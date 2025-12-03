@@ -39,7 +39,7 @@ const Cliente = sequelize.define(
     },
     telefono: {
       type: DataTypes.STRING(30),
-      allowNull: true,
+      allowNull: false, //? el false lo hace obligatorio
       validate: {
         is: {
           args: /^\+[1-9]\d{1,14}$/,
@@ -49,8 +49,9 @@ const Cliente = sequelize.define(
     },
     email: {
       type: DataTypes.STRING(100),
-      allowNull: false,
+      allowNull: true,
       unique: true,
+      sparse: true,
       validate: {
         isEmail: {
           msg: "Debe ser un email válido",

@@ -1,25 +1,9 @@
-// src/controllers/admin/clientes.controller.js
-
-/**
- * CONTROLLER DE CLIENTES CON SERVICE
- *
- * El controller ahora solo maneja:
- * - Recibir datos de la request (req)
- * - Llamar al service (lógica de negocio)
- * - Enviar respuesta HTTP (res)
- */
-
 import clientesService from "../services/clientes_service.js";
-
-// ============================================
-// CREATE - CREAR CLIENTE
-// ============================================
 
 export const crearCliente = async (req, res) => {
   try {
     //  Toda la lógica está en el service
     const cliente = await clientesService.crear(req.body);
-
     // Solo manejamos la respuesta HTTP
     return res.status(201).json({
       success: true,
@@ -36,11 +20,6 @@ export const crearCliente = async (req, res) => {
     });
   }
 };
-
-// ============================================
-// READ - OBTENER TODOS LOS CLIENTES
-// ============================================
-
 export const obtenerClientes = async (req, res) => {
   try {
     // Pasamos las opciones al service
@@ -64,11 +43,6 @@ export const obtenerClientes = async (req, res) => {
     });
   }
 };
-
-// ============================================
-// READ - OBTENER UN CLIENTE POR ID
-// ============================================
-
 export const obtenerClientePorId = async (req, res) => {
   try {
     const cliente = await clientesService.obtenerPorId(req.params.id);
@@ -86,11 +60,6 @@ export const obtenerClientePorId = async (req, res) => {
     });
   }
 };
-
-// ============================================
-// READ - BUSCAR CLIENTES
-// ============================================
-
 export const buscarClientes = async (req, res) => {
   try {
     const clientes = await clientesService.buscar(req.query.q);
@@ -109,11 +78,6 @@ export const buscarClientes = async (req, res) => {
     });
   }
 };
-
-// ============================================
-// UPDATE - ACTUALIZAR CLIENTE
-// ============================================
-
 export const actualizarCliente = async (req, res) => {
   try {
     const cliente = await clientesService.actualizar(req.params.id, req.body);
@@ -132,11 +96,6 @@ export const actualizarCliente = async (req, res) => {
     });
   }
 };
-
-// ============================================
-// DELETE - ELIMINAR CLIENTE
-// ============================================
-
 export const eliminarCliente = async (req, res) => {
   try {
     const resultado = await clientesService.eliminar(req.params.id);

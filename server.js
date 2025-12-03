@@ -12,6 +12,7 @@ import "./src/models/index.js";
 //importacion de rutas CRUD
 
 import clientesRoutes from "./src/routes/clientes.routes.js";
+import consultasRoutes from "./src/routes/consultas.routes.js";
 
 // Inicializar Express
 const app = express();
@@ -71,7 +72,7 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 //* todas las rutas de clientes tendran el prefijo /api/clientes
 app.use("/api/clientes", clientesRoutes);
-
+app.use("/api/consultas", consultasRoutes);
 // Ruta de health check
 app.get("/health", (req, res) => {
   res.json({

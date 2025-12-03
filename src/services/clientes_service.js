@@ -1,4 +1,4 @@
-import { Cliente, Consulta, Caso } from "../models/index.js";
+import { Cliente, Consulta, Caso, Abogado } from "../models/index.js";
 import { Op } from "sequelize";
 import { emailRegex, telefonoRegex } from "../utils/regex.js";
 class AppError extends Error {
@@ -15,9 +15,6 @@ class AppError extends Error {
     this.name = "AppError";
   }
 }
-//* ============================================
-//* MÉTODO: CREAR CLIENTES
-//* ============================================
 
 export const crear = async (datosCliente) => {
   /**
@@ -37,12 +34,19 @@ export const crear = async (datosCliente) => {
     datosCliente;
 
   if (!nombre || !apellido || !email) {
-    throw new AppError("Nombre, Apellido y Email son obligatorios", 400);
+    throw new AppError("Nombre, Apellido y Teléfono son obligatorios", 400);
   }
 
-  const emailValidation = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailValidation.test(email)) {
-    throw new AppError("El formato del mail no es válido", 400);
+  if (email) {
+    const emailValidation = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailValidation.test(email)) {
+      throw new AppError("El formato del mail no es válido", 400);
+    }
+
+    const existeEmail = await Cliente.findOne({ where: { email } });
+    if (existeEmail) {
+      throw new AppError("Ya existe un cliente con este email", 409);
+    }
   }
 
   const telefonoValidation = /^\+[1-9]\d{1,14}$/;
@@ -50,19 +54,9 @@ export const crear = async (datosCliente) => {
     throw new AppError("El formato del numero de telefono no es válido", 400);
   }
 
-  const existeEmail = await Cliente.findOne({ where: { email } });
-  if (existeEmail) {
-    throw new AppError("Ya existe un cliente con este email", 409);
-  }
-
-  if (telefono) {
-    const existeTelefono = await Cliente.findOne({ where: { telefono } });
-    if (existeTelefono) {
-      throw new AppError(
-        "Ya existe un cliente con este número de teléfono",
-        409
-      );
-    }
+  const existeTelefono = await Cliente.findOne({ where: { telefono } });
+  if (existeTelefono) {
+    throw new AppError("Ya existe un cliente con este número de teléfono", 409);
   }
 
   //** Creacion de cliente */
@@ -95,11 +89,6 @@ export const crear = async (datosCliente) => {
     //* throw new  AppError(...), en lugar de lanzar el error, y estar adivinando cual es el error, toda esta traduccion que hicimos facilitará el arreglo de la misma
   }
 };
-
-//* ============================================
-//* MÉTODO: OBTENER TODOS LOS CLIENTES
-//* ============================================
-
 export const obtenerTodos = async (opciones = {}) => {
   /**
    * Obtiene lista de clientes con paginación y búsqueda
@@ -155,11 +144,6 @@ export const obtenerTodos = async (opciones = {}) => {
     },
   };
 };
-
-//* ============================================
-//* MÉTODO: OBTENER CLIENTE POR ID
-//* ============================================
-
 export const obtenerPorId = async (id) => {
   /**
    * Obtiene un cliente específico con sus relaciones
@@ -183,6 +167,11 @@ export const obtenerPorId = async (id) => {
         attributes: ["id_caso", "descripcion", "estado", "fecha_inicio"],
         order: [["fecha_inicio", "DESC"]],
       },
+      {
+        model: Abogado,
+        as: "abogado",
+        attributes: ["id_abogado", "nombre", "apellido", "especialidad"],
+      },
     ],
   });
 
@@ -192,11 +181,6 @@ export const obtenerPorId = async (id) => {
 
   return cliente;
 };
-
-//* ============================================
-//* MÉTODO: BUSCAR CLIENTES
-//* ============================================
-
 export const buscar = async (termino) => {
   /**
    * Busca clientes por nombre, apellido, email o teléfono
@@ -228,11 +212,6 @@ export const buscar = async (termino) => {
 
   return clientes;
 };
-
-//* ============================================
-//* MÉTODO: ACTUALIZAR CLIENTE
-//* ============================================
-
 export const actualizar = async (id, datosActualizacion) => {
   /**
    * Actualiza un cliente existente
@@ -280,11 +259,6 @@ export const actualizar = async (id, datosActualizacion) => {
 
   return cliente;
 };
-
-//* ============================================
-//* MÉTODO: ELIMINAR CLIENTE
-//* ============================================
-
 export const eliminar = async (id) => {
   /**
    * Elimina un cliente si no tiene relaciones
@@ -319,11 +293,6 @@ export const eliminar = async (id) => {
     id: id,
   };
 };
-
-//* ============================================
-//* MÉTODO: VERIFICAR SI EXISTE
-//* ============================================
-
 export const existe = async (email) => {
   /**
    * Verifica si existe un cliente con el email dado
@@ -338,11 +307,6 @@ export const existe = async (email) => {
 
   return cliente !== null;
 };
-
-//* ============================================
-//* EXPORTAR TODO COMO UN OBJETO
-//* ============================================
-
 export default {
   crear,
   obtenerTodos,
