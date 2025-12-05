@@ -1,275 +1,142 @@
-import { Consulta, Cliente, Abogado } from "../models/index.js";
+import { Cliente, Consulta, Caso, Abogado } from "../models/index.js";
 import { Op } from "sequelize";
-
+import { emailRegex, telefonoRegex } from "../utils/regex.js";
 class AppError extends Error {
+  // creacion de clase, el extends indica que va a heredar toda propiedad y metodo de otra clase existente
+  // en este caso heredará la clase nativa de js "Error"
+  // que logramos con esto? crearmos un tipo de error mas especifico, y sigue siendo reconocido como un error legitimo por el entorno node.js
   constructor(message, statusCode = 500) {
-    super(message);
+    // inicializa el objeto, estableciedno sus propiedades y comportamientos iniciales
+
+    // se utiliza para asignar valores a la propiedad del objeto //** this.statusCode  this.name */
+
+    super(message); // esto llama al constructor de la clase padre (Error)
     this.statusCode = statusCode;
     this.name = "AppError";
   }
 }
 
-// consulta desde el front
-
-export const crearDesdeFormulario = async (datosFormulario) => {
+export const crear = async (datosCliente) => {
   /**
-   * Crea una consulta y el cliente si no existe (flujo típico de formulario web)
+   * Crea un nuevo cliente en la base de datos
    *
-   * @param {Object} datosFormulario - Datos del formulario
-   * @param {string} datosFormulario.mensaje - Mensaje de la consulta (obligatorio)
-   * @param {string} datosFormulario.nombre - Nombre del cliente (obligatorio)
-   * @param {string} datosFormulario.apellido - Apellido del cliente (obligatorio)
-   * @param {string} datosFormulario.telefono - Teléfono del cliente (obligatorio)
-   * @param {string} [datosFormulario.email] - Email del cliente (opcional)
-   * @param {boolean} datosFormulario.consentimiento_datos - Consentimiento del cliente
-   * @returns {Promise<Object>} Consulta creada con el cliente
-   * @throws {AppError} Si faltan datos obligatorios
+   * @param {Object} datosCliente - Datos del cliente
+   * @param {string} datosCliente.nombre - Nombre del cliente
+   * @param {string} datosCliente.apellido - Apellido del cliente
+   * @param {string} datosCliente.email - Email del cliente
+   * @param {string} datosCliente.telefono - Teléfono del cliente
+   * @param {boolean} datosCliente.consentimiento_datos - Consentimiento
+   * @returns {Promise<Object>} Cliente creado
+   * @throws {AppError} Si faltan datos o el email/teléfono ya existe
    */
 
-  const { mensaje, nombre, apellido, email, telefono, consentimiento_datos } =
-    datosFormulario;
+  const { nombre, apellido, telefono, email, consentimiento_datos } =
+    datosCliente;
 
-  // Validaciones básicas - teléfono obligatorio, email opcional
-  if (!mensaje || !nombre || !apellido || !telefono) {
-    throw new AppError(
-      "El mensaje, nombre, apellido y teléfono son obligatorios",
-      400
-    );
+  if (!nombre || !apellido || !telefono) {
+    throw new AppError("Nombre, Apellido y Teléfono son obligatorios", 400);
   }
 
-  if (mensaje.trim().length < 10) {
-    throw new AppError("El mensaje debe tener al menos 10 caracteres", 400);
-  }
-
-  // Validar teléfono (obligatorio)
-  const telefonoValidation = /^\+[1-9]\d{1,14}$/;
-  if (!telefonoValidation.test(telefono)) {
-    throw new AppError(
-      "El formato del número de teléfono no es válido (debe ser formato E.164: +54...)",
-      400
-    );
-  }
-
-  // Validar email solo si se proporciona (opcional)
+  // Email solo si viene
   if (email) {
     const emailValidation = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailValidation.test(email)) {
-      throw new AppError("El formato del email no es válido", 400);
+      throw new AppError("El formato del mail no es válido", 400);
+    }
+
+    const existeEmail = await Cliente.findOne({ where: { email } });
+    if (existeEmail) {
+      throw new AppError("Ya existe un cliente con este email", 409);
     }
   }
 
+  const telefonoValidation = /^\+[1-9]\d{1,14}$/;
+  if (!telefonoValidation.test(telefono)) {
+    throw new AppError("El formato del numero de telefono no es válido", 400);
+  }
+
+  const existeTelefono = await Cliente.findOne({ where: { telefono } });
+  if (existeTelefono) {
+    throw new AppError("Ya existe un cliente con este número de teléfono", 409);
+  }
+
+  //** Creacion de cliente */
+
   try {
-    // Buscar si el cliente ya existe por teléfono (ahora es el identificador único)
-    let cliente = await Cliente.findOne({
-      where: { telefono },
+    const nuevoCliente = await Cliente.create({
+      nombre: nombre.trim(), //elimina espacios
+      apellido: apellido.trim(),
+      telefono,
+      email: email.toLowerCase().trim(), // convierte el email en minusculas, y le quita espacios
+      fecha_registro: new Date(),
+      consentimiento_datos: consentimiento_datos || false,
     });
 
-    // Si no existe, crearlo
-    if (!cliente) {
-      cliente = await Cliente.create({
-        nombre: nombre.trim(),
-        apellido: apellido.trim(),
-        email: email ? email.toLowerCase().trim() : null,
-        telefono,
-        fecha_registro: new Date(),
-        consentimiento_datos: consentimiento_datos || false,
-      });
-    }
-
-    // Crear la consulta con el cliente (existente o recién creado)
-    const nuevaConsulta = await Consulta.create({
-      mensaje: mensaje.trim(),
-      id_cliente: cliente.id_cliente,
-      id_abogado_asignado: null, // Sin asignar inicialmente
-      estado: "pendiente",
-      fecha_envio: new Date(),
-    });
-
-    // Traer la consulta completa con relaciones
-    const consultaCompleta = await Consulta.findByPk(
-      nuevaConsulta.id_consulta,
-      {
-        include: [
-          {
-            model: Cliente,
-            as: "cliente",
-            attributes: [
-              "id_cliente",
-              "nombre",
-              "apellido",
-              "email",
-              "telefono",
-            ],
-          },
-        ],
-      }
-    );
-
-    return {
-      consulta: consultaCompleta,
-      clienteNuevo: !cliente.id_cliente, // Indica si se creó un cliente nuevo
-    };
+    return nuevoCliente;
   } catch (error) {
     if (error.name === "SequelizeValidationError") {
       const mensajes = error.errors.map((e) => e.message).join(", ");
       throw new AppError(`Error de validación: ${mensajes}`, 400);
     }
     throw new AppError(
-      "Error al procesar la consulta [consultas_service.js]",
+      "Error al crear el cliente en la base de datos [clientes_service.js]",
       500
     );
+    //* SequelizeValidationError es el nombre que Sequelize asigna a los errores que ocurren con los datos que violan las reglas definidas en el modelo
+    // error.errors contiene los errores que almacenó sequelize, este objeto datalla el error
+    //* .map(e => e.message) este metodo recorre los errores, y extrae solo lo legible
+    //* .join(', ') une todos los mensajes de errores en una sola cadena de texto, separadas por una coma y espacio
+
+    //* throw new  AppError(...), en lugar de lanzar el error, y estar adivinando cual es el error, toda esta traduccion que hicimos facilitará el arreglo de la misma
   }
 };
-
-// crear consulta desde el equipo interno
-
-export const crear = async (datosConsulta) => {
+export const obtenerTodos = async (opciones = {}) => {
   /**
-   * Crea una nueva consulta en la base de datos (uso interno/admin)
-   * Requiere que el cliente ya exista
-   *
-   * @param {Object} datosConsulta - Datos de la consulta
-   * @param {string} datosConsulta.mensaje - Mensaje de la consulta
-   * @param {number} datosConsulta.id_cliente - ID del cliente que hace la consulta
-   * @param {number} datosConsulta.id_abogado_asignado - ID del abogado asignado (opcional)
-   * @param {string} datosConsulta.estado - Estado de la consulta (pendiente, en_progreso, resuelta)
-   * @returns {Promise<Object>} Consulta creada
-   * @throws {AppError} Si faltan datos o el cliente no existe
-   */
-
-  const { mensaje, id_cliente, id_abogado_asignado, estado } = datosConsulta;
-
-  // Validaciones básicas
-  if (!mensaje || !id_cliente) {
-    throw new AppError("El mensaje y el ID del cliente son obligatorios", 400);
-  }
-
-  if (mensaje.trim().length < 10) {
-    throw new AppError("El mensaje debe tener al menos 10 caracteres", 400);
-  }
-
-  // Verificar que el cliente existe
-  const clienteExiste = await Cliente.findByPk(id_cliente);
-  if (!clienteExiste) {
-    throw new AppError("El cliente especificado no existe", 404);
-  }
-
-  // Si se asignó un abogado, verificar que existe
-  if (id_abogado_asignado) {
-    const abogadoExiste = await Abogado.findByPk(id_abogado_asignado);
-    if (!abogadoExiste) {
-      throw new AppError("El abogado especificado no existe", 404);
-    }
-  }
-
-  // Validar estado si se proporciona
-  const estadosValidos = ["pendiente", "en_progreso", "resuelta"];
-  if (estado && !estadosValidos.includes(estado)) {
-    throw new AppError(
-      `El estado debe ser uno de: ${estadosValidos.join(", ")}`,
-      400
-    );
-  }
-
-  try {
-    const nuevaConsulta = await Consulta.create({
-      mensaje: mensaje.trim(),
-      id_cliente,
-      id_abogado_asignado: id_abogado_asignado || null,
-      estado: estado || "pendiente",
-      fecha_envio: new Date(),
-    });
-
-    // Traer la consulta con las relaciones incluidas
-    const consultaCompleta = await Consulta.findByPk(
-      nuevaConsulta.id_consulta,
-      {
-        include: [
-          {
-            model: Cliente,
-            as: "cliente",
-            attributes: ["id_cliente", "nombre", "apellido", "email"],
-          },
-          {
-            model: Abogado,
-            as: "abogado",
-            attributes: ["id_abogado", "nombre", "apellido", "especialidad"],
-          },
-        ],
-      }
-    );
-
-    return consultaCompleta;
-  } catch (error) {
-    if (error.name === "SequelizeValidationError") {
-      const mensajes = error.errors.map((e) => e.message).join(", ");
-      throw new AppError(`Error de validación: ${mensajes}`, 400);
-    }
-    throw new AppError(
-      "Error al crear la consulta en la base de datos [consultas_service.js]",
-      500
-    );
-  }
-};
-
-// obtencion de todas las consultas por paginacion
-
-export const obtenerTodas = async (opciones = {}) => {
-  /**
-   * Obtiene lista de consultas con paginación y filtros
+   * Obtiene lista de clientes con paginación y búsqueda
    *
    * @param {Object} opciones - Opciones de consulta
    * @param {number} opciones.page - Página actual
-   * @param {number} opciones.limit - Consultas por página
-   * @param {string} opciones.estado - Filtrar por estado
-   * @param {number} opciones.id_cliente - Filtrar por cliente
-   * @param {number} opciones.id_abogado - Filtrar por abogado
-   * @returns {Promise<Object>} { consultas, pagination }
+   * @param {number} opciones.limit - Clientes por página
+   * @param {string} opciones.search - Término de búsqueda
+   * @returns {Promise<Object>} { clientes, pagination }
    */
 
-  const { page = 1, limit = 20, estado, id_cliente, id_abogado } = opciones;
+  const { page = 1, limit = 20, search } = opciones;
 
   // Calcular offset
   const offset = (page - 1) * limit;
 
-  // Construir filtros
+  // Construir filtro de búsqueda
   const where = {};
 
-  if (estado) {
-    where.estado = estado;
-  }
-
-  if (id_cliente) {
-    where.id_cliente = id_cliente;
-  }
-
-  if (id_abogado) {
-    where.id_abogado_asignado = id_abogado;
+  if (search) {
+    where[Op.or] = [
+      { nombre: { [Op.like]: `%${search}%` } },
+      { apellido: { [Op.like]: `%${search}%` } },
+      { email: { [Op.like]: `%${search}%` } },
+    ];
   }
 
   // Consultar base de datos
-  const { count, rows: consultas } = await Consulta.findAndCountAll({
+  const { count, rows: clientes } = await Cliente.findAndCountAll({
     where,
     limit: parseInt(limit),
     offset: parseInt(offset),
-    order: [["fecha_envio", "DESC"]],
-    include: [
-      {
-        model: Cliente,
-        as: "cliente",
-        attributes: ["id_cliente", "nombre", "apellido", "email"],
-      },
-      {
-        model: Abogado,
-        as: "abogado",
-        attributes: ["id_abogado", "nombre", "apellido", "especialidad"],
-      },
+    order: [["fecha_registro", "DESC"]],
+    attributes: [
+      "id_cliente",
+      "nombre",
+      "apellido",
+      "email",
+      "telefono",
+      "fecha_registro",
+      "consentimiento_datos",
     ],
   });
 
   // Retornar datos con paginación
   return {
-    consultas,
+    clientes,
     pagination: {
       total: count,
       page: parseInt(page),
@@ -278,293 +145,163 @@ export const obtenerTodas = async (opciones = {}) => {
     },
   };
 };
-
-// obtencion de consulta por id
-
 export const obtenerPorId = async (id) => {
   /**
-   * Obtiene una consulta específica con sus relaciones
+   * Obtiene un cliente específico con sus relaciones
    *
-   * @param {number} id - ID de la consulta
-   * @returns {Promise<Object>} Consulta con cliente y abogado
-   * @throws {AppError} Si la consulta no existe
+   * @param {number} id - ID del cliente
+   * @returns {Promise<Object>} Cliente con consultas y casos
+   * @throws {AppError} Si el cliente no existe
    */
 
-  const consulta = await Consulta.findByPk(id, {
+  const cliente = await Cliente.findByPk(id, {
     include: [
       {
-        model: Cliente,
-        as: "cliente",
-        attributes: ["id_cliente", "nombre", "apellido", "email", "telefono"],
+        model: Consulta,
+        as: "consultas",
+        attributes: ["id_consulta", "mensaje", "estado", "fecha_envio"],
+        include: [
+          {
+            model: Abogado,
+            as: "abogado",
+            attributes: ["id_abogado", "nombre", "apellido", "especialidad"],
+          },
+        ],
+        order: [["fecha_envio", "DESC"]],
       },
       {
-        model: Abogado,
-        as: "abogado",
-        attributes: [
-          "id_abogado",
-          "nombre",
-          "apellido",
-          "email",
-          "especialidad",
-          "rol",
-        ],
+        model: Caso,
+        as: "casos",
+        attributes: ["id_caso", "descripcion", "estado", "fecha_inicio"],
+        order: [["fecha_inicio", "DESC"]],
       },
     ],
   });
 
-  if (!consulta) {
-    throw new AppError("Consulta no encontrada", 404);
+  if (!cliente) {
+    throw new AppError("Cliente no encontrado", 404);
   }
 
-  return consulta;
+  return cliente;
 };
-
-//modificacion de consultas
-
-export const actualizar = async (id, datosActualizacion) => {
+export const buscar = async (termino) => {
   /**
-   * Actualiza una consulta existente
+   * Busca clientes por nombre, apellido, email o teléfono
    *
-   * @param {number} id - ID de la consulta
-   * @param {Object} datosActualizacion - Datos a actualizar
-   * @returns {Promise<Object>} Consulta actualizada
-   * @throws {AppError} Si la consulta no existe
+   * @param {string} termino - Término de búsqueda
+   * @returns {Promise<Array>} Lista de clientes encontrados
+   * @throws {AppError} Si el término es muy corto
    */
 
-  const { mensaje, estado, id_abogado_asignado } = datosActualizacion;
-
-  // Buscar la consulta
-  const consulta = await Consulta.findByPk(id);
-
-  if (!consulta) {
-    throw new AppError("Consulta no encontrada", 404);
-  }
-
-  // Validar estado si se proporciona
-  const estadosValidos = ["pendiente", "en_progreso", "resuelta"];
-  if (estado && !estadosValidos.includes(estado)) {
+  if (!termino || termino.length < 2) {
     throw new AppError(
-      `El estado debe ser uno de: ${estadosValidos.join(", ")}`,
+      "Debe proporcionar al menos 2 caracteres para buscar",
       400
     );
   }
 
-  // Si se asigna un abogado, verificar que existe
-  if (id_abogado_asignado) {
-    const abogadoExiste = await Abogado.findByPk(id_abogado_asignado);
-    if (!abogadoExiste) {
-      throw new AppError("El abogado especificado no existe", 404);
+  const clientes = await Cliente.findAll({
+    where: {
+      [Op.or]: [
+        { nombre: { [Op.like]: `%${termino}%` } },
+        { apellido: { [Op.like]: `%${termino}%` } },
+        { email: { [Op.like]: `%${termino}%` } },
+        { telefono: { [Op.like]: `%${termino}%` } },
+      ],
+    },
+    limit: 10,
+    attributes: ["id_cliente", "nombre", "apellido", "email", "telefono"],
+  });
+
+  return clientes;
+};
+export const actualizar = async (id, datosActualizacion) => {
+  /**
+   * Actualiza un cliente existente
+   *
+   * @param {number} id - ID del cliente
+   * @param {Object} datosActualizacion - Datos a actualizar
+   * @returns {Promise<Object>} Cliente actualizado
+   * @throws {AppError} Si el cliente no existe o hay duplicados
+   */
+
+  const { nombre, apellido, telefono, email, consentimiento_datos } =
+    datosActualizacion;
+
+  // Buscar el cliente
+  const cliente = await Cliente.findByPk(id);
+
+  if (!cliente) {
+    throw new AppError("Cliente no encontrado", 404);
+  }
+
+  // Verificar email único (si se quiere cambiar)
+  if (email && email !== cliente.email) {
+    const existeEmail = await Cliente.findOne({ where: { email } });
+    if (existeEmail) {
+      throw new AppError("Ya existe un cliente con ese email", 409);
     }
   }
 
-  // Validar mensaje si se proporciona
-  if (mensaje && mensaje.trim().length < 10) {
-    throw new AppError("El mensaje debe tener al menos 10 caracteres", 400);
+  // Verificar teléfono único (si se quiere cambiar)
+  if (telefono && telefono !== cliente.telefono) {
+    const existeTelefono = await Cliente.findOne({ where: { telefono } });
+    if (existeTelefono) {
+      throw new AppError("Ya existe un cliente con ese teléfono", 409);
+    }
   }
 
   // Actualizar solo campos proporcionados
-  await consulta.update({
-    ...(mensaje && { mensaje: mensaje.trim() }),
-    ...(estado && { estado }),
-    ...(id_abogado_asignado !== undefined && { id_abogado_asignado }),
+  await cliente.update({
+    ...(nombre && { nombre: nombre.trim() }),
+    ...(apellido && { apellido: apellido.trim() }),
+    ...(telefono !== undefined && { telefono }),
+    ...(email && { email: email.toLowerCase().trim() }),
+    ...(consentimiento_datos !== undefined && { consentimiento_datos }),
   });
 
-  // Devolver consulta actualizada con relaciones
-  const consultaActualizada = await Consulta.findByPk(id, {
-    include: [
-      {
-        model: Cliente,
-        as: "cliente",
-        attributes: ["id_cliente", "nombre", "apellido", "email"],
-      },
-      {
-        model: Abogado,
-        as: "abogado",
-        attributes: ["id_abogado", "nombre", "apellido", "especialidad"],
-      },
-    ],
-  });
-
-  return consultaActualizada;
+  return cliente;
 };
-
-// eliminacion de consulta
-
 export const eliminar = async (id) => {
   /**
-   * Elimina una consulta
+   * Elimina un cliente si no tiene relaciones
    *
-   * @param {number} id - ID de la consulta
+   * @param {number} id - ID del cliente
    * @returns {Promise<Object>} Mensaje de éxito
-   * @throws {AppError} Si la consulta no existe
+   * @throws {AppError} Si el cliente no existe o tiene relaciones
    */
 
-  const consulta = await Consulta.findByPk(id);
+  const cliente = await Cliente.findByPk(id);
 
-  if (!consulta) {
-    throw new AppError("Consulta no encontrada", 404);
+  if (!cliente) {
+    throw new AppError("Cliente no encontrado", 404);
+  }
+
+  // Verificar relaciones
+  const tieneConsultas = await Consulta.count({ where: { id_cliente: id } });
+  const tieneCasos = await Caso.count({ where: { id_cliente: id } });
+
+  if (tieneConsultas > 0 || tieneCasos > 0) {
+    throw new AppError(
+      `No se puede eliminar el cliente porque tiene ${tieneConsultas} consultas y ${tieneCasos} casos asociados`,
+      409
+    );
   }
 
   // Eliminar
-  await consulta.destroy();
+  await cliente.destroy();
 
   return {
-    message: "Consulta eliminada exitosamente",
+    message: "Cliente eliminado exitosamente",
     id: id,
   };
 };
 
-// asignacion de abogado a consulta
-
-export const asignarAbogado = async (id_consulta, id_abogado) => {
-  /**
-   * Asigna un abogado a una consulta
-   *
-   * @param {number} id_consulta - ID de la consulta
-   * @param {number} id_abogado - ID del abogado a asignar
-   * @returns {Promise<Object>} Consulta actualizada
-   * @throws {AppError} Si la consulta o el abogado no existen
-   */
-
-  const consulta = await Consulta.findByPk(id_consulta);
-  if (!consulta) {
-    throw new AppError("Consulta no encontrada", 404);
-  }
-
-  const abogado = await Abogado.findByPk(id_abogado);
-  if (!abogado) {
-    throw new AppError("Abogado no encontrado", 404);
-  }
-
-  await consulta.update({
-    id_abogado_asignado: id_abogado,
-    estado: "en_progreso", // Cambiar estado automáticamente
-  });
-
-  // Devolver consulta con relaciones
-  const consultaActualizada = await Consulta.findByPk(id_consulta, {
-    include: [
-      {
-        model: Cliente,
-        as: "cliente",
-        attributes: ["id_cliente", "nombre", "apellido", "email"],
-      },
-      {
-        model: Abogado,
-        as: "abogado",
-        attributes: ["id_abogado", "nombre", "apellido", "especialidad"],
-      },
-    ],
-  });
-
-  return consultaActualizada;
-};
-
-// cambio de estado de la consulta
-
-export const cambiarEstado = async (id_consulta, nuevoEstado) => {
-  /**
-   * Cambia el estado de una consulta
-   *
-   * @param {number} id_consulta - ID de la consulta
-   * @param {string} nuevoEstado - Nuevo estado (pendiente, en_progreso, resuelta)
-   * @returns {Promise<Object>} Consulta actualizada
-   * @throws {AppError} Si la consulta no existe o el estado es inválido
-   */
-
-  const estadosValidos = ["pendiente", "en_progreso", "resuelta"];
-  if (!estadosValidos.includes(nuevoEstado)) {
-    throw new AppError(
-      `El estado debe ser uno de: ${estadosValidos.join(", ")}`,
-      400
-    );
-  }
-
-  const consulta = await Consulta.findByPk(id_consulta);
-  if (!consulta) {
-    throw new AppError("Consulta no encontrada", 404);
-  }
-
-  await consulta.update({ estado: nuevoEstado });
-
-  // Devolver consulta con relaciones
-  const consultaActualizada = await Consulta.findByPk(id_consulta, {
-    include: [
-      {
-        model: Cliente,
-        as: "cliente",
-        attributes: ["id_cliente", "nombre", "apellido", "email"],
-      },
-      {
-        model: Abogado,
-        as: "abogado",
-        attributes: ["id_abogado", "nombre", "apellido", "especialidad"],
-      },
-    ],
-  });
-
-  return consultaActualizada;
-};
-
-// obtencion de consultas por cliente
-
-export const obtenerPorCliente = async (id_cliente) => {
-  /**
-   * Obtiene todas las consultas de un cliente específico
-   *
-   * @param {number} id_cliente - ID del cliente
-   * @returns {Promise<Array>} Lista de consultas del cliente
-   */
-
-  const consultas = await Consulta.findAll({
-    where: { id_cliente },
-    order: [["fecha_envio", "DESC"]],
-    include: [
-      {
-        model: Abogado,
-        as: "abogado",
-        attributes: ["id_abogado", "nombre", "apellido", "especialidad"],
-      },
-    ],
-  });
-
-  return consultas;
-};
-
-// obtencion de consultas por abogado
-
-export const obtenerPorAbogado = async (id_abogado) => {
-  /**
-   * Obtiene todas las consultas asignadas a un abogado
-   *
-   * @param {number} id_abogado - ID del abogado
-   * @returns {Promise<Array>} Lista de consultas del abogado
-   */
-
-  const consultas = await Consulta.findAll({
-    where: { id_abogado_asignado: id_abogado },
-    order: [["fecha_envio", "DESC"]],
-    include: [
-      {
-        model: Cliente,
-        as: "cliente",
-        attributes: ["id_cliente", "nombre", "apellido", "email", "telefono"],
-      },
-    ],
-  });
-
-  return consultas;
-};
-
 export default {
-  crearDesdeFormulario, // ← NUEVO: Para formularios públicos
-  crear, // Para uso interno/admin
-  obtenerTodas,
+  crear,
+  obtenerTodos,
   obtenerPorId,
+  buscar,
   actualizar,
   eliminar,
-  asignarAbogado,
-  cambiarEstado,
-  obtenerPorCliente,
-  obtenerPorAbogado,
 };
