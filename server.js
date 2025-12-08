@@ -14,6 +14,7 @@ import "./src/models/index.js";
 import clientesRoutes from "./src/routes/clientes.routes.js";
 import consultasRoutes from "./src/routes/consultas.routes.js";
 import abogadosRoutes from "./src/routes/abogados.routes.js";
+import casosRoutes from "./src/routes/casos.routes.js";
 
 // Inicializar Express
 const app = express();
@@ -75,7 +76,7 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use("/api/clientes", clientesRoutes);
 app.use("/api/consultas", consultasRoutes);
 app.use("/api/abogados", abogadosRoutes);
-
+app.use("/api/casos", casosRoutes);
 // Ruta de health check
 app.get("/health", (req, res) => {
   res.json({
