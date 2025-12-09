@@ -5,6 +5,7 @@ import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import { testConnection, syncDatabase } from "./src/config/database.js";
+import path from "path";
 
 // Importar modelos para establecer relaciones
 import "./src/models/index.js";
@@ -15,6 +16,7 @@ import clientesRoutes from "./src/routes/clientes.routes.js";
 import consultasRoutes from "./src/routes/consultas.routes.js";
 import abogadosRoutes from "./src/routes/abogados.routes.js";
 import casosRoutes from "./src/routes/casos.routes.js";
+import documentosRoutes from "./src/routes/documentos.routes.js";
 
 // Inicializar Express
 const app = express();
@@ -58,9 +60,7 @@ const limiter = rateLimit({
 
 app.use("/api/", limiter);
 
-// ====================
-// MIDDLEWARES DE EXPRESS
-// ====================
+//middleware de express
 
 // Parser de JSON (para req.body)
 app.use(express.json({ limit: "10mb" }));
@@ -68,15 +68,18 @@ app.use(express.json({ limit: "10mb" }));
 // Parser de URL-encoded (para formularios)
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
-// ====================
-// RUTAS
-// ====================
-
+// rutas
 //* todas las rutas de clientes tendran el prefijo /api/clientes
 app.use("/api/clientes", clientesRoutes);
 app.use("/api/consultas", consultasRoutes);
 app.use("/api/abogados", abogadosRoutes);
 app.use("/api/casos", casosRoutes);
+app.use("/api/documentos", documentosRoutes);
+
+// archivos estaticos
+
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+
 // Ruta de health check
 app.get("/health", (req, res) => {
   res.json({
