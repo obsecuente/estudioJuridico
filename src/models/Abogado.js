@@ -12,7 +12,7 @@ const Abogado = sequelize.define(
     },
     dni: {
       type: DataTypes.STRING(8),
-      allowNull: false, // ← OBLIGATORIO
+      allowNull: false,
       unique: {
         name: "unique_dni_abogado",
         msg: "Ya existe un abogado con este DNI",
@@ -52,7 +52,7 @@ const Abogado = sequelize.define(
 
     telefono: {
       type: DataTypes.STRING(30),
-      allowNull: false, // ← OBLIGATORIO
+      allowNull: false,
       validate: {
         is: {
           args: /^\+[1-9]\d{1,14}$/,
@@ -66,9 +66,9 @@ const Abogado = sequelize.define(
 
     email: {
       type: DataTypes.STRING(100),
-      allowNull: true, // ← OPCIONAL (puede ser NULL)
-      unique: true, // ← Pero si existe, debe ser único
-      sparse: true, // ← IMPORTANTE: permite múltiples NULL pero emails únicos
+      allowNull: true,
+      unique: true,
+      sparse: true,
       validate: {
         isEmail: {
           msg: "Debe ser un email válido",
@@ -76,12 +76,18 @@ const Abogado = sequelize.define(
       },
     },
 
+    // NUEVO: Campo para la contraseña hasheada
+    password: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      comment: "Contraseña hasheada con bcrypt",
+    },
+
     especialidad: {
       type: DataTypes.STRING(100),
       allowNull: true,
     },
 
-    // ENUM: solo puede tener uno de estos valores
     rol: {
       type: DataTypes.ENUM("admin", "abogado", "asistente"),
       allowNull: true,
@@ -97,6 +103,16 @@ const Abogado = sequelize.define(
   {
     tableName: "abogados",
     timestamps: false,
+    // Excluir password por defecto en las queries
+    defaultScope: {
+      attributes: { exclude: ["password"] },
+    },
+    // Scope para incluir password cuando sea necesario
+    scopes: {
+      withPassword: {
+        attributes: { include: ["password"] },
+      },
+    },
   }
 );
 

@@ -11,20 +11,54 @@ import {
   obtenerConsultasPorAbogado,
   obtenerConsultasPorCliente,
 } from "../controllers/consultas_controller.js";
+import authMiddleware from "../middleware/authMiddleware.js";
+import roleMiddleware from "../middleware/roleMiddleware.js";
 
 const router = express.Router();
 
-router.post("/", crearConsulta); //* (uso interno)
+// Ruta pública (sin autenticación)
 router.post("/publica", crearConsultaPublica);
 
-router.get("/", obtenerConsultas); // paginacion
-router.get("/cliente/:id_cliente", obtenerConsultasPorCliente); // Por cliente
-router.get("/abogado/:id_abogado", obtenerConsultasPorAbogado); // Por abogado
-router.get("/:id", obtenerConsultaPorId); // Por ID específico de consulta
+// Todas las demás rutas requieren autenticación
+router.use(authMiddleware);
 
-router.put("/:id", actualizarConsulta); // Actualización general
-router.put("/:id/asignar-abogado", asignarAbogadoAConsulta);
-router.put("/:id/cambiar-estado", cambiarEstadoConsulta);
+// Ver todas - Todos pueden
+router.get("/", obtenerConsultas);
 
-router.delete("/:id", eliminarConsulta);
+// Ver por cliente - Todos pueden
+router.get("/cliente/:id_cliente", obtenerConsultasPorCliente);
+
+// Ver por abogado - Todos pueden
+router.get("/abogado/:id_abogado", obtenerConsultasPorAbogado);
+
+// Ver una - Todos pueden
+router.get("/:id", obtenerConsultaPorId);
+
+// Crear - Admin, Abogado, Asistente pueden
+router.post(
+  "/",
+  roleMiddleware(["admin", "abogado", "asistente"]),
+  crearConsulta
+);
+
+// Actualizar - Admin y Abogado pueden
+router.put("/:id", roleMiddleware(["admin", "abogado"]), actualizarConsulta);
+
+// Asignar abogado - Solo Admin
+router.put(
+  "/:id/asignar-abogado",
+  roleMiddleware(["admin"]),
+  asignarAbogadoAConsulta
+);
+
+// Cambiar estado - Admin y Abogado pueden
+router.put(
+  "/:id/cambiar-estado",
+  roleMiddleware(["admin", "abogado"]),
+  cambiarEstadoConsulta
+);
+
+// Eliminar - Solo Admin
+router.delete("/:id", roleMiddleware(["admin"]), eliminarConsulta);
+
 export default router;

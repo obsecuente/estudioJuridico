@@ -10,20 +10,43 @@ import {
   cerrarCaso,
   eliminarCaso,
 } from "../controllers/casos_controller.js";
+import authMiddleware from "../middleware/authMiddleware.js";
+import roleMiddleware from "../middleware/roleMiddleware.js";
 
 const router = express.Router();
 
-router.post("/", crearCaso);
+// Todas las rutas requieren autenticación
+router.use(authMiddleware);
 
-router.get("/", obtenerCasos); // Con paginación y filtros
-router.get("/cliente/:id_cliente", obtenerCasosPorCliente); // Por cliente
-router.get("/abogado/:id_abogado", obtenerCasosPorAbogado); // Por abogado
-router.get("/:id", obtenerCasoPorId); // Por ID específico
+// Ver todos - Todos pueden
+router.get("/", obtenerCasos);
 
-router.put("/:id", actualizarCaso); // Actualización general
-router.put("/:id/cambiar-estado", cambiarEstadoCaso); // Cambiar estado
-router.put("/:id/cerrar", cerrarCaso); // Cerrar caso (helper)
+// Ver por cliente - Todos pueden
+router.get("/cliente/:id_cliente", obtenerCasosPorCliente);
 
-router.delete("/:id", eliminarCaso);
+// Ver por abogado - Todos pueden
+router.get("/abogado/:id_abogado", obtenerCasosPorAbogado);
+
+// Ver uno - Todos pueden
+router.get("/:id", obtenerCasoPorId);
+
+// Crear - Admin y Abogado pueden
+router.post("/", roleMiddleware(["admin", "abogado"]), crearCaso);
+
+// Actualizar - Admin y Abogado pueden
+router.put("/:id", roleMiddleware(["admin", "abogado"]), actualizarCaso);
+
+// Cambiar estado - Admin y Abogado pueden
+router.put(
+  "/:id/cambiar-estado",
+  roleMiddleware(["admin", "abogado"]),
+  cambiarEstadoCaso
+);
+
+// Cerrar caso - Admin y Abogado pueden
+router.put("/:id/cerrar", roleMiddleware(["admin", "abogado"]), cerrarCaso);
+
+// Eliminar - Solo Admin
+router.delete("/:id", roleMiddleware(["admin"]), eliminarCaso);
 
 export default router;
