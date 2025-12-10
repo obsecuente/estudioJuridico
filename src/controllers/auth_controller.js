@@ -1,20 +1,9 @@
 import authService from "../services/auth_service.js";
+import { registrarAuditoria } from "../services/auditoria_service.js";
 
 /**
  * REGISTRO DE NUEVO ABOGADO
  * POST /api/auth/register
- *
- * Body esperado:
- * {
- *   "dni": "12345678",
- *   "telefono": "+5492995123456",
- *   "email": "juan@estudio.com",
- *   "password": "miPassword123",
- *   "nombre": "Juan",
- *   "apellido": "Pérez",
- *   "especialidad": "Penal",
- *   "rol": "abogado"
- * }
  */
 export const registrar = async (req, res) => {
   try {
@@ -25,7 +14,8 @@ export const registrar = async (req, res) => {
       message: "Abogado registrado exitosamente",
       data: {
         abogado: resultado.abogado,
-        token: resultado.token,
+        accessToken: resultado.accessToken,
+        refreshToken: resultado.refreshToken,
       },
     });
   } catch (error) {
@@ -39,35 +29,32 @@ export const registrar = async (req, res) => {
 };
 
 /**
- * LOGIN (INICIAR SESIÓN)
+ * LOGIN
  * POST /api/auth/login
- *
- * Body esperado:
- * {
- *   "email": "juan@estudio.com",
- *   "password": "miPassword123"
- * }
- *
- * Respuesta exitosa:
- * {
- *   "success": true,
- *   "message": "Login exitoso",
- *   "data": {
- *     "abogado": { ... },
- *     "token": "eyJhbGc..."
- *   }
- * }
  */
 export const login = async (req, res) => {
   try {
-    const resultado = await authService.login(req.body);
+    const resultado = await authService.login(
+      req.body.email,
+      req.body.password
+    );
+
+    // AUDITORÍA: Registrar login exitoso
+    await registrarAuditoria({
+      id_usuario: resultado.abogado.id_abogado,
+      accion: "LOGIN",
+      entidad: "auth",
+      detalle: { email: resultado.abogado.email },
+      req,
+    });
 
     return res.status(200).json({
       success: true,
       message: "Login exitoso",
       data: {
         abogado: resultado.abogado,
-        token: resultado.token,
+        accessToken: resultado.accessToken,
+        refreshToken: resultado.refreshToken,
       },
     });
   } catch (error) {
@@ -81,16 +68,11 @@ export const login = async (req, res) => {
 };
 
 /**
- * OBTENER PERFIL DEL USUARIO AUTENTICADO
+ * OBTENER PERFIL
  * GET /api/auth/perfil
- * Headers: { Authorization: "Bearer token" }
- *
- * No necesita parámetros, usa req.user.id_abogado
- * que fue agregado por authMiddleware
  */
 export const obtenerPerfil = async (req, res) => {
   try {
-    // req.user fue agregado por authMiddleware
     const abogado = await authService.obtenerPerfil(req.user.id_abogado);
 
     return res.status(200).json({
@@ -108,18 +90,8 @@ export const obtenerPerfil = async (req, res) => {
 };
 
 /**
- * ACTUALIZAR PERFIL DEL USUARIO AUTENTICADO
+ * ACTUALIZAR PERFIL
  * PUT /api/auth/perfil
- * Headers: { Authorization: "Bearer token" }
- *
- * Body (todos opcionales):
- * {
- *   "nombre": "Juan Carlos",
- *   "apellido": "Pérez",
- *   "telefono": "+5492995987654",
- *   "email": "juancarlos@estudio.com",
- *   "especialidad": "Penal y Civil"
- * }
  */
 export const actualizarPerfil = async (req, res) => {
   try {
@@ -146,13 +118,6 @@ export const actualizarPerfil = async (req, res) => {
 /**
  * CAMBIAR CONTRASEÑA
  * PUT /api/auth/password
- * Headers: { Authorization: "Bearer token" }
- *
- * Body:
- * {
- *   "passwordActual": "miPassword123",
- *   "passwordNuevo": "nuevoPassword456"
- * }
  */
 export const cambiarPassword = async (req, res) => {
   try {
@@ -163,6 +128,14 @@ export const cambiarPassword = async (req, res) => {
       passwordActual,
       passwordNuevo
     );
+
+    // AUDITORÍA: Registrar cambio de password
+    await registrarAuditoria({
+      id_usuario: req.user.id_abogado,
+      accion: "CAMBIAR_PASSWORD",
+      entidad: "auth",
+      req,
+    });
 
     return res.status(200).json({
       success: true,
@@ -178,10 +151,127 @@ export const cambiarPassword = async (req, res) => {
   }
 };
 
+/**
+ * SOLICITAR RECUPERACIÓN DE CONTRASEÑA
+ * POST /api/auth/forgot-password
+ */
+export const solicitarRecuperacionPassword = async (req, res) => {
+  try {
+    const resultado = await authService.solicitarRecuperacionPassword(
+      req.body.email
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: resultado.message,
+      ...(process.env.NODE_ENV === "development" &&
+        resultado.resetToken && {
+          dev: {
+            resetToken: resultado.resetToken,
+            resetLink: resultado.resetLink,
+          },
+        }),
+    });
+  } catch (error) {
+    console.error("Error al solicitar recuperación:", error);
+
+    return res.status(error.statusCode || 500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * RESETEAR CONTRASEÑA CON TOKEN
+ * POST /api/auth/reset-password
+ */
+export const resetearPassword = async (req, res) => {
+  try {
+    const { token, nuevaPassword } = req.body;
+
+    const resultado = await authService.resetearPassword(token, nuevaPassword);
+
+    return res.status(200).json({
+      success: true,
+      message: resultado.message,
+    });
+  } catch (error) {
+    console.error("Error al resetear contraseña:", error);
+
+    return res.status(error.statusCode || 500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * RENOVAR ACCESS TOKEN
+ * POST /api/auth/refresh
+ */
+export const renovarToken = async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+
+    const resultado = await authService.renovarToken(refreshToken);
+
+    return res.status(200).json({
+      success: true,
+      message: "Token renovado exitosamente",
+      data: {
+        accessToken: resultado.accessToken,
+        refreshToken: resultado.refreshToken,
+      },
+    });
+  } catch (error) {
+    console.error("Error al renovar token:", error);
+
+    return res.status(error.statusCode || 500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * LOGOUT
+ * POST /api/auth/logout
+ */
+export const logout = async (req, res) => {
+  try {
+    const resultado = await authService.logout(req.user.id_abogado);
+
+    // AUDITORÍA: Registrar logout
+    await registrarAuditoria({
+      id_usuario: req.user.id_abogado,
+      accion: "LOGOUT",
+      entidad: "auth",
+      req,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: resultado.message,
+    });
+  } catch (error) {
+    console.error("Error al hacer logout:", error);
+
+    return res.status(error.statusCode || 500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+};
+
 export default {
   registrar,
   login,
   obtenerPerfil,
   actualizarPerfil,
   cambiarPassword,
+  solicitarRecuperacionPassword,
+  resetearPassword,
+  renovarToken,
+  logout, // NUEVO
 };

@@ -5,39 +5,26 @@ import {
   obtenerPerfil,
   actualizarPerfil,
   cambiarPassword,
+  solicitarRecuperacionPassword,
+  resetearPassword,
+  renovarToken,
+  logout, // NUEVO
 } from "../controllers/auth_controller.js";
 import authMiddleware from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-/**
- * RUTAS PÚBLICAS (sin autenticación)
- * Cualquiera puede acceder a estas rutas
- */
-
-// Registrar nuevo abogado
-// POST /api/auth/register
+// Rutas públicas
 router.post("/register", registrar);
-
-// Iniciar sesión
-// POST /api/auth/login
 router.post("/login", login);
+router.post("/forgot-password", solicitarRecuperacionPassword);
+router.post("/reset-password", resetearPassword);
+router.post("/refresh", renovarToken);
 
-/**
- * RUTAS PROTEGIDAS (requieren autenticación)
- * Necesitan header: Authorization: Bearer token
- */
-
-// Obtener mi perfil
-// GET /api/auth/perfil
+// Rutas protegidas
 router.get("/perfil", authMiddleware, obtenerPerfil);
-
-// Actualizar mi perfil
-// PUT /api/auth/perfil
 router.put("/perfil", authMiddleware, actualizarPerfil);
-
-// Cambiar mi contraseña
-// PUT /api/auth/password
 router.put("/password", authMiddleware, cambiarPassword);
+router.post("/logout", authMiddleware, logout); // NUEVO
 
 export default router;

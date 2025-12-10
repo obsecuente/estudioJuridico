@@ -8,37 +8,38 @@ import {
   buscarClientes,
 } from "../controllers/clientes_controller.js";
 import authMiddleware from "../middleware/authMiddleware.js";
-import roleMiddleware from "../middleware/roleMiddleware.js";
+import { verificarRol } from "../middleware/roleMiddleware.js";
+import { audit } from "../middleware/auditMiddleware.js"; // IMPORTAR
 
 const router = express.Router();
 
 // Todas las rutas requieren autenticación
 router.use(authMiddleware);
 
-// Ver todos - Todos pueden
 router.get("/", obtenerClientes);
-
-// Buscar - Todos pueden
 router.get("/search", buscarClientes);
-
-// Ver uno - Todos pueden
 router.get("/:id", obtenerClientePorId);
 
-// Crear - Admin, Abogado, Asistente pueden
+// Con auditoría
 router.post(
   "/",
-  roleMiddleware(["admin", "abogado", "asistente"]),
+  verificarRol(["admin", "abogado", "asistente"]),
+  audit("CREAR", "cliente"), // ← AUDITAR
   crearCliente
 );
 
-// Actualizar - Admin, Abogado, Asistente pueden
 router.put(
   "/:id",
-  roleMiddleware(["admin", "abogado", "asistente"]),
+  verificarRol(["admin", "abogado", "asistente"]),
+  audit("ACTUALIZAR", "cliente"), // ← AUDITAR
   actualizarCliente
 );
 
-// Eliminar - Solo Admin
-router.delete("/:id", roleMiddleware(["admin"]), eliminarCliente);
+router.delete(
+  "/:id",
+  verificarRol(["admin"]),
+  audit("ELIMINAR", "cliente"), // ← AUDITAR
+  eliminarCliente
+);
 
 export default router;

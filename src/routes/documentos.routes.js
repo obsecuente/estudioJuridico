@@ -1,42 +1,28 @@
 import express from "express";
-import upload from "../config/multerConfig.js";
 import {
-  subirDocumento,
-  obtenerDocumentosPorCaso,
-  obtenerDocumentoPorId,
-  obtenerDocumentos,
-  eliminarDocumento,
-  descargarDocumento,
-} from "../controllers/documentos_controller.js";
+  crearAbogado,
+  obtenerAbogados,
+  obtenerAbogadoPorId,
+  actualizarAbogado,
+  eliminarAbogado,
+} from "../controllers/abogados_controller.js";
 import authMiddleware from "../middleware/authMiddleware.js";
-import roleMiddleware from "../middleware/roleMiddleware.js";
+import { verificarRol } from "../middleware/roleMiddleware.js";
+import { audit } from "../middleware/auditMiddleware.js";
 
 const router = express.Router();
 
-// Todas las rutas requieren autenticación
+// Todas las rutas requieren autenticación y solo admin puede usarlas
 router.use(authMiddleware);
+router.use(verificarRol(["admin"]));
 
-// Ver todos - Todos pueden
-router.get("/", obtenerDocumentos);
+router.get("/", obtenerAbogados);
+router.get("/:id", obtenerAbogadoPorId);
 
-// Ver por caso - Todos pueden
-router.get("/caso/:id_caso", obtenerDocumentosPorCaso);
+router.post("/", audit("CREAR", "abogado"), crearAbogado);
 
-// Ver uno - Todos pueden
-router.get("/:id", obtenerDocumentoPorId);
+router.put("/:id", audit("ACTUALIZAR", "abogado"), actualizarAbogado);
 
-// Descargar - Todos pueden
-router.get("/:id/descargar", descargarDocumento);
-
-// Subir - Admin, Abogado, Asistente pueden
-router.post(
-  "/",
-  roleMiddleware(["admin", "abogado", "asistente"]),
-  upload.array("archivos", 10),
-  subirDocumento
-);
-
-// Eliminar - Solo Admin
-router.delete("/:id", roleMiddleware(["admin"]), eliminarDocumento);
+router.delete("/:id", audit("ELIMINAR", "abogado"), eliminarAbogado);
 
 export default router;

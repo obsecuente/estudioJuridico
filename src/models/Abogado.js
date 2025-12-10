@@ -10,6 +10,7 @@ const Abogado = sequelize.define(
       autoIncrement: true,
       allowNull: false,
     },
+
     dni: {
       type: DataTypes.STRING(8),
       allowNull: false,
@@ -56,7 +57,7 @@ const Abogado = sequelize.define(
       validate: {
         is: {
           args: /^\+[1-9]\d{1,14}$/,
-          msg: "Formato de teléfono inválido ",
+          msg: "Formato de teléfono inválido",
         },
         notEmpty: {
           msg: "El teléfono no puede estar vacío",
@@ -66,9 +67,8 @@ const Abogado = sequelize.define(
 
     email: {
       type: DataTypes.STRING(100),
-      allowNull: true,
+      allowNull: false,
       unique: true,
-      sparse: true,
       validate: {
         isEmail: {
           msg: "Debe ser un email válido",
@@ -76,11 +76,36 @@ const Abogado = sequelize.define(
       },
     },
 
-    // NUEVO: Campo para la contraseña hasheada
     password: {
       type: DataTypes.STRING(255),
       allowNull: true,
       comment: "Contraseña hasheada con bcrypt",
+    },
+
+    // Campos para recuperación de contraseña
+    reset_password_token: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      comment: "Token temporal para resetear contraseña",
+    },
+
+    reset_password_expires: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      comment: "Fecha de expiración del token de reseteo",
+    },
+
+    // Campos para refresh token
+    refresh_token: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      comment: "Token para renovar el access token",
+    },
+
+    refresh_token_expires: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      comment: "Fecha de expiración del refresh token",
     },
 
     especialidad: {
@@ -103,14 +128,34 @@ const Abogado = sequelize.define(
   {
     tableName: "abogados",
     timestamps: false,
-    // Excluir password por defecto en las queries
+
+    // Scope por defecto: excluye campos sensibles
     defaultScope: {
-      attributes: { exclude: ["password"] },
+      attributes: {
+        exclude: [
+          "password",
+          "reset_password_token",
+          "reset_password_expires",
+          "refresh_token",
+          "refresh_token_expires",
+        ],
+      },
     },
-    // Scope para incluir password cuando sea necesario
+
+    // Scopes especiales para cuando necesitamos esos campos
     scopes: {
       withPassword: {
         attributes: { include: ["password"] },
+      },
+      withResetToken: {
+        attributes: {
+          include: ["reset_password_token", "reset_password_expires"],
+        },
+      },
+      withRefreshToken: {
+        attributes: {
+          include: ["refresh_token", "refresh_token_expires"],
+        },
       },
     },
   }

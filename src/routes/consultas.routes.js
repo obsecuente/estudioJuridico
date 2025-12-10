@@ -4,15 +4,14 @@ import {
   obtenerConsultas,
   obtenerConsultaPorId,
   actualizarConsulta,
-  asignarAbogadoAConsulta,
   eliminarConsulta,
   cambiarEstadoConsulta,
+  asignarAbogado,
   crearConsultaPublica,
-  obtenerConsultasPorAbogado,
-  obtenerConsultasPorCliente,
 } from "../controllers/consultas_controller.js";
 import authMiddleware from "../middleware/authMiddleware.js";
-import roleMiddleware from "../middleware/roleMiddleware.js";
+import { verificarRol } from "../middleware/roleMiddleware.js";
+import { audit } from "../middleware/auditMiddleware.js";
 
 const router = express.Router();
 
@@ -22,43 +21,42 @@ router.post("/publica", crearConsultaPublica);
 // Todas las demás rutas requieren autenticación
 router.use(authMiddleware);
 
-// Ver todas - Todos pueden
 router.get("/", obtenerConsultas);
-
-// Ver por cliente - Todos pueden
-router.get("/cliente/:id_cliente", obtenerConsultasPorCliente);
-
-// Ver por abogado - Todos pueden
-router.get("/abogado/:id_abogado", obtenerConsultasPorAbogado);
-
-// Ver una - Todos pueden
 router.get("/:id", obtenerConsultaPorId);
 
-// Crear - Admin, Abogado, Asistente pueden
 router.post(
   "/",
-  roleMiddleware(["admin", "abogado", "asistente"]),
+  verificarRol(["admin", "abogado", "asistente"]),
+  audit("CREAR", "consulta"),
   crearConsulta
 );
 
-// Actualizar - Admin y Abogado pueden
-router.put("/:id", roleMiddleware(["admin", "abogado"]), actualizarConsulta);
-
-// Asignar abogado - Solo Admin
 router.put(
-  "/:id/asignar-abogado",
-  roleMiddleware(["admin"]),
-  asignarAbogadoAConsulta
+  "/:id",
+  verificarRol(["admin", "abogado"]),
+  audit("ACTUALIZAR", "consulta"),
+  actualizarConsulta
 );
 
-// Cambiar estado - Admin y Abogado pueden
-router.put(
-  "/:id/cambiar-estado",
-  roleMiddleware(["admin", "abogado"]),
+router.patch(
+  "/:id/estado",
+  verificarRol(["admin", "abogado"]),
+  audit("CAMBIAR_ESTADO", "consulta"),
   cambiarEstadoConsulta
 );
 
-// Eliminar - Solo Admin
-router.delete("/:id", roleMiddleware(["admin"]), eliminarConsulta);
+router.patch(
+  "/:id/asignar",
+  verificarRol(["admin"]),
+  audit("ASIGNAR", "consulta"),
+  asignarAbogado
+);
+
+router.delete(
+  "/:id",
+  verificarRol(["admin"]),
+  audit("ELIMINAR", "consulta"),
+  eliminarConsulta
+);
 
 export default router;

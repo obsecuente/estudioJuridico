@@ -17,6 +17,7 @@ import abogadosRoutes from "./src/routes/abogados.routes.js";
 import casosRoutes from "./src/routes/casos.routes.js";
 import documentosRoutes from "./src/routes/documentos.routes.js";
 import authRoutes from "./src/routes/auth.routes.js"; // ← NUEVO
+import httpLogger from "./src/middleware/loggerMiddleware.js";
 
 // Inicializar Express
 const app = express();
@@ -47,6 +48,8 @@ app.use("/api/", limiter);
 // Middleware de express
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+
+app.use(httpLogger);
 
 // Rutas
 app.use("/api/auth", authRoutes); // ← NUEVO: Rutas de autenticación

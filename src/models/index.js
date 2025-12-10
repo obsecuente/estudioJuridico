@@ -4,6 +4,7 @@ import Abogado from "./Abogado.js";
 import Consulta from "./Consulta.js";
 import Caso from "./Caso.js";
 import Documento from "./Documento.js";
+import Auditoria from "./Auditoria.js";
 
 /**
  * DEFINICIÓN DE RELACIONES (ASOCIACIONES)
@@ -87,11 +88,26 @@ Documento.belongsTo(Caso, {
   as: "caso",
 });
 
-/**
- * Exportar todos los modelos y la instancia de Sequelize
- * De esta forma puedes importarlos fácilmente en otros archivos
- */
-export { sequelize, Cliente, Abogado, Consulta, Caso, Documento };
+// Relación con Auditoría
+Abogado.hasMany(Auditoria, {
+  foreignKey: "id_usuario",
+  as: "auditorias",
+});
+
+Auditoria.belongsTo(Abogado, {
+  foreignKey: "id_usuario",
+  as: "usuario",
+});
+
+export {
+  sequelize,
+  Cliente,
+  Abogado,
+  Consulta,
+  Caso,
+  Documento,
+  Auditoria, // NUEVO
+};
 
 export default {
   sequelize,
@@ -100,4 +116,5 @@ export default {
   Consulta,
   Caso,
   Documento,
+  Auditoria, // NUEVO
 };

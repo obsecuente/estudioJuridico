@@ -1,6 +1,16 @@
 import { Abogado } from "../models/index.js";
 import { hashPassword, comparePassword } from "../utils/hash.js";
-import { generarToken } from "../utils/jwt.js";
+import {
+  generarToken,
+  generarRefreshToken,
+  verificarRefreshToken,
+} from "../utils/jwt.js";
+import {
+  generarTokenSeguro,
+  generarExpiracion,
+} from "../utils/tokenGenerator.js";
+import { enviarEmail, plantillas } from "../config/email.js";
+import logger from "../config/logger.js";
 
 class AppError extends Error {
   constructor(message, statusCode = 500) {
@@ -10,18 +20,8 @@ class AppError extends Error {
   }
 }
 
-/**
- * REGISTRO DE NUEVO ABOGADO
- *
- * Flujo:
- * 1. Validar que vengan todos los datos obligatorios
- * 2. Verificar que email y DNI no existan
- * 3. Hashear la contraseña (bcrypt)
- * 4. Crear abogado en BD con password hasheado
- * 5. Generar token JWT
- * 6. Retornar abogado (SIN password) + token
- */
-export const registrar = async (datosRegistro) => {
+// REGISTRAR NUEVO ABOGADO
+export const registrar = async (datosAbogado) => {
   const {
     dni,
     telefono,
@@ -31,9 +31,8 @@ export const registrar = async (datosRegistro) => {
     apellido,
     especialidad,
     rol,
-  } = datosRegistro;
+  } = datosAbogado;
 
-  // Validar campos obligatorios
   if (!dni || !telefono || !email || !password) {
     throw new AppError(
       "DNI, teléfono, email y contraseña son obligatorios",
@@ -41,147 +40,115 @@ export const registrar = async (datosRegistro) => {
     );
   }
 
-  // Validar longitud de contraseña
   if (password.length < 6) {
     throw new AppError("La contraseña debe tener al menos 6 caracteres", 400);
   }
 
-  // Validar formato de email
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) {
-    throw new AppError("Formato de email inválido", 400);
-  }
-
-  // Validar que el email no exista
-  const emailExiste = await Abogado.findOne({ where: { email } });
-  if (emailExiste) {
-    throw new AppError("Ya existe un abogado con este email", 409);
-  }
-
-  // Validar que el DNI no exista
-  const dniExiste = await Abogado.findOne({ where: { dni } });
-  if (dniExiste) {
+  const existeDni = await Abogado.findOne({ where: { dni } });
+  if (existeDni) {
     throw new AppError("Ya existe un abogado con este DNI", 409);
   }
 
-  // Hashear la contraseña
-  // Esto convierte "miPassword123" en algo como:
-  // "$2b$10$KIXz3DG8vT0dKJ9mvF3pOeMt8RjqVxT8Q2I8fJ6Y..."
-  const passwordHasheado = await hashPassword(password);
+  const existeEmail = await Abogado.findOne({ where: { email } });
+  if (existeEmail) {
+    throw new AppError("Ya existe un abogado con este email", 409);
+  }
 
-  // Crear el abogado
+  const passwordHasheado = await hashPassword(password);
+  const refreshToken = generarRefreshToken({ email });
+  const refreshTokenExpires = generarExpiracion(24 * 7);
+
   const nuevoAbogado = await Abogado.create({
-    dni: dni.trim(),
+    dni,
     telefono,
     email: email.toLowerCase().trim(),
-    password: passwordHasheado, // ← Guardamos el hash, NUNCA la contraseña original
-    nombre: nombre?.trim() || null,
-    apellido: apellido?.trim() || null,
-    especialidad: especialidad?.trim() || null,
+    password: passwordHasheado,
+    nombre: nombre?.trim(),
+    apellido: apellido?.trim(),
+    especialidad: especialidad?.trim(),
     rol: rol || "abogado",
+    refresh_token: refreshToken,
+    refresh_token_expires: refreshTokenExpires,
   });
 
-  // Generar token JWT
-  // El token contiene: id_abogado, email, rol
-  // NO contiene la contraseña (nunca mandamos eso en el token)
-  const token = generarToken({
+  const accessToken = generarToken({
     id_abogado: nuevoAbogado.id_abogado,
     email: nuevoAbogado.email,
     rol: nuevoAbogado.rol,
   });
 
-  // Retornar abogado sin el password
-  const abogadoSinPassword = nuevoAbogado.toJSON();
-  delete abogadoSinPassword.password;
+  const abogadoSinPassword = await Abogado.findByPk(nuevoAbogado.id_abogado);
+
+  logger.info("Abogado registrado exitosamente", {
+    id_abogado: nuevoAbogado.id_abogado,
+    email: nuevoAbogado.email,
+  });
 
   return {
     abogado: abogadoSinPassword,
-    token,
+    accessToken,
+    refreshToken,
   };
 };
 
-/**
- * LOGIN (INICIAR SESIÓN)
- *
- * Flujo:
- * 1. Buscar abogado por email (con scope para incluir password)
- * 2. Verificar que exista
- * 3. Comparar contraseña ingresada con hash guardado
- * 4. Si coincide, generar token JWT
- * 5. Retornar abogado (SIN password) + token
- */
-export const login = async (credenciales) => {
-  const { email, password } = credenciales;
-
-  // Validar que vengan ambos datos
+// LOGIN
+export const login = async (email, password) => {
   if (!email || !password) {
     throw new AppError("Email y contraseña son obligatorios", 400);
   }
 
-  // Buscar abogado por email
-  // IMPORTANTE: Usamos scope('withPassword') para incluir el campo password
-  // Normalmente está excluido por seguridad
   const abogado = await Abogado.scope("withPassword").findOne({
     where: { email: email.toLowerCase().trim() },
   });
 
-  // Si no existe el abogado
   if (!abogado) {
     throw new AppError("Credenciales inválidas", 401);
   }
 
-  // Si el abogado no tiene password configurado
   if (!abogado.password) {
-    throw new AppError(
-      "Este usuario no tiene contraseña configurada. Contactá al administrador.",
-      401
-    );
+    throw new AppError("Este usuario no tiene contraseña configurada", 401);
   }
 
-  // Comparar contraseña ingresada con el hash
-  // comparePassword("miPassword123", "$2b$10$KIX...") → true/false
   const passwordValido = await comparePassword(password, abogado.password);
 
   if (!passwordValido) {
     throw new AppError("Credenciales inválidas", 401);
   }
 
-  // Generar token JWT
-  const token = generarToken({
+  const refreshToken = generarRefreshToken({
+    id_abogado: abogado.id_abogado,
+    email: abogado.email,
+  });
+  const refreshTokenExpires = generarExpiracion(24 * 7);
+
+  await abogado.update({
+    refresh_token: refreshToken,
+    refresh_token_expires: refreshTokenExpires,
+  });
+
+  const accessToken = generarToken({
     id_abogado: abogado.id_abogado,
     email: abogado.email,
     rol: abogado.rol,
   });
 
-  // Retornar abogado sin password
-  const abogadoSinPassword = abogado.toJSON();
-  delete abogadoSinPassword.password;
+  const abogadoSinPassword = await Abogado.findByPk(abogado.id_abogado);
+
+  logger.info("Login exitoso", {
+    id_abogado: abogado.id_abogado,
+    email: abogado.email,
+  });
 
   return {
     abogado: abogadoSinPassword,
-    token,
+    accessToken,
+    refreshToken,
   };
 };
 
-/**
- * OBTENER PERFIL DEL USUARIO AUTENTICADO
- *
- * Este método se usa cuando el usuario ya está logueado
- * y quiere ver su información completa.
- */
+// OBTENER PERFIL
 export const obtenerPerfil = async (id_abogado) => {
-  const abogado = await Abogado.findByPk(id_abogado, {
-    attributes: [
-      "id_abogado",
-      "dni",
-      "nombre",
-      "apellido",
-      "email",
-      "telefono",
-      "especialidad",
-      "rol",
-    ],
-  });
+  const abogado = await Abogado.findByPk(id_abogado);
 
   if (!abogado) {
     throw new AppError("Abogado no encontrado", 404);
@@ -190,11 +157,7 @@ export const obtenerPerfil = async (id_abogado) => {
   return abogado;
 };
 
-/**
- * ACTUALIZAR PERFIL DEL USUARIO AUTENTICADO
- *
- * Permite actualizar datos personales (no el password, eso es aparte)
- */
+// ACTUALIZAR PERFIL
 export const actualizarPerfil = async (id_abogado, datosActualizacion) => {
   const { nombre, apellido, telefono, email, especialidad } =
     datosActualizacion;
@@ -205,7 +168,6 @@ export const actualizarPerfil = async (id_abogado, datosActualizacion) => {
     throw new AppError("Abogado no encontrado", 404);
   }
 
-  // Verificar email único si se quiere cambiar
   if (email && email !== abogado.email) {
     const existeEmail = await Abogado.findOne({ where: { email } });
     if (existeEmail) {
@@ -213,7 +175,6 @@ export const actualizarPerfil = async (id_abogado, datosActualizacion) => {
     }
   }
 
-  // Actualizar
   await abogado.update({
     ...(nombre && { nombre: nombre.trim() }),
     ...(apellido && { apellido: apellido.trim() }),
@@ -222,47 +183,39 @@ export const actualizarPerfil = async (id_abogado, datosActualizacion) => {
     ...(especialidad && { especialidad: especialidad.trim() }),
   });
 
+  logger.info("Perfil actualizado", {
+    id_abogado,
+  });
+
   return abogado;
 };
 
-/**
- * CAMBIAR CONTRASEÑA
- *
- * Flujo:
- * 1. Verificar que la contraseña actual sea correcta
- * 2. Validar que la nueva contraseña sea diferente a la actual
- * 3. Validar nueva contraseña
- * 4. Hashear nueva contraseña
- * 5. Actualizar en BD
- */
+// CAMBIAR CONTRASEÑA
 export const cambiarPassword = async (
   id_abogado,
   passwordActual,
-  passwordNuevo
+  nuevaPassword
 ) => {
-  // Validaciones
-  if (!passwordActual || !passwordNuevo) {
+  if (!passwordActual || !nuevaPassword) {
     throw new AppError(
       "Contraseña actual y nueva contraseña son obligatorias",
       400
     );
   }
 
-  if (passwordNuevo.length < 6) {
+  if (nuevaPassword.length < 6) {
     throw new AppError(
       "La nueva contraseña debe tener al menos 6 caracteres",
       400
     );
   }
 
-  // Buscar abogado con password
   const abogado = await Abogado.scope("withPassword").findByPk(id_abogado);
 
   if (!abogado) {
     throw new AppError("Abogado no encontrado", 404);
   }
 
-  // Verificar contraseña actual
   const passwordValido = await comparePassword(
     passwordActual,
     abogado.password
@@ -272,23 +225,215 @@ export const cambiarPassword = async (
     throw new AppError("La contraseña actual es incorrecta", 401);
   }
 
-  // ← NUEVO: Verificar que la nueva contraseña sea diferente
-  const esLaMisma = await comparePassword(passwordNuevo, abogado.password);
+  const esMismaPassword = await comparePassword(
+    nuevaPassword,
+    abogado.password
+  );
 
-  if (esLaMisma) {
+  if (esMismaPassword) {
     throw new AppError(
-      "La nueva contraseña no puede ser igual a la actual",
+      "La nueva contraseña debe ser diferente a la actual",
       400
     );
   }
 
-  // Hashear nueva contraseña
-  const nuevoPasswordHasheado = await hashPassword(passwordNuevo);
+  const passwordHasheado = await hashPassword(nuevaPassword);
 
-  // Actualizar
-  await abogado.update({ password: nuevoPasswordHasheado });
+  await abogado.update({
+    password: passwordHasheado,
+  });
 
-  return { message: "Contraseña actualizada exitosamente" };
+  logger.info("Contraseña cambiada exitosamente", {
+    id_abogado,
+  });
+
+  return {
+    message: "Contraseña actualizada exitosamente",
+  };
+};
+
+// SOLICITAR RECUPERACIÓN DE CONTRASEÑA
+export const solicitarRecuperacionPassword = async (email) => {
+  if (!email) {
+    throw new AppError("El email es obligatorio", 400);
+  }
+
+  const abogado = await Abogado.scope("withResetToken").findOne({
+    where: { email: email.toLowerCase().trim() },
+  });
+
+  if (!abogado) {
+    return {
+      message: "Si el email existe, recibirás un link de recuperación",
+    };
+  }
+
+  const resetToken = generarTokenSeguro();
+  const resetExpires = generarExpiracion(1);
+
+  await abogado.update({
+    reset_password_token: resetToken,
+    reset_password_expires: resetExpires,
+  });
+
+  const resetLink = `${
+    process.env.FRONTEND_URL || "http://localhost:3001"
+  }/reset-password/${resetToken}`;
+
+  // ENVÍO DE EMAIL REAL
+  try {
+    const emailData = plantillas.recuperacionPassword(
+      abogado.nombre || abogado.email,
+      resetLink
+    );
+
+    await enviarEmail({
+      to: abogado.email,
+      ...emailData,
+    });
+
+    logger.info("Email de recuperación enviado", {
+      email: abogado.email,
+    });
+  } catch (error) {
+    logger.error("Error al enviar email de recuperación", {
+      error: error.message,
+      email: abogado.email,
+    });
+  }
+
+  return {
+    message: "Si el email existe, recibirás un link de recuperación",
+    ...(process.env.NODE_ENV === "development" && {
+      resetToken,
+      resetLink,
+    }),
+  };
+};
+
+// RESETEAR CONTRASEÑA
+export const resetearPassword = async (token, nuevaPassword) => {
+  if (!token || !nuevaPassword) {
+    throw new AppError("Token y nueva contraseña son obligatorios", 400);
+  }
+
+  if (nuevaPassword.length < 6) {
+    throw new AppError("La contraseña debe tener al menos 6 caracteres", 400);
+  }
+
+  const abogado = await Abogado.scope("withPassword", "withResetToken").findOne(
+    {
+      where: {
+        reset_password_token: token,
+      },
+    }
+  );
+
+  if (!abogado) {
+    throw new AppError("Token inválido o expirado", 400);
+  }
+
+  const ahora = new Date();
+  if (ahora > abogado.reset_password_expires) {
+    throw new AppError("Token expirado. Solicitá uno nuevo", 400);
+  }
+
+  const passwordHasheado = await hashPassword(nuevaPassword);
+
+  await abogado.update({
+    password: passwordHasheado,
+    reset_password_token: null,
+    reset_password_expires: null,
+  });
+
+  logger.info("Contraseña reseteada exitosamente", {
+    email: abogado.email,
+  });
+
+  return {
+    message: "Contraseña actualizada exitosamente",
+  };
+};
+
+// RENOVAR TOKEN
+export const renovarToken = async (refreshToken) => {
+  if (!refreshToken) {
+    throw new AppError("Refresh token es obligatorio", 400);
+  }
+
+  let decoded;
+  try {
+    decoded = verificarRefreshToken(refreshToken);
+  } catch (error) {
+    throw new AppError("Refresh token inválido o expirado", 401);
+  }
+
+  const abogado = await Abogado.scope("withRefreshToken").findOne({
+    where: {
+      id_abogado: decoded.id_abogado,
+      refresh_token: refreshToken,
+    },
+  });
+
+  if (!abogado) {
+    throw new AppError("Refresh token inválido", 401);
+  }
+
+  const ahora = new Date();
+  if (ahora > abogado.refresh_token_expires) {
+    throw new AppError(
+      "Refresh token expirado. Por favor, volvé a hacer login",
+      401
+    );
+  }
+
+  const nuevoAccessToken = generarToken({
+    id_abogado: abogado.id_abogado,
+    email: abogado.email,
+    rol: abogado.rol,
+  });
+
+  const nuevoRefreshToken = generarRefreshToken({
+    id_abogado: abogado.id_abogado,
+    email: abogado.email,
+  });
+  const nuevaExpiracion = generarExpiracion(24 * 7);
+
+  await abogado.update({
+    refresh_token: nuevoRefreshToken,
+    refresh_token_expires: nuevaExpiracion,
+  });
+
+  logger.info("Token renovado exitosamente", {
+    id_abogado: abogado.id_abogado,
+  });
+
+  return {
+    accessToken: nuevoAccessToken,
+    refreshToken: nuevoRefreshToken,
+  };
+};
+
+// LOGOUT
+export const logout = async (id_abogado) => {
+  const abogado = await Abogado.scope("withRefreshToken").findByPk(id_abogado);
+
+  if (!abogado) {
+    throw new AppError("Abogado no encontrado", 404);
+  }
+
+  await abogado.update({
+    refresh_token: null,
+    refresh_token_expires: null,
+  });
+
+  logger.info("Logout exitoso", {
+    id_abogado,
+  });
+
+  return {
+    message: "Logout exitoso",
+  };
 };
 
 export default {
@@ -297,4 +442,8 @@ export default {
   obtenerPerfil,
   actualizarPerfil,
   cambiarPassword,
+  solicitarRecuperacionPassword,
+  resetearPassword,
+  renovarToken,
+  logout,
 };
