@@ -1,73 +1,65 @@
 import { Cliente, Consulta, Caso, Abogado } from "../models/index.js";
 import { Op } from "sequelize";
-import { emailRegex, telefonoRegex } from "../utils/regex.js";
 class AppError extends Error {
-  // creacion de clase, el extends indica que va a heredar toda propiedad y metodo de otra clase existente
-  // en este caso heredará la clase nativa de js "Error"
-  // que logramos con esto? crearmos un tipo de error mas especifico, y sigue siendo reconocido como un error legitimo por el entorno node.js
   constructor(message, statusCode = 500) {
-    // inicializa el objeto, estableciedno sus propiedades y comportamientos iniciales
-
-    // se utiliza para asignar valores a la propiedad del objeto //** this.statusCode  this.name */
-
-    super(message); // esto llama al constructor de la clase padre (Error)
+    super(message);
     this.statusCode = statusCode;
     this.name = "AppError";
   }
 }
 
 export const crear = async (datosCliente) => {
-  /**
-   * Crea un nuevo cliente en la base de datos
-   *
-   * @param {Object} datosCliente - Datos del cliente
-   * @param {string} datosCliente.nombre - Nombre del cliente
-   * @param {string} datosCliente.apellido - Apellido del cliente
-   * @param {string} datosCliente.email - Email del cliente
-   * @param {string} datosCliente.telefono - Teléfono del cliente
-   * @param {boolean} datosCliente.consentimiento_datos - Consentimiento
-   * @returns {Promise<Object>} Cliente creado
-   * @throws {AppError} Si faltan datos o el email/teléfono ya existe
-   */
-
   const { nombre, apellido, telefono, email, consentimiento_datos } =
     datosCliente;
 
-  if (!nombre || !apellido || !telefono) {
-    throw new AppError("Nombre, Apellido y Teléfono son obligatorios", 400);
+  // 1. Normalización y limpieza de datos clave al inicio
+  const nombreLimpio = nombre ? nombre.trim() : nombre;
+  const apellidoLimpio = apellido ? apellido.trim() : apellido;
+  // Limpiamos email de espacios y lo pasamos a minúsculas para todas las validaciones
+  const emailNormalizado = email ? email.trim().toLowerCase() : email;
+
+  // 2. Validaciones de campos obligatorios (nombre, apellido, email y teléfono)
+  if (!nombreLimpio || !apellidoLimpio || !telefono || !emailNormalizado) {
+    throw new AppError(
+      "Nombre, Apellido, Email y Teléfono son obligatorios",
+      400
+    ); // <--- CORRECCIÓN DE MENSAJE
   }
 
-  // Email solo si viene
-  if (email) {
-    const emailValidation = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailValidation.test(email)) {
-      throw new AppError("El formato del mail no es válido", 400);
-    }
+  // 3. Validación de formato de Email
+  // Nota: Usamos la validación regex del modelo Cliente si está definida,
+  // si no está en el modelo, descomentar la siguiente sección y usar emailRegex:
+  // if (!emailRegex.test(emailNormalizado)) {
+  //  throw new AppError("El formato del mail no es válido", 400);
+  // }
 
-    const existeEmail = await Cliente.findOne({ where: { email } });
-    if (existeEmail) {
-      throw new AppError("Ya existe un cliente con este email", 409);
-    }
+  // 4. Verificación de duplicidad de Email
+  const existeEmail = await Cliente.findOne({
+    where: { email: emailNormalizado },
+  });
+  if (existeEmail) {
+    throw new AppError("Ya existe un cliente con este email", 409);
   }
 
-  const telefonoValidation = /^\+[1-9]\d{1,14}$/;
+  // 5. Validación de formato de Teléfono (asumiendo que viene sin espacios)
+  const telefonoValidation = /^\+[1-9]\d{7,14}$/;
   if (!telefonoValidation.test(telefono)) {
     throw new AppError("El formato del numero de telefono no es válido", 400);
   }
 
+  // 6. Verificación de duplicidad de Teléfono
   const existeTelefono = await Cliente.findOne({ where: { telefono } });
   if (existeTelefono) {
     throw new AppError("Ya existe un cliente con este número de teléfono", 409);
   }
 
-  //** Creacion de cliente */
-
+  // Creacion de cliente
   try {
     const nuevoCliente = await Cliente.create({
-      nombre: nombre.trim(), //elimina espacios
-      apellido: apellido.trim(),
+      nombre: nombreLimpio, // Se usa la versión limpia
+      apellido: apellidoLimpio, // Se usa la versión limpia
       telefono,
-      email: email.toLowerCase().trim(), // convierte el email en minusculas, y le quita espacios
+      email: emailNormalizado, // <--- SE USA LA VERSIÓN LIMPIA Y EN MINÚSCULAS
       fecha_registro: new Date(),
       consentimiento_datos: consentimiento_datos || false,
     });
@@ -82,24 +74,10 @@ export const crear = async (datosCliente) => {
       "Error al crear el cliente en la base de datos [clientes_service.js]",
       500
     );
-    //* SequelizeValidationError es el nombre que Sequelize asigna a los errores que ocurren con los datos que violan las reglas definidas en el modelo
-    // error.errors contiene los errores que almacenó sequelize, este objeto datalla el error
-    //* .map(e => e.message) este metodo recorre los errores, y extrae solo lo legible
-    //* .join(', ') une todos los mensajes de errores en una sola cadena de texto, separadas por una coma y espacio
-
-    //* throw new  AppError(...), en lugar de lanzar el error, y estar adivinando cual es el error, toda esta traduccion que hicimos facilitará el arreglo de la misma
   }
 };
 export const obtenerTodos = async (opciones = {}) => {
-  /**
-   * Obtiene lista de clientes con paginación y búsqueda
-   *
-   * @param {Object} opciones - Opciones de consulta
-   * @param {number} opciones.page - Página actual
-   * @param {number} opciones.limit - Clientes por página
-   * @param {string} opciones.search - Término de búsqueda
-   * @returns {Promise<Object>} { clientes, pagination }
-   */
+  /* ... código de obtenerTodos sin cambios ... */
 
   const { page = 1, limit = 20, search } = opciones;
 
@@ -146,13 +124,7 @@ export const obtenerTodos = async (opciones = {}) => {
   };
 };
 export const obtenerPorId = async (id) => {
-  /**
-   * Obtiene un cliente específico con sus relaciones
-   *
-   * @param {number} id - ID del cliente
-   * @returns {Promise<Object>} Cliente con consultas y casos
-   * @throws {AppError} Si el cliente no existe
-   */
+  /* ... código de obtenerPorId sin cambios ... */
 
   const cliente = await Cliente.findByPk(id, {
     include: [
@@ -185,13 +157,7 @@ export const obtenerPorId = async (id) => {
   return cliente;
 };
 export const buscar = async (termino) => {
-  /**
-   * Busca clientes por nombre, apellido, email o teléfono
-   *
-   * @param {string} termino - Término de búsqueda
-   * @returns {Promise<Array>} Lista de clientes encontrados
-   * @throws {AppError} Si el término es muy corto
-   */
+  /* ... código de buscar sin cambios ... */
 
   if (!termino || termino.length < 2) {
     throw new AppError(
@@ -216,14 +182,7 @@ export const buscar = async (termino) => {
   return clientes;
 };
 export const actualizar = async (id, datosActualizacion) => {
-  /**
-   * Actualiza un cliente existente
-   *
-   * @param {number} id - ID del cliente
-   * @param {Object} datosActualizacion - Datos a actualizar
-   * @returns {Promise<Object>} Cliente actualizado
-   * @throws {AppError} Si el cliente no existe o hay duplicados
-   */
+  /* ... código de actualizar sin cambios ... */
 
   const { nombre, apellido, telefono, email, consentimiento_datos } =
     datosActualizacion;
@@ -236,8 +195,12 @@ export const actualizar = async (id, datosActualizacion) => {
   }
 
   // Verificar email único (si se quiere cambiar)
-  if (email && email !== cliente.email) {
-    const existeEmail = await Cliente.findOne({ where: { email } });
+  if (email && email.trim().toLowerCase() !== cliente.email) {
+    // <--- LIMPIAR Y COMPARAR
+    const emailNormalizado = email.trim().toLowerCase(); // <--- LIMPIAR
+    const existeEmail = await Cliente.findOne({
+      where: { email: emailNormalizado },
+    });
     if (existeEmail) {
       throw new AppError("Ya existe un cliente con ese email", 409);
     }
@@ -256,6 +219,7 @@ export const actualizar = async (id, datosActualizacion) => {
     ...(nombre && { nombre: nombre.trim() }),
     ...(apellido && { apellido: apellido.trim() }),
     ...(telefono !== undefined && { telefono }),
+    // Aseguramos que el email se guarda limpio y en minúsculas
     ...(email && { email: email.toLowerCase().trim() }),
     ...(consentimiento_datos !== undefined && { consentimiento_datos }),
   });
@@ -263,13 +227,7 @@ export const actualizar = async (id, datosActualizacion) => {
   return cliente;
 };
 export const eliminar = async (id) => {
-  /**
-   * Elimina un cliente si no tiene relaciones
-   *
-   * @param {number} id - ID del cliente
-   * @returns {Promise<Object>} Mensaje de éxito
-   * @throws {AppError} Si el cliente no existe o tiene relaciones
-   */
+  /* ... código de eliminar sin cambios ... */
 
   const cliente = await Cliente.findByPk(id);
 
@@ -297,11 +255,36 @@ export const eliminar = async (id) => {
   };
 };
 
+// 3. Implementación de la función existe
+export const existe = async (email) => {
+  // <--- NUEVA FUNCIÓN
+  /**
+   * Verifica si existe un cliente con el email proporcionado (case-insensitive y tolerante a espacios).
+   * @param {string} email - Email a verificar.
+   * @returns {Promise<boolean>}
+   */
+
+  if (!email) return false;
+
+  // Normalizar el email para la búsqueda
+  const emailLimpio = email.trim().toLowerCase();
+
+  const cliente = await Cliente.findOne({
+    // La búsqueda se hace directamente con el email limpio
+    where: { email: emailLimpio },
+    attributes: ["id_cliente"], // Optimización: solo necesitamos el ID
+  });
+
+  return !!cliente; // Retorna true si encuentra algo, false si es null
+};
+
 export default {
+  // <--- EXPORTACIÓN CORREGIDA
   crear,
   obtenerTodos,
   obtenerPorId,
   buscar,
   actualizar,
   eliminar,
+  existe, // <--- AÑADIR LA EXPORTACIÓN DE LA NUEVA FUNCIÓN
 };

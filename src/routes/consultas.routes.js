@@ -6,7 +6,7 @@ import {
   actualizarConsulta,
   eliminarConsulta,
   cambiarEstadoConsulta,
-  asignarAbogado,
+  asignarAbogadoAConsulta,
   crearConsultaPublica,
 } from "../controllers/consultas_controller.js";
 import authMiddleware from "../middleware/authMiddleware.js";
@@ -49,7 +49,7 @@ router.patch(
   "/:id/asignar",
   verificarRol(["admin"]),
   audit("ASIGNAR", "consulta"),
-  asignarAbogado
+  asignarAbogadoAConsulta
 );
 
 router.delete(

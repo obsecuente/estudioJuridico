@@ -5,19 +5,19 @@ import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import { testConnection, syncDatabase } from "./src/config/database.js";
-import path from "path";
+import logger from "./src/config/logger.js"; // NUEVO
+import httpLogger from "./src/middleware/loggerMiddleware.js"; // NUEVO
 
 // Importar modelos para establecer relaciones
 import "./src/models/index.js";
 
-// Importacion de rutas CRUD
+// Importación de rutas CRUD
 import clientesRoutes from "./src/routes/clientes.routes.js";
 import consultasRoutes from "./src/routes/consultas.routes.js";
-import abogadosRoutes from "./src/routes/abogados.routes.js";
 import casosRoutes from "./src/routes/casos.routes.js";
 import documentosRoutes from "./src/routes/documentos.routes.js";
-import authRoutes from "./src/routes/auth.routes.js"; // ← NUEVO
-import httpLogger from "./src/middleware/loggerMiddleware.js";
+import abogadosRoutes from "./src/routes/abogados.routes.js";
+import authRoutes from "./src/routes/auth.routes.js";
 
 // Inicializar Express
 const app = express();
@@ -45,22 +45,20 @@ const limiter = rateLimit({
 
 app.use("/api/", limiter);
 
-// Middleware de express
+// Middlewares de Express
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
+// Middleware de logging HTTP (NUEVO - agregar AQUÍ)
 app.use(httpLogger);
 
 // Rutas
-app.use("/api/auth", authRoutes); // ← NUEVO: Rutas de autenticación
+app.use("/api/auth", authRoutes);
 app.use("/api/clientes", clientesRoutes);
 app.use("/api/consultas", consultasRoutes);
-app.use("/api/abogados", abogadosRoutes);
 app.use("/api/casos", casosRoutes);
 app.use("/api/documentos", documentosRoutes);
-
-// Archivos estaticos
-app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+app.use("/api/abogados", abogadosRoutes);
 
 // Ruta de health check
 app.get("/health", (req, res) => {
@@ -79,7 +77,12 @@ app.use((req, res) => {
 });
 
 app.use((err, req, res, next) => {
-  console.error("Error:", err);
+  logger.error("Error no manejado", {
+    // NUEVO - usar logger
+    error: err.message,
+    stack: err.stack,
+    url: req.originalUrl,
+  });
 
   res.status(err.status || 500).json({
     error: err.message || "Error interno del servidor",
@@ -90,36 +93,40 @@ app.use((err, req, res, next) => {
 // Iniciar servidor
 const startServer = async () => {
   try {
-    console.log("Conectando a MySQL... [server.js]");
+    logger.info("Conectando a MySQL..."); // NUEVO
     const connected = await testConnection();
 
     if (!connected) {
-      console.error(" No se pudo conectar a la base de datos [server.js]");
+      logger.error("No se pudo conectar a la base de datos"); // NUEVO
       process.exit(1);
     }
 
-    console.log("Sincronizando modelos...");
+    logger.info("Sincronizando modelos..."); // NUEVO
     await syncDatabase();
 
     app.listen(PORT, () => {
-      console.log(`\n${"=".repeat(50)}`);
-      console.log(`Servidor corriendo en http://localhost:${PORT} [server.js]`);
-      console.log(
-        `Entorno: ${process.env.NODE_ENV || "development"} [server.js]`
-      );
-      console.log(`Base de datos: ${process.env.DB_NAME}`);
-      console.log(`${"=".repeat(50)}\n`);
+      logger.info(`Servidor corriendo en http://localhost:${PORT}`); // NUEVO
+      logger.info(`Entorno: ${process.env.NODE_ENV || "development"}`); // NUEVO
+      logger.info(`Base de datos: ${process.env.DB_NAME}`); // NUEVO
     });
   } catch (error) {
-    console.error("Error al iniciar el servidor:", error, " [server.js]");
+    logger.error("Error al iniciar el servidor", {
+      // NUEVO
+      error: error.message,
+      stack: error.stack,
+    });
     process.exit(1);
   }
 };
 
 startServer();
 
+if (process.env.NODE_ENV !== "test") {
+  startServer();
+}
+
 process.on("SIGINT", async () => {
-  console.log("\n Cerrando servidor... [server.js]");
+  logger.info("Cerrando servidor..."); // NUEVO
   process.exit(0);
 });
 

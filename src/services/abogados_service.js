@@ -44,7 +44,7 @@ export const crear = async (datosAbogado) => {
     throw new AppError("Ya existe un abogado con este DNI", 409);
   }
 
-  const telefonoValidation = /^\+[1-9]\d{1,14}$/;
+  const telefonoValidation = /^\+[1-9]\d{7,14}$/;
   if (!telefonoValidation.test(telefono)) {
     throw new AppError(
       "El formato del número de teléfono no es válido (debe ser formato E.164: +54...)",
@@ -279,7 +279,7 @@ export const actualizar = async (id, datosActualizacion) => {
 
   // Validar teléfono si se proporciona
   if (telefono) {
-    const telefonoRegex = /^\+[1-9]\d{1,14}$/;
+    const telefonoRegex = /^\+[1-9]\d{7,14}$/;
     if (!telefonoRegex.test(telefono)) {
       throw new AppError("Formato de teléfono inválido", 400);
     }

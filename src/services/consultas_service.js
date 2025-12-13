@@ -40,7 +40,7 @@ export const crearDesdeFormulario = async (datosFormulario) => {
   }
 
   // Validar teléfono (obligatorio)
-  const telefonoValidation = /^\+[1-9]\d{1,14}$/;
+  const telefonoValidation = /^\+[1-9]\d{7,14}$/;
   if (!telefonoValidation.test(telefono)) {
     throw new AppError(
       "El formato del número de teléfono no es válido (debe ser formato E.164: +54...)",

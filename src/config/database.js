@@ -30,7 +30,7 @@ const sequelize = new Sequelize(
     },
 
     // Logging: útil para desarrollo, desactívalo en producción
-    logging: console.log, // Cambia a 'false' en producción
+    logging: process.env.NODE_ENV === "test" ? false : console.log, // Cambia a 'false' en producción
 
     // Timezone: importante para fechas
     timezone: "-03:00", // Argentina (UTC-3)

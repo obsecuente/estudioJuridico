@@ -56,7 +56,7 @@ const Abogado = sequelize.define(
       allowNull: false,
       validate: {
         is: {
-          args: /^\+[1-9]\d{1,14}$/,
+          args: /^\+[1-9]\d{7,14}$/,
           msg: "Formato de teléfono inválido",
         },
         notEmpty: {

@@ -42,7 +42,7 @@ const Cliente = sequelize.define(
       allowNull: false, //? el false lo hace obligatorio
       validate: {
         is: {
-          args: /^\+[1-9]\d{1,14}$/,
+          args: /^\+[1-9]\d{7,14}$/,
           msg: "Formato de telefono inválido",
         },
       },
