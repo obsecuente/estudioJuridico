@@ -1,4 +1,4 @@
-import { Abogado, Caso } from "../models/index.js";
+import { Abogado, Caso, Consulta } from "../models/index.js";
 import { Op } from "sequelize";
 
 class AppError extends Error {
@@ -169,16 +169,17 @@ export const obtenerTodos = async (opciones = {}) => {
     },
   };
 };
-export const obtenerPorId = async (id) => {
+export const obtenerPorId = async (id, incluirRelaciones = false) => {
   /**
    * Obtiene un abogado específico por ID
    *
    * @param {number} id - ID del abogado
+   * @param {boolean} incluirRelaciones - Si debe incluir consultas y casos
    * @returns {Promise<Object>} Abogado encontrado
    * @throws {AppError} Si el abogado no existe
    */
 
-  const abogado = await Abogado.findByPk(id, {
+  const options = {
     attributes: [
       "id_abogado",
       "dni",
@@ -189,7 +190,25 @@ export const obtenerPorId = async (id) => {
       "especialidad",
       "rol",
     ],
-  });
+  };
+
+  // Solo agregar relaciones si se pide explícitamente
+  if (incluirRelaciones) {
+    options.include = [
+      {
+        model: Consulta,
+        as: "consultas",
+        attributes: ["id_consulta", "mensaje", "estado", "fecha_envio"],
+      },
+      {
+        model: Caso,
+        as: "casos",
+        attributes: ["id_caso", "descripcion", "estado", "fecha_inicio"],
+      },
+    ];
+  }
+
+  const abogado = await Abogado.findByPk(id, options);
 
   if (!abogado) {
     throw new AppError("Abogado no encontrado", 404);

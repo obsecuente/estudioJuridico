@@ -42,7 +42,7 @@ export const obtenerAbogados = async (req, res) => {
 };
 export const obtenerAbogadoPorId = async (req, res) => {
   try {
-    const abogado = await abogadosService.obtenerPorId(req.params.id);
+    const abogado = await abogadosService.obtenerPorId(req.params.id, true);
     res.json({
       success: true,
       data: abogado,

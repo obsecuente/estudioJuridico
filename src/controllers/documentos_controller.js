@@ -125,14 +125,25 @@ export const descargarDocumento = async (req, res) => {
       req.params.id
     );
 
-    // Descargar archivo
-    res.download(ruta, nombre_archivo, (error) => {
+    // Configurar headers para permitir visualización
+    res.setHeader(
+      "Access-Control-Allow-Origin",
+      process.env.FRONTEND_URL || "http://localhost:5173"
+    );
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    res.setHeader("Content-Type", "application/pdf"); // O detectar tipo automáticamente
+    res.setHeader("Content-Disposition", "inline"); // inline para ver, attachment para descargar
+
+    // Enviar archivo
+    res.sendFile(ruta, (error) => {
       if (error) {
-        console.error("Error al descargar archivo:", error);
-        res.status(500).json({
-          success: false,
-          error: "Error al descargar el archivo",
-        });
+        console.error("Error al enviar archivo:", error);
+        if (!res.headersSent) {
+          res.status(500).json({
+            success: false,
+            error: "Error al enviar el archivo",
+          });
+        }
       }
     });
   } catch (error) {

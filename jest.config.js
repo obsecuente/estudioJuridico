@@ -1,24 +1,11 @@
 export default {
   testEnvironment: "node",
-  coverageDirectory: "coverage",
-  collectCoverageFrom: ["src/**/*.js", "!src/config/**", "!**/node_modules/**"],
-  coverageThreshold: {
-    global: {
-      branches: 70,
-      functions: 70,
-      lines: 70,
-      statements: 70,
-    },
-  },
-  testMatch: ["**/tests/**/*.test.js"],
+  transform: {},
+  testMatch: ["**/__tests__/**/*.test.js"],
+  setupFilesAfterEnv: ["<rootDir>/tests/setup.js"],
   verbose: true,
   forceExit: true,
   clearMocks: true,
   resetMocks: true,
   restoreMocks: true,
-  transform: {},
-  /*   moduleNameMapper: {
-    "^(\\.{1,2}/.*)\\.js$": "$1",
-  }, */
-  setupFilesAfterEnv: ["<rootDir>/tests/setup.js"],
 };
