@@ -1,0 +1,19 @@
+# Dependencias de ambos proyectos
+node_modules/
+juridico/node_modules/
+juridico-client/node_modules/
+
+# Archivos de configuración local y secretos
+.env
+juridico/.env
+juridico-client/.env
+
+# Archivos de construcción/distribución (Front-end)
+juridico-client/dist/
+juridico-client/build/
+
+# Logs y archivos del sistema
+*.log
+logs/
+.DS_Store
+coverage/

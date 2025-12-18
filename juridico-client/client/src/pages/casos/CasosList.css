@@ -1,0 +1,429 @@
+.casos-container {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Header */
+.casos-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.casos-header h1 {
+  margin: 0 0 5px 0;
+  font-size: 28px;
+  color: #333;
+}
+
+.casos-header p {
+  margin: 0;
+  color: #666;
+  font-size: 14px;
+}
+
+/* Botón Nuevo */
+.btn-nuevo {
+  padding: 12px 24px;
+  background: #10b981;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-size: 15px;
+}
+
+.btn-nuevo:hover {
+  background: #059669;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+/* Barra de filtros */
+.filters-bar {
+  margin-bottom: 20px;
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.search-bar {
+  flex: 1;
+  min-width: 300px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 14px 20px;
+  font-size: 15px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  transition: border-color 0.3s;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+/* Filtros de estado */
+.estado-filters {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.filter-btn {
+  padding: 10px 16px;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
+  font-size: 14px;
+  color: #4b5563;
+}
+
+.filter-btn:hover {
+  border-color: #667eea;
+  background: #f9fafb;
+}
+
+.filter-btn.active {
+  background: #667eea;
+  color: white;
+  border-color: #667eea;
+}
+
+/* Tabla */
+.table-container {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.casos-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.casos-table thead {
+  background: #f9fafb;
+}
+
+.casos-table th {
+  padding: 16px;
+  text-align: left;
+  font-weight: 600;
+  color: #374151;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.casos-table tbody tr {
+  border-bottom: 1px solid #f3f4f6;
+  transition: background-color 0.2s;
+}
+
+.casos-table tbody tr:hover {
+  background: #f9fafb;
+}
+
+.casos-table td {
+  padding: 16px;
+  color: #4b5563;
+  font-size: 14px;
+}
+
+/* Anchos fijos para las columnas */
+.casos-table th:nth-child(1),
+.casos-table td:nth-child(1) {
+  width: 60px;
+  text-align: center;
+}
+
+.casos-table th:nth-child(2),
+.casos-table td:nth-child(2) {
+  width: 200px;
+}
+
+.casos-table th:nth-child(3),
+.casos-table td:nth-child(3) {
+  width: 300px;
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.casos-table th:nth-child(4),
+.casos-table td:nth-child(4) {
+  width: 120px;
+  text-align: center;
+}
+
+.casos-table th:nth-child(5),
+.casos-table td:nth-child(5) {
+  width: 180px;
+}
+
+.casos-table th:nth-child(6),
+.casos-table td:nth-child(6) {
+  width: 120px;
+}
+
+.casos-table th:nth-child(7),
+.casos-table td:nth-child(7) {
+  width: 150px;
+  text-align: center;
+}
+
+/* Celdas especiales */
+.cliente-cell a {
+  color: #667eea;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.cliente-cell a:hover {
+  text-decoration: underline;
+}
+
+.descripcion-cell {
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.abogado-cell {
+  font-weight: 500;
+}
+
+.sin-asignar {
+  color: #9ca3af;
+  font-style: italic;
+}
+
+/* Badge de estado */
+.estado-badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-block;
+}
+
+/* Botones de acción */
+.actions-cell {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-action {
+  padding: 10px 14px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 18px;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  min-height: 40px;
+}
+
+.btn-view {
+  background: #8b5cf6;
+  color: white;
+}
+
+.btn-view:hover {
+  background: #7c3aed;
+  transform: scale(1.05);
+}
+
+.btn-edit {
+  background: #3b82f6;
+  color: white;
+}
+
+.btn-edit:hover {
+  background: #2563eb;
+  transform: scale(1.05);
+}
+
+.btn-delete {
+  background: #ef4444;
+  color: white;
+}
+
+.btn-delete:hover {
+  background: #dc2626;
+  transform: scale(1.05);
+}
+
+/* Paginación */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin: 20px 0;
+}
+
+.page-numbers {
+  display: flex;
+  gap: 5px;
+}
+
+.btn-page {
+  padding: 10px 16px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+
+.btn-page:hover:not(:disabled) {
+  background: #f3f4f6;
+  border-color: #667eea;
+}
+
+.btn-page:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-page-number {
+  padding: 8px 14px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
+  min-width: 40px;
+}
+
+.btn-page-number:hover {
+  background: #f3f4f6;
+  border-color: #667eea;
+}
+
+.btn-page-number.active {
+  background: #667eea;
+  color: white;
+  border-color: #667eea;
+}
+
+.pagination-info {
+  text-align: center;
+  color: #6b7280;
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+
+/* Estados */
+.loading-container {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid #f3f4f6;
+  border-top-color: #667eea;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 20px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #6b7280;
+}
+
+.btn-clear {
+  margin-top: 15px;
+  padding: 10px 20px;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.btn-clear:hover {
+  background: #5568d3;
+}
+
+.error-message {
+  background: #fee2e2;
+  color: #dc2626;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border-left: 4px solid #dc2626;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .casos-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+
+  .btn-nuevo {
+    width: 100%;
+  }
+
+  .filters-bar {
+    flex-direction: column;
+  }
+
+  .search-bar {
+    min-width: 100%;
+  }
+
+  .estado-filters {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .table-container {
+    overflow-x: auto;
+  }
+
+  .casos-table {
+    min-width: 900px;
+  }
+
+  .pagination {
+    flex-wrap: wrap;
+  }
+}
