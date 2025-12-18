@@ -1,29 +1,27 @@
-.dashboard-layout {
+.dashboard-app-container {
   display: flex;
   min-height: 100vh;
-  background: #f5f5f5;
+  background-color: #f8fafc;
 }
 
-.dashboard-main {
+/* El área de la derecha que contiene Topbar + Contenido */
+.dashboard-main-area {
   flex: 1;
-  margin-left: 260px;
   display: flex;
   flex-direction: column;
+  /* El margen del Sidebar solo acá */
+  margin-left: 260px;
+  min-width: 0;
+  position: relative;
 }
 
-.dashboard-content {
-  margin-top: 70px;
+.dashboard-page-content {
   padding: 30px;
-  min-height: calc(100vh - 70px);
+  flex: 1;
 }
 
-/* Responsive */
 @media (max-width: 768px) {
-  .dashboard-main {
+  .dashboard-main-area {
     margin-left: 70px;
-  }
-
-  .dashboard-content {
-    padding: 20px 15px;
   }
 }

@@ -1,6 +1,14 @@
 import { NavLink } from "react-router-dom";
 import { useContext } from "react";
 import { AuthContext } from "../../context/AuthContext.jsx";
+import {
+  ConsultasIcon,
+  ClientIcon,
+  HomeIcon,
+  CasosIcon,
+  DocumentosIcon,
+  AbogadosIcon,
+} from "../common/Icons.jsx";
 import "./Sidebar.css";
 
 const Sidebar = () => {
@@ -21,7 +29,9 @@ const Sidebar = () => {
             isActive ? "nav-link active" : "nav-link"
           }
         >
-          <span className="nav-icon">🏠</span>
+          <span className="nav-icon">
+            <HomeIcon />
+          </span>
           <span>Inicio</span>
         </NavLink>
 
@@ -31,7 +41,9 @@ const Sidebar = () => {
             isActive ? "nav-link active" : "nav-link"
           }
         >
-          <span className="nav-icon">👥</span>
+          <span className="nav-icon">
+            <ClientIcon />
+          </span>
           <span>Clientes</span>
         </NavLink>
 
@@ -41,7 +53,9 @@ const Sidebar = () => {
             isActive ? "nav-link active" : "nav-link"
           }
         >
-          <span className="nav-icon">💬</span>
+          <span className="nav-icon">
+            <ConsultasIcon />
+          </span>
           <span>Consultas</span>
         </NavLink>
 
@@ -51,7 +65,10 @@ const Sidebar = () => {
             isActive ? "nav-link active" : "nav-link"
           }
         >
-          <span className="nav-icon">📂</span>
+          <span className="nav-icon">
+            {" "}
+            <CasosIcon />{" "}
+          </span>
           <span>Casos</span>
         </NavLink>
 
@@ -61,7 +78,10 @@ const Sidebar = () => {
             isActive ? "nav-link active" : "nav-link"
           }
         >
-          <span className="nav-icon">📄</span>
+          <span className="nav-icon">
+            {" "}
+            <DocumentosIcon />{" "}
+          </span>
           <span>Documentos</span>
         </NavLink>
 
@@ -73,7 +93,10 @@ const Sidebar = () => {
               isActive ? "nav-link active" : "nav-link"
             }
           >
-            <span className="nav-icon">⚖️</span>
+            <span className="nav-icon">
+              {" "}
+              <AbogadosIcon />{" "}
+            </span>
             <span>Abogados</span>
           </NavLink>
         )}

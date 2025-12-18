@@ -1,14 +1,14 @@
 .sidebar {
   width: 260px;
   height: 100vh;
-  background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+  background-color: #0f172a; /* El azul noche del Login */
   color: white;
   display: flex;
   flex-direction: column;
   position: fixed;
   left: 0;
   top: 0;
-  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 4px 0 15px rgba(0, 0, 0, 0.3); /* Sombra más profunda */
   z-index: 100;
 }
 
@@ -19,8 +19,11 @@
 
 .sidebar-header h2 {
   margin: 0;
-  font-size: 22px;
-  font-weight: 600;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: #f8fafc;
 }
 
 .sidebar-subtitle {
@@ -40,27 +43,40 @@
   align-items: center;
   gap: 15px;
   padding: 15px 20px;
-  color: white;
+  color: #eeebe9;
   text-decoration: none;
   transition: all 0.3s ease;
   border-left: 3px solid transparent;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .nav-link:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-left-color: white;
+  background: rgba(255, 255, 255, 0.03);
+  padding-left: 25px;
+  color: #ffffff;
 }
 
 .nav-link.active {
-  background: rgba(255, 255, 255, 0.2);
-  border-left-color: white;
+  /* Fondo con un tinte dorado muy suave para armonizar */
+  background: rgba(212, 175, 55, 0.08);
+  /* Borde más marcado para guiar la vista */
+  border-left: 4px solid #d4af37;
+  /* El color dorado en el texto e icono */
+  color: #d4af37;
   font-weight: 600;
+  /* Un pequeño brillo al texto para que resalte en el azul noche */
+  text-shadow: 0 0 10px rgba(212, 175, 55, 0.2);
 }
 
 .nav-icon {
-  font-size: 20px;
   width: 24px;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.nav-icon svg {
+  width: 20px;
+  height: 20px;
 }
 
 .sidebar-footer {

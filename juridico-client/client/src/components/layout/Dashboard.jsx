@@ -5,11 +5,11 @@ import "./Dashboard.css";
 
 const Dashboard = () => {
   return (
-    <div className="dashboard-layout">
+    <div className="dashboard-app-container">
       <Sidebar />
-      <div className="dashboard-main">
+      <div className="dashboard-main-area">
         <Topbar />
-        <main className="dashboard-content">
+        <main className="dashboard-page-content">
           <Outlet />
         </main>
       </div>

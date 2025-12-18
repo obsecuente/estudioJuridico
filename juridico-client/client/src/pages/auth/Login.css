@@ -3,29 +3,47 @@
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background-color: #2d241e;
+  background-image: url(../../assets/background-login.webp);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+  background-attachment: scroll;
+  animation: fadeInBg 0.8s ease-in-out;
+}
+@keyframes fadeInBg {
+  from {
+    opacity: 0.9;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .login-card {
-  background: white;
+  backdrop-filter: blur(20px) saturate(200%); /* Subimos un toque la saturación */
+  background: rgba(15, 23, 42, 0.75); /* Un gris azulado bien profundo */
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
   padding: 40px;
-  border-radius: 10px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
   width: 100%;
   max-width: 400px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
 }
 
 .login-card h1 {
   margin: 0 0 10px 0;
-  color: #333;
+  color: #ffffff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   font-size: 24px;
   text-align: center;
 }
 
 .login-card h2 {
   margin: 0 0 30px 0;
-  color: #666;
-  font-size: 18px;
+  color: #ffffff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  font-size: 19px;
   font-weight: normal;
   text-align: center;
 }
@@ -34,52 +52,116 @@
   margin-bottom: 20px;
 }
 
-.form-group label {
+.login-card .form-group label {
+  color: #f8fafc !important;
   display: block;
-  margin-bottom: 5px;
-  color: #333;
-  font-weight: 500;
+  margin-bottom: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  text-shadow: 0px 2px 4px rgba(0, 0, 0, 0.5);
 }
 
-.form-group input {
+.login-card .form-group input[type="email"],
+.login-card .form-group input[type="password"] {
   width: 100%;
   padding: 12px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  font-size: 14px;
-  transition: border-color 0.3s;
+  background: rgba(0, 0, 0, 0.4) !important; /* Fondo negro traslúcido */
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: #ffffff !important;
+  font-size: 15px;
+  transition: all 0.3s ease;
 }
 
-.form-group input:focus {
+.login-card .form-group input:focus {
+  background: rgba(0, 0, 0, 0.6) !important;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.3);
   outline: none;
-  border-color: #667eea;
 }
 
-.form-group input:disabled {
-  background-color: #f5f5f5;
-  cursor: not-allowed;
+/* Color del texto (placeholder) */
+.form-group input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
 }
 
 .btn-login {
   width: 100%;
-  padding: 12px;
-  background: #667eea;
+  height: 52px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(99, 102, 241, 0.15); /* Fondo suave */
   color: white;
   border: none;
-  border-radius: 5px;
+  border-radius: 12px;
   font-size: 16px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.3s;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  margin-top: 20px;
+  /* El borde brillante sutil */
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+/* El efecto de brillo que viste en el otro botón */
+.btn-login::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    to bottom right,
+    rgba(99, 102, 241, 0.8) 0%,
+    transparent 40%
+  );
+  opacity: 0.3;
+  transition: opacity 0.3s ease;
 }
 
 .btn-login:hover:not(:disabled) {
-  background: #5568d3;
+  background: rgba(99, 102, 241, 0.25);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.3),
+    0 0 20px rgba(99, 102, 241, 0.3);
+}
+
+.btn-login:hover::before {
+  opacity: 1; /* Se "enciende" el borde al pasar el mouse */
+}
+
+/* Efecto de click */
+.btn-login:active:not(:disabled) {
+  transform: scale(0.98);
 }
 
 .btn-login:disabled {
-  background: #ccc;
+  opacity: 0.5;
   cursor: not-allowed;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Controlar el color del autocompletado */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  /* Tapamos el fondo de Chrome con una sombra interna del color de tu input */
+  -webkit-box-shadow: 0 0 0px 1000px rgba(17, 24, 39, 0.9) inset !important;
+
+  /* Color de la letra */
+  -webkit-text-fill-color: white !important;
+
+  /* Mantener el blur del fondo si es necesario */
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+.login-card:focus-within {
+  border: 1px solid rgba(99, 102, 241, 0.4);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7),
+    0 0 15px rgba(99, 102, 241, 0.1);
 }
 
 .error-message {
