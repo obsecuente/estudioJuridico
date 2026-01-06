@@ -1,0 +1,104 @@
+/* CustomSelect - dark themed for glass modals */
+.custom-select {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  font-family: inherit;
+}
+
+.custom-select__control {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  color: #f8fafc;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+  transition: box-shadow 0.12s ease, transform 0.08s ease;
+  text-align: left;
+}
+.custom-select__control:focus {
+  outline: none;
+}
+.custom-select__control:focus-visible {
+  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.08),
+    0 0 0 4px rgba(212, 175, 55, 0.12);
+  border-color: rgba(99, 102, 241, 0.9);
+}
+.custom-select__control.is-open {
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+.custom-select__value {
+  font-size: 15px;
+  color: #f8fafc;
+}
+.custom-select__arrow {
+  margin-left: 12px;
+  color: rgba(248, 250, 252, 0.72);
+}
+
+.custom-select__menu {
+  position: absolute;
+  z-index: 1200;
+  left: 0;
+  right: 0;
+  margin-top: 8px;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  background: linear-gradient(
+    180deg,
+    rgba(15, 23, 42, 0.98),
+    rgba(8, 10, 12, 0.98)
+  );
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.custom-select__option {
+  padding: 10px 14px;
+  cursor: pointer;
+  color: rgba(248, 250, 252, 0.9);
+  background: transparent;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.custom-select__option.is-focused,
+.custom-select__option:hover {
+  background: rgba(212, 175, 55, 0.08);
+  color: var(--color-acento);
+}
+
+.custom-select__option.is-selected {
+  background: var(--color-acento) !important;
+  color: var(--color-primario) !important;
+  font-weight: 700;
+}
+
+.custom-select.is-disabled .custom-select__control {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Error state mapping from form CSS */
+.custom-select.input-error .custom-select__control {
+  border-color: rgba(239, 68, 68, 0.9) !important;
+}
+
+/* Scrollbar matches dark theme */
+.custom-select__menu::-webkit-scrollbar {
+  width: 10px;
+}
+.custom-select__menu::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 8px;
+}
+.custom-select__menu::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+}

@@ -10,3 +10,9 @@ body {
     sans-serif;
   background-color: #000;
 }
+:root {
+  --color-primario: #0f172a; /* El azul noche de tu sidebar */
+  --color-acento: #d4af37; /* El dorado premium */
+  --color-borde: #e2e8f0;
+  --color-blanco: #f1f5f9;
+}

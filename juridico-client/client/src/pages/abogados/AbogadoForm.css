@@ -22,7 +22,7 @@
   }
 }
 
-/* Contenido del modal */
+/* Contenido del modal: fallback visual; glass variant applied via .glass-card */
 .modal-content {
   background: white;
   border-radius: 12px;
@@ -32,6 +32,26 @@
   overflow-y: auto;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
   animation: slideIn 0.3s ease;
+}
+
+/* When glass-card is applied, adjust inner elements for dark background */
+.modal-content.glass-card .modal-header h2 {
+  color: #f8fafc;
+}
+.modal-content.glass-card .btn-close-modal {
+  color: rgba(248, 250, 252, 0.92);
+}
+.modal-content.glass-card .form-group label {
+  color: rgba(248, 250, 252, 0.92);
+}
+.modal-content.glass-card .form-group input {
+  background: rgba(255, 255, 255, 0.03);
+  color: #f8fafc;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.modal-content.glass-card .btn-submit {
+  background: rgba(99, 102, 241, 0.18);
+  color: white;
 }
 
 @keyframes slideIn {
@@ -77,8 +97,9 @@
 }
 
 .btn-close-modal:hover {
-  background: #f3f4f6;
-  color: #1f2937;
+  background: rgba(255, 255, 255, 0.02);
+  color: rgba(15, 23, 42, 0.9);
+  transform: translateY(-2px);
 }
 
 /* Cuerpo del formulario */
@@ -150,18 +171,19 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  cursor: pointer;
+  cursor: default; /* evitar pointer en modales glass */
   user-select: none;
 }
 
 .checkbox-label input[type="checkbox"] {
-  width: 20px;
-  height: 20px;
-  cursor: pointer;
+  width: 18px;
+  height: 18px;
+  cursor: default;
+  accent-color: #667eea;
 }
 
 .checkbox-label span {
-  color: #374151;
+  color: rgba(15, 23, 42, 0.85);
   font-size: 14px;
 }
 
@@ -175,6 +197,22 @@
   background: #f9fafb;
 }
 
+/* Ajustes para variante glass (cuando se aplica .glass-card) */
+.modal-content.glass-card .modal-footer {
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.06), rgba(0, 0, 0, 0));
+  border-top-color: rgba(255, 255, 255, 0.04);
+}
+
+.modal-content.glass-card .btn-cancel {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(248, 250, 252, 0.92);
+}
+
+.modal-content.glass-card .btn-submit {
+  position: relative;
+  overflow: hidden;
+}
 .btn-cancel {
   padding: 12px 24px;
   background: white;

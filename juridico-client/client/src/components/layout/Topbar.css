@@ -25,7 +25,7 @@
   font-size: 20px;
   color: #0f172a; /* Azul noche del estudio */
   font-weight: 700;
-  letter-spacing: -0.5px;
+  letter-spacing: 5px;
 }
 
 .topbar-right {
@@ -64,6 +64,22 @@
   color: #1e293b;
   font-size: 14px;
   white-space: nowrap; /* Evita que el nombre se corte en dos líneas */
+}
+.user-role {
+  font-size: 10px; /* Un poco más chico para que no compita con el nombre */
+  padding: 2px 10px; /* Más aire a los costados */
+  border-radius: 20px; /* Forma de píldora */
+  color: #0f172a;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  align-self: flex-start;
+
+  /* Un toque de profundidad sutil */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+  /* Para que no se pegue al nombre si están muy juntos */
+  margin-top: 2px;
 }
 
 /* Botón de Logout: Estilo sobrio (Quiet Luxury) */

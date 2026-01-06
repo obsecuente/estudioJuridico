@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import api from "../../services/api";
+import ModalFrame from "../../components/common/ModalFrame";
+import CustomSelect from "../../components/common/CustomSelect";
 import "./AbogadoForm.css";
 
 const AbogadoForm = ({ abogado, onClose, showToast }) => {
@@ -107,168 +109,157 @@ const AbogadoForm = ({ abogado, onClose, showToast }) => {
 
   // 4. Renderizado (JSX)
   return (
-    <div className="modal-overlay">
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2>{isEditing ? "Editar Abogado" : "Nuevo Abogado"}</h2>
+    <ModalFrame
+      title={isEditing ? "Editar Abogado" : "Nuevo Abogado"}
+      onClose={onClose}
+    >
+      <form onSubmit={handleSubmit}>
+        <div className="form-body">
+          {/* Campo DNI */}           
+          <div className="form-group">
+            <label htmlFor="dni">DNI</label>          
+            <input
+              type="text"
+              id="dni"
+              name="dni"
+              value={formData.dni}
+              onChange={handleChange}
+              disabled={loading}
+              className={errors.dni ? "input-error" : ""}
+            />
+            {errors.dni && <span className="error-text">{errors.dni}</span>}    
+                 
+          </div>
+                                 
+          <div className="form-group">
+            <label htmlFor="nombre">Nombre</label>      
+            <input
+              type="text"
+              id="nombre"
+              name="nombre"
+              value={formData.nombre}
+              onChange={handleChange}
+              disabled={loading}
+              className={errors.nombre ? "input-error" : ""}
+            />
+                   
+            {errors.nombre && (
+              <span className="error-text">{errors.nombre}</span>
+            )}
+                       
+          </div>
+                           
+          <div className="form-group">
+            <label htmlFor="apellido">Apellido</label>        
+            <input
+              type="text"
+              id="apellido"
+              name="apellido"
+              value={formData.apellido}
+              onChange={handleChange}
+              disabled={loading}
+              className={errors.apellido ? "input-error" : ""}
+            />
+                       
+            {errors.apellido && (
+              <span className="error-text">{errors.apellido}</span>
+            )}
+                     
+          </div>
+                           
+          <div className="form-group">
+            <label htmlFor="email">Email</label>       
+            <input
+              type="email"
+              id="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              disabled={loading}
+              className={errors.email ? "input-error" : ""}
+            />{" "}
+                   
+            {errors.email && <span className="error-text">{errors.email}</span>}
+                     
+          </div>{" "}
+                             
+          <div className="form-group">
+            <label htmlFor="telefono">Teléfono</label>         
+            <input
+              type="text"
+              id="telefono"
+              name="telefono"
+              value={formData.telefono}
+              onChange={handleChange}
+              disabled={loading}
+              className={errors.telefono ? "input-error" : ""}
+            />{" "}
+                     
+            {errors.telefono && (
+              <span className="error-text">{errors.telefono}</span>
+            )}
+                     
+          </div>
+          <div className="form-group">
+            <label htmlFor="especialidad">Especialidad</label>
+            <input
+              type="text"
+              id="especialidad"
+              name="especialidad"
+              value={formData.especialidad}
+              onChange={handleChange}
+              disabled={loading}
+            />
+          </div>
+          <div className="form-group">
+            <label htmlFor="rol">Rol</label>
+            {/* CustomSelect reemplaza el select nativo para mejor control visual */}
+            <CustomSelect
+              name="rol"
+              options={[
+                { value: "abogado", label: "Abogado" },
+                { value: "admin", label: "Administrador" },
+                { value: "asistente", label: "Asistente" },
+              ]}
+              value={formData.rol}
+              onChange={(val) => setFormData((p) => ({ ...p, rol: val }))}
+              disabled={loading}
+            />
+          </div>
+          <div className="form-group">
+            <label htmlFor="password">
+              Contraseña {isEditing && "(Dejar vacío para no cambiar)"}
+            </label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              disabled={loading}
+              className={errors.password ? "input-error" : ""}
+            />
+            {errors.password && (
+              <span className="error-text">{errors.password}</span>
+            )}
+          </div>
+        </div>
+        {/* Footer con botones (similar a ClienteForm) */}
+        <div className="modal-footer">
           <button
-            className="btn-close-modal"
-            onClick={() => onClose(false)}
             type="button"
+            className="btn-cancel"
+            onClick={() => onClose(false)}
+            disabled={loading}
           >
-            ✕
+            Cancelar
+          </button>
+          <button type="submit" className="btn-submit" disabled={loading}>
+            {loading ? "Guardando..." : "Guardar"}
           </button>
         </div>
-
-        <form onSubmit={handleSubmit}>
-          <div className="form-body">
-            {/* Campo DNI */}           
-            <div className="form-group">
-              <label htmlFor="dni">DNI</label>          
-              <input
-                type="text"
-                id="dni"
-                name="dni"
-                value={formData.dni}
-                onChange={handleChange}
-                disabled={loading}
-                className={errors.dni ? "input-error" : ""}
-              />
-              {errors.dni && <span className="error-text">{errors.dni}</span>}  
-                     
-            </div>
-                                   
-            <div className="form-group">
-              <label htmlFor="nombre">Nombre</label>      
-              <input
-                type="text"
-                id="nombre"
-                name="nombre"
-                value={formData.nombre}
-                onChange={handleChange}
-                disabled={loading}
-                className={errors.nombre ? "input-error" : ""}
-              />
-                     
-              {errors.nombre && (
-                <span className="error-text">{errors.nombre}</span>
-              )}
-                         
-            </div>
-                             
-            <div className="form-group">
-              <label htmlFor="apellido">Apellido</label>        
-              <input
-                type="text"
-                id="apellido"
-                name="apellido"
-                value={formData.apellido}
-                onChange={handleChange}
-                disabled={loading}
-                className={errors.apellido ? "input-error" : ""}
-              />
-                         
-              {errors.apellido && (
-                <span className="error-text">{errors.apellido}</span>
-              )}
-                       
-            </div>
-                             
-            <div className="form-group">
-              <label htmlFor="email">Email</label>       
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                disabled={loading}
-                className={errors.email ? "input-error" : ""}
-              />{" "}
-                     
-              {errors.email && (
-                <span className="error-text">{errors.email}</span>
-              )}
-                       
-            </div>{" "}
-                               
-            <div className="form-group">
-              <label htmlFor="telefono">Teléfono</label>         
-              <input
-                type="text"
-                id="telefono"
-                name="telefono"
-                value={formData.telefono}
-                onChange={handleChange}
-                disabled={loading}
-                className={errors.telefono ? "input-error" : ""}
-              />{" "}
-                       
-              {errors.telefono && (
-                <span className="error-text">{errors.telefono}</span>
-              )}
-                       
-            </div>
-            <div className="form-group">
-              <label htmlFor="especialidad">Especialidad</label>
-              <input
-                type="text"
-                id="especialidad"
-                name="especialidad"
-                value={formData.especialidad}
-                onChange={handleChange}
-                disabled={loading}
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="rol">Rol</label>
-              <select
-                id="rol"
-                name="rol"
-                value={formData.rol}
-                onChange={handleChange}
-                disabled={loading}
-              >
-                <option value="abogado">Abogado</option>
-                <option value="admin">Administrador</option>
-                <option value="asistente">Asistente</option>
-              </select>
-            </div>
-            <div className="form-group">
-              <label htmlFor="password">
-                Contraseña {isEditing && "(Dejar vacío para no cambiar)"}
-              </label>
-              <input
-                type="password"
-                id="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                disabled={loading}
-                className={errors.password ? "input-error" : ""}
-              />
-              {errors.password && (
-                <span className="error-text">{errors.password}</span>
-              )}
-            </div>
-          </div>
-          {/* Footer con botones (similar a ClienteForm) */}
-          <div className="modal-footer">
-            <button
-              type="button"
-              className="btn-cancel"
-              onClick={() => onClose(false)}
-              disabled={loading}
-            >
-              Cancelar
-            </button>
-            <button type="submit" className="btn-submit" disabled={loading}>
-              {loading ? "Guardando..." : "Guardar"}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+      </form>
+    </ModalFrame>
   );
 };
 

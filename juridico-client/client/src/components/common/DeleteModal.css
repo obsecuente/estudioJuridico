@@ -1,0 +1,176 @@
+.delete-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7); /* Oscurecí un toque más el fondo */
+  backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999; /* <--- Subilo a 9999 para que tape todo */
+  animation: fadeIn 0.3s ease;
+}
+
+.delete-modal-card {
+  /* Efecto Glassmorphism fiel a tu Login */
+  backdrop-filter: blur(20px) saturate(180%);
+  background: rgba(
+    15,
+    23,
+    42,
+    0.75
+  ); /* El mismo fondo azul profundo traslúcido */
+
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 40px; /* Un poco más de aire */
+  width: 90%;
+  max-width: 400px;
+  text-align: center;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  animation: modalPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes modalPop {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+.delete-modal-icon {
+  width: 65px;
+  height: 65px;
+  /* Un rojo que brille sobre el fondo oscuro */
+  background: rgba(239, 68, 68, 0.2);
+  border: 2px solid rgba(239, 68, 68, 0.5);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 25px;
+  /* Glow rojo sutil */
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.2);
+}
+
+.warning-symbol {
+  color: #ff4d4d;
+  font-size: 30px;
+  font-weight: bold;
+}
+
+.delete-modal-card h1 {
+  color: #ffffff;
+  font-size: 24px;
+  margin-bottom: 12px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.delete-modal-card p {
+  color: rgba(248, 250, 252, 0.8); /* Blanco suavizado */
+  font-size: 15px;
+  line-height: 1.6;
+  margin-bottom: 35px;
+}
+
+.delete-modal-actions {
+  display: flex;
+  gap: 15px;
+}
+
+.btn-modal-cancel {
+  flex: 1;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: #cbd5e1;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-modal-cancel:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.btn-modal-confirm {
+  flex: 1.5;
+  padding: 12px;
+  background: rgba(239, 68, 68, 0.8); /* Rojo intenso pero con transparencia */
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  color: white;
+  font-weight: 500;
+  text-transform: uppercase;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+}
+
+.btn-modal-confirm:hover {
+  background: #ef4444; /* Se vuelve sólido al hover */
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(239, 68, 68, 0.5);
+}
+
+/* Variantes: success (reabrir), warning (cerrar), danger (eliminar) */
+.btn-modal-success {
+  background: rgba(16, 185, 129, 0.9) !important;
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.25);
+}
+.btn-modal-success:hover {
+  background: #10b981 !important;
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.45);
+  transform: translateY(-2px);
+}
+
+.btn-modal-warning {
+  background: rgba(245, 158, 11, 0.9) !important;
+  box-shadow: 0 4px 15px rgba(245, 158, 11, 0.25);
+}
+.btn-modal-warning:hover {
+  background: #f59e0b !important;
+  box-shadow: 0 8px 25px rgba(245, 158, 11, 0.45);
+  transform: translateY(-2px);
+}
+
+/* Icon variants as fallback */
+.delete-modal-card.success .delete-modal-icon {
+  background: rgba(16, 185, 129, 0.12);
+  border: 2px solid rgba(16, 185, 129, 0.28);
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.12);
+}
+.delete-modal-card.warning .delete-modal-icon {
+  background: rgba(245, 158, 11, 0.12);
+  border: 2px solid rgba(245, 158, 11, 0.28);
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.12);
+}
+.delete-modal-card.danger .delete-modal-icon {
+  background: rgba(239, 68, 68, 0.2);
+  border: 2px solid rgba(239, 68, 68, 0.5);
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.2);
+}
+
+.warning-symbol {
+  color: #ff4d4d;
+  font-size: 30px;
+  font-weight: bold;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

@@ -38,3 +38,72 @@
 .read-the-docs {
   color: #888;
 }
+
+/* Reusable frosted glass card for modals and cards (coherent with Login) */
+.modal-content.glass-card {
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  background: rgba(15, 23, 42, 0.72) !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  color: #f8fafc !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5),
+    0 0 30px rgba(99, 102, 241, 0.04) !important;
+  border-radius: 16px !important;
+}
+
+/* Overrides for inner elements when glass applied */
+.modal-content.glass-card .modal-header h2 {
+  color: #f8fafc !important;
+}
+.modal-content.glass-card .btn-close-modal {
+  color: rgba(248, 250, 252, 0.92) !important;
+}
+.modal-content.glass-card .form-group label {
+  color: rgba(248, 250, 252, 0.92) !important;
+}
+.modal-content.glass-card .form-group input,
+.modal-content.glass-card .form-group textarea,
+.modal-content.glass-card .form-group select {
+  background: rgba(255, 255, 255, 0.03) !important;
+  color: #f8fafc !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+.modal-content.glass-card .modal-footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.04) !important;
+  /* Background should be a subtle dark gradient to match the glass */
+  background: linear-gradient(180deg, rgba(0,0,0,0.06), rgba(0,0,0,0)) !important;
+}
+
+/* Checkbox and helper text adjustments for glass modals */
+.modal-content.glass-card .checkbox-label {
+  cursor: default !important;
+}
+.modal-content.glass-card .checkbox-label span {
+  color: rgba(248,250,252,0.86) !important;
+  font-size: 14px;
+}
+.modal-content.glass-card .checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: default !important;
+  accent-color: #667eea; /* match primary focus */
+}
+
+.modal-content.glass-card .help-text {
+  color: rgba(248,250,252,0.56) !important;
+}
+
+/* Ensure submit button behaviour & pseudo-element layering (like Login) */
+.modal-content.glass-card .btn-submit {
+  position: relative !important;
+  overflow: hidden !important;
+  background: rgba(99, 102, 241, 0.18) !important;
+  color: #fff !important;
+}
+.modal-content.glass-card .btn-submit::before {
+  z-index: 0 !important;
+  pointer-events: none !important;
+}
+.modal-content.glass-card .btn-submit > * {
+  position: relative;
+  z-index: 1;

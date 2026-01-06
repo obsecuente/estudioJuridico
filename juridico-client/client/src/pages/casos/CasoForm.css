@@ -34,6 +34,28 @@
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
 }
 
+/* Glass variant overrides */
+.modal-content.glass-card .modal-header h2 {
+  color: #f8fafc;
+}
+.modal-content.glass-card .btn-close-modal {
+  color: rgba(248, 250, 252, 0.92);
+}
+.modal-content.glass-card .form-group label {
+  color: rgba(248, 250, 252, 0.92);
+}
+.modal-content.glass-card .form-group input,
+.modal-content.glass-card .form-group textarea,
+.modal-content.glass-card .form-group select {
+  background: rgba(255, 255, 255, 0.03);
+  color: #f8fafc;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.modal-content.glass-card .btn-submit {
+  background: rgba(99, 102, 241, 0.18);
+  color: white;
+}
+
 @keyframes slideIn {
   from {
     transform: translateY(-50px);
@@ -77,10 +99,27 @@
 }
 
 .btn-close-modal:hover {
-  background: #f3f4f6;
-  color: #374151;
+  background: rgba(255, 255, 255, 0.02);
+  color: rgba(15, 23, 42, 0.9);
+  transform: translateY(-2px);
 }
 
+/* modal footer adjustments for glass */
+.modal-content.glass-card .modal-footer {
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.06), rgba(0, 0, 0, 0));
+  border-top-color: rgba(255, 255, 255, 0.04);
+}
+
+.modal-content.glass-card .btn-cancel {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(248, 250, 252, 0.92);
+}
+
+.modal-content.glass-card .btn-submit {
+  position: relative;
+  overflow: hidden;
+}
 /* Form Body */
 .form-body {
   padding: 24px;

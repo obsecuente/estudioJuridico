@@ -1,0 +1,33 @@
+/* SearchInput.css */
+.search-container-glass {
+  position: relative;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  display: flex;
+}
+
+.search-input-glass {
+  width: 100%;
+  padding: 12px 12px 12px 45px;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  border-radius: 10px;
+  font-size: 15px;
+  transition: all 0.3s ease;
+}
+
+.search-input-glass:focus {
+  outline: none;
+  border-color: #d4af37; /* Tu dorado */
+  box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.1);
+  background: white;
+}

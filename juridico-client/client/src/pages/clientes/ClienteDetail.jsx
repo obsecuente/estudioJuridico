@@ -2,16 +2,34 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import api from "../../services/api";
 import ClienteForm from "./ClienteForm";
+import ConsultaForm from "../consultas/ConsultaForm";
+import CasoForm from "../casos/CasoForm";
 import Toast from "../../components/common/Toast";
+import BackButton from "../../components/common/BackButton";
+import DeleteModal from "../../components/common/DeleteModal.jsx";
 import "./ClienteDetail.css";
+import {
+  AddIcon,
+  PencilIcon,
+  TrashICon,
+  RightIcon,
+} from "../../components/common/Icons";
 
 const ClienteDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-
   const [cliente, setCliente] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // ESTADOS PARA MODALES
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showConsultaModal, setShowConsultaModal] = useState(false);
+  const [showCasoModal, setShowCasoModal] = useState(false);
+
+  // ESTADOS PARA EL DELETE MODAL GENÉRICO
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfig, setDeleteConfig] = useState({ type: null, id: null });
+
   const [toast, setToast] = useState(null);
 
   useEffect(() => {
@@ -28,269 +46,240 @@ const ClienteDetail = () => {
       const response = await api.get(`/clientes/${id}`);
       setCliente(response.data.data);
     } catch (err) {
-      console.error("Error al cargar cliente:", err);
-      showToast("Error al cargar el cliente", "error");
       navigate("/dashboard/clientes");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleEliminar = async () => {
-    if (
-      !window.confirm(
-        `¿Estás seguro de eliminar a ${cliente.nombre} ${cliente.apellido}?`
-      )
-    ) {
-      return;
-    }
+  // 1. Prepara la eliminación del CLIENTE
+  const triggerDeleteCliente = () => {
+    setDeleteConfig({ type: "CLIENTE", id: id });
+    setShowDeleteModal(true);
+  };
 
+  // 2. Prepara el cierre de un CASO (usando el mismo modal)
+  const triggerCerrarCaso = (casoId) => {
+    setDeleteConfig({ type: "CASO", id: casoId });
+    setShowDeleteModal(true);
+  };
+
+  // 3. Función única que confirma según el tipo
+  const handleConfirmAction = async () => {
     try {
-      await api.delete(`/clientes/${id}`);
-      showToast("Cliente eliminado exitosamente", "warning");
-      setTimeout(() => {
-        navigate("/dashboard/clientes");
-      }, 1500);
+      if (deleteConfig.type === "CLIENTE") {
+        await api.delete(`/clientes/${deleteConfig.id}`);
+        showToast("Cliente eliminado correctamente", "warning");
+        setTimeout(() => navigate("/dashboard/clientes"), 1500);
+      } else if (deleteConfig.type === "CASO") {
+        // Suponiendo que tu API tiene un endpoint para cerrar o podés usar delete
+        await api.delete(`/casos/${deleteConfig.id}`);
+        showToast("Caso cerrado y archivado", "success");
+        cargarCliente(); // Recargamos para ver los cambios
+      }
     } catch (err) {
-      console.error("Error al eliminar cliente:", err);
-      showToast(
-        err.response?.data?.error || "Error al eliminar el cliente",
-        "error"
-      );
+      showToast("Error al procesar la solicitud", "error");
+    } finally {
+      setShowDeleteModal(false);
     }
   };
 
-  const handleCloseModal = (reload = false) => {
-    setShowEditModal(false);
-    if (reload) {
-      cargarCliente();
-    }
-  };
+  const formatearFecha = (f) =>
+    f ? new Date(f).toLocaleDateString("es-AR") : "-";
 
-  const formatearFecha = (fecha) => {
-    if (!fecha) return "-";
-    return new Date(fecha).toLocaleDateString("es-AR");
-  };
-
-  const getEstadoBadge = (estado) => {
-    const badges = {
-      pendiente: { text: "Pendiente", color: "#f59e0b" },
-      en_progreso: { text: "En Progreso", color: "#3b82f6" },
-      resuelta: { text: "Resuelta", color: "#10b981" },
-      abierto: { text: "Abierto", color: "#10b981" },
-      cerrado: { text: "Cerrado", color: "#6b7280" },
-    };
-    return badges[estado] || { text: estado, color: "#6b7280" };
-  };
-
-  if (loading) {
-    return (
-      <div className="detail-container">
-        <div className="loading-container">
-          <div className="spinner"></div>
-          <p>Cargando cliente...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!cliente) {
-    return (
-      <div className="detail-container">
-        <div className="error-message">Cliente no encontrado</div>
-      </div>
-    );
-  }
+  if (loading) return <div className="detail-container">Cargando...</div>;
+  if (!cliente)
+    return <div className="detail-container">Cliente no encontrado</div>;
 
   return (
     <div className="detail-container">
-      {/* Header con botones de acción */}
       <div className="detail-header">
         <div>
-          <Link to="/dashboard/clientes" className="back-link">
-            ← Volver a Clientes
-          </Link>
+          <BackButton to="/dashboard/clientes" />
           <h1>
-            👤 {cliente.nombre} {cliente.apellido}
+            {cliente.nombre} {cliente.apellido}
           </h1>
-          <p>Información completa del cliente</p>
+          <p>Expediente Digital Individual · ID #{cliente.id_cliente}</p>
         </div>
         <div className="header-actions">
           <button
             className="btn-action-header btn-edit"
             onClick={() => setShowEditModal(true)}
           >
-            ✏️ Editar
+            <PencilIcon /> Editar Perfil
           </button>
           <button
             className="btn-action-header btn-delete"
-            onClick={handleEliminar}
+            onClick={triggerDeleteCliente}
           >
-            🗑️ Eliminar
+            <TrashICon /> Eliminar Cliente
           </button>
         </div>
       </div>
 
-      {/* Grid principal */}
       <div className="detail-grid">
-        {/* Sección: Datos del Cliente */}
+        {/* CARD DATOS DEL CLIENTE - Verificá que esté este bloque */}
         <div className="detail-card">
           <div className="card-header">
-            <h2>📋 Datos del Cliente</h2>
+            <h2>Datos del Cliente</h2>
           </div>
           <div className="card-body">
             <div className="info-row">
-              <span className="info-label">ID:</span>
-              <span className="info-value">{cliente.id_cliente}</span>
+              <span className="info-label">Email</span>
+              <span className="info-value">{cliente.email}</span>
             </div>
             <div className="info-row">
-              <span className="info-label">Nombre:</span>
-              <span className="info-value">{cliente.nombre}</span>
+              <span className="info-label">Teléfono</span>
+              <span className="info-value">{cliente.telefono || "-"}</span>
             </div>
             <div className="info-row">
-              <span className="info-label">Apellido:</span>
-              <span className="info-value">{cliente.apellido}</span>
-            </div>
-            <div className="info-row">
-              <span className="info-label">Email:</span>
-              <span className="info-value">
-                <a href={`mailto:${cliente.email}`}>{cliente.email}</a>
-              </span>
-            </div>
-            <div className="info-row">
-              <span className="info-label">Teléfono:</span>
-              <span className="info-value">
-                {cliente.telefono ? (
-                  <a href={`tel:${cliente.telefono}`}>{cliente.telefono}</a>
-                ) : (
-                  "-"
-                )}
-              </span>
-            </div>
-            <div className="info-row">
-              <span className="info-label">Fecha Registro:</span>
-              <span className="info-value">
-                {formatearFecha(cliente.fecha_registro)}
-              </span>
-            </div>
-            <div className="info-row">
-              <span className="info-label">Consentimiento:</span>
-              <span className="info-value">
-                {cliente.consentimiento_datos
-                  ? "✅ Otorgado"
-                  : "❌ No otorgado"}
-              </span>
+              <span className="info-label">DNI / CUIT</span>
+              <span className="info-value">{cliente.dni || "-"}</span>
             </div>
           </div>
         </div>
 
-        {/* Sección: Consultas */}
+        {/* CARD CONSULTAS - Corregida con 'mensaje' y 'fecha_envio' */}
         <div className="detail-card">
           <div className="card-header">
-            <h2>💬 Consultas ({cliente.consultas?.length || 0})</h2>
-            <button className="btn-small btn-primary">➕ Nueva Consulta</button>
+            <h2>Consultas ({cliente.consultas?.length || 0})</h2>
+            <button
+              className="btn-small btn-primary"
+              onClick={() => setShowConsultaModal(true)}
+            >
+              <AddIcon /> Nueva
+            </button>
           </div>
           <div className="card-body">
             {cliente.consultas && cliente.consultas.length > 0 ? (
-              <div className="list-items">
-                {cliente.consultas.map((consulta) => {
-                  const badge = getEstadoBadge(consulta.estado);
-                  return (
-                    <div key={consulta.id_consulta} className="list-item">
-                      <div className="item-content">
-                        <span className="item-id">#{consulta.id_consulta}</span>
-                        <span
-                          className="item-badge"
-                          style={{ backgroundColor: badge.color }}
-                        >
-                          {badge.text}
-                        </span>
-                      </div>
-                      <div className="item-info">
-                        <p className="item-message">
-                          {consulta.mensaje?.substring(0, 100)}...
-                        </p>
-                        <small className="item-date">
-                          {formatearFecha(consulta.fecha_envio)}
-                        </small>
-                      </div>
-                      <Link
-                        to={`/dashboard/consultas/${consulta.id_consulta}`}
-                        className="item-link"
-                      >
-                        Ver →
-                      </Link>
-                    </div>
-                  );
-                })}
-              </div>
+              cliente.consultas.map((consulta) => (
+                <Link
+                  key={consulta.id_consulta}
+                  to={`/dashboard/consultas/${consulta.id_consulta}`}
+                  className="list-item clickable-item"
+                  style={{ borderLeftColor: "#d4af37", textDecoration: "none" }}
+                >
+                  <div className="item-sidebar">
+                    <span className="item-id">ID #{consulta.id_consulta}</span>
+                    <span className="item-date">
+                      {formatearFecha(consulta.fecha_envio)}
+                    </span>
+                    <span className="item-status">{consulta.estado}</span>
+                  </div>
+                  <div className="item-main-content">
+                    <p className="preview-text">
+                      {consulta.mensaje || "Sin mensaje"}
+                    </p>
+                  </div>
+                  <div className="item-arrow">
+                    <RightIcon />
+                  </div>
+                </Link>
+              ))
             ) : (
-              <div className="empty-state-small">
-                <p>No hay consultas registradas</p>
-              </div>
+              <p className="empty-state-small">No hay consultas registradas.</p>
             )}
           </div>
         </div>
 
-        {/* Sección: Casos */}
-        <div className="detail-card">
+        {/* CARD CASOS (Ocupa todo el ancho abajo) */}
+        <div className="detail-card" style={{ gridColumn: "span 2" }}>
           <div className="card-header">
-            <h2>📂 Casos ({cliente.casos?.length || 0})</h2>
-            <button className="btn-small btn-primary">➕ Nuevo Caso</button>
+            <h2>Expedientes y Casos Legales ({cliente.casos?.length || 0})</h2>
+            <button
+              className="btn-small btn-primary"
+              onClick={() => setShowCasoModal(true)}
+            >
+              <AddIcon /> Iniciar Caso
+            </button>
           </div>
           <div className="card-body">
             {cliente.casos && cliente.casos.length > 0 ? (
-              <div className="list-items">
-                {cliente.casos.map((caso) => {
-                  const badge = getEstadoBadge(caso.estado);
-                  return (
-                    <div key={caso.id_caso} className="list-item">
-                      <div className="item-content">
-                        <span className="item-id">#{caso.id_caso}</span>
-                        <span
-                          className="item-badge"
-                          style={{ backgroundColor: badge.color }}
-                        >
-                          {badge.text}
-                        </span>
-                      </div>
-                      <div className="item-info">
-                        <p className="item-message">
-                          {caso.descripcion?.substring(0, 100)}...
-                        </p>
-                        <small className="item-date">
-                          Inicio: {formatearFecha(caso.fecha_inicio)}
-                        </small>
-                      </div>
-                      <Link
-                        to={`/dashboard/casos/${caso.id_caso}`}
-                        className="item-link"
-                      >
-                        Ver →
-                      </Link>
-                    </div>
-                  );
-                })}
-              </div>
+              cliente.casos.map((caso) => (
+                <div key={caso.id_caso} className="list-item clickable-item">
+                  <div className="item-sidebar">
+                    <span className="item-id">Caso #{caso.id_caso}</span>
+                    <span className="item-status">{caso.estado}</span>
+                  </div>
+                  <div className="item-main-content">
+                    <p>{caso.descripcion}</p>
+                  </div>
+                  <button
+                    className="btn-delete-small"
+                    onClick={() => triggerCerrarCaso(caso.id_caso)}
+                    title="Eliminar Caso"
+                  >
+                    <TrashICon />
+                  </button>
+                </div>
+              ))
             ) : (
-              <div className="empty-state-small">
-                <p>No hay casos registrados</p>
-              </div>
+              <p className="empty-state-small">
+                No hay casos iniciados para este cliente.
+              </p>
             )}
           </div>
         </div>
       </div>
 
-      {/* Modal de edición */}
+      {/* --- RENDER DE MODALES --- */}
+
       {showEditModal && (
         <ClienteForm
           cliente={cliente}
-          onClose={handleCloseModal}
+          onClose={(reload) => {
+            setShowEditModal(false);
+            if (reload) cargarCliente();
+          }}
           showToast={showToast}
         />
       )}
 
-      {/* Toast */}
+      {showConsultaModal && (
+        <ConsultaForm
+          clienteId={id}
+          onClose={(reload) => {
+            setShowConsultaModal(false);
+            if (reload) cargarCliente();
+          }}
+          showToast={showToast}
+        />
+      )}
+
+      {showCasoModal && (
+        <CasoForm
+          clienteId={id}
+          onClose={(reload) => {
+            setShowCasoModal(false);
+            if (reload) cargarCliente();
+          }}
+          showToast={showToast}
+        />
+      )}
+
+      {/* MODAL DE ELIMINACIÓN PREMIUM */}
+      <DeleteModal
+        isOpen={showDeleteModal}
+        onConfirm={handleConfirmAction}
+        onCancel={() => setShowDeleteModal(false)}
+        title={
+          deleteConfig.type === "CLIENTE"
+            ? "¿Eliminar Cliente?"
+            : "¿Cerrar Expediente?"
+        }
+        message={
+          deleteConfig.type === "CLIENTE"
+            ? `Se borrará permanentemente a ${cliente.nombre} y todos sus datos.`
+            : "Esta acción archivará el caso seleccionado. ¿Confirmar?"
+        }
+        confirmLabel={
+          deleteConfig.type === "CLIENTE"
+            ? "Eliminar Cliente"
+            : "Cerrar Expediente"
+        }
+        confirmVariant={deleteConfig.type === "CLIENTE" ? "danger" : "warning"}
+      />
+
       {toast && (
         <Toast
           message={toast.message}

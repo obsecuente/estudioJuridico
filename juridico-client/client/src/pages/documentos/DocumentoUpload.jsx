@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import api from "../../services/api";
+import ModalFrame from "../../components/common/ModalFrame";
+import CustomSelect from "../../components/common/CustomSelect";
 import "./DocumentoUpload.css";
+import { DocumentosIcon, UploadIcon } from "../../components/common/Icons";
 
 const DocumentoUpload = ({ onClose, showToast, idCasoPredefinido = null }) => {
   const [archivo, setArchivo] = useState(null);
@@ -130,126 +133,119 @@ const DocumentoUpload = ({ onClose, showToast, idCasoPredefinido = null }) => {
   };
 
   return (
-    <div className="modal-overlay" onClick={() => onClose(false)}>
-      <div
-        className="modal-content upload-modal"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="modal-header">
-          <h2>⬆️ Subir Documento</h2>
-          <button
-            className="btn-close-modal"
-            onClick={() => onClose(false)}
-            type="button"
-          >
-            ✕
-          </button>
+    <ModalFrame
+      title={`${(<UploadIcon />)} Subir Documento`}
+      onClose={onClose}
+      className={"upload-modal"}
+    >
+      {loadingCasos ? (
+        <div className="loading-form">
+          <div className="spinner"></div>
+          <p>Cargando casos...</p>
         </div>
-
-        {loadingCasos ? (
-          <div className="loading-form">
-            <div className="spinner"></div>
-            <p>Cargando casos...</p>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit}>
-            <div className="form-body">
-              {/* Drop zone */}
-              <div
-                className={`drop-zone ${dragActive ? "active" : ""} ${
-                  archivo ? "has-file" : ""
-                }`}
-                onDragEnter={handleDrag}
-                onDragLeave={handleDrag}
-                onDragOver={handleDrag}
-                onDrop={handleDrop}
-              >
-                {archivo ? (
-                  <div className="file-preview">
-                    <div className="file-icon">📄</div>
-                    <div className="file-info">
-                      <p className="file-name">{archivo.name}</p>
-                      <p className="file-size">
-                        {(archivo.size / 1024 / 1024).toFixed(2)} MB
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      className="btn-remove-file"
-                      onClick={() => setArchivo(null)}
-                    >
-                      ✕
-                    </button>
+      ) : (
+        <form onSubmit={handleSubmit}>
+          <div className="form-body">
+            {/* Drop zone */}
+            <div
+              className={`drop-zone ${dragActive ? "active" : ""} ${
+                archivo ? "has-file" : ""
+              }`}
+              onDragEnter={handleDrag}
+              onDragLeave={handleDrag}
+              onDragOver={handleDrag}
+              onDrop={handleDrop}
+            >
+              {archivo ? (
+                <div className="file-preview">
+                  <div className="file-icon">
+                    <DocumentosIcon />
                   </div>
-                ) : (
-                  <>
-                    <div className="drop-icon">📁</div>
-                    <p className="drop-text">
-                      Arrastrá el archivo acá o hacé click para seleccionar
+                  <div className="file-info">
+                    <p className="file-name">{archivo.name}</p>
+                    <p className="file-size">
+                      {(archivo.size / 1024 / 1024).toFixed(2)} MB
                     </p>
-                    <p className="drop-hint">
-                      PDF, Word, Excel, Imágenes (Máx. 10MB)
-                    </p>
-                    <input
-                      type="file"
-                      id="file-input"
-                      className="file-input"
-                      onChange={handleFileInput}
-                      accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.txt"
-                    />
-                    <label htmlFor="file-input" className="btn-select-file">
-                      Seleccionar archivo
-                    </label>
-                  </>
-                )}
-              </div>
-
-              {error && <div className="error-message-upload">{error}</div>}
-
-              {/* Caso */}
-              <div className="form-group">
-                <label htmlFor="id_caso">
-                  Caso asociado <span className="required">*</span>
-                </label>
-                <select
-                  id="id_caso"
-                  value={idCaso}
-                  onChange={(e) => setIdCaso(e.target.value)}
-                  disabled={loading || idCasoPredefinido}
-                  required
-                >
-                  <option value="">Seleccionar caso...</option>
-                  {casos.map((caso) => (
-                    <option key={caso.id_caso} value={caso.id_caso}>
-                      #{caso.id_caso} - {caso.cliente?.nombre}{" "}
-                      {caso.cliente?.apellido}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn-remove-file"
+                    onClick={() => setArchivo(null)}
+                  >
+                    ✕
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className="drop-icon">
+                    <DocumentosIcon />
+                  </div>
+                  <p className="drop-text">
+                    Arrastrá el archivo acá o hacé click para seleccionar
+                  </p>
+                  <p className="drop-hint">
+                    PDF, Word, Excel, Imágenes (Máx. 10MB)
+                  </p>
+                  <input
+                    type="file"
+                    id="file-input"
+                    className="file-input"
+                    onChange={handleFileInput}
+                    accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.txt"
+                  />
+                  <label htmlFor="file-input" className="btn-select-file">
+                    Seleccionar archivo
+                  </label>
+                </>
+              )}
             </div>
 
-            <div className="modal-footer">
-              <button
-                type="button"
-                className="btn-cancel"
-                onClick={() => onClose(false)}
-                disabled={loading}
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                className="btn-submit"
-                disabled={loading || !archivo || !idCaso}
-              >
-                {loading ? "Subiendo..." : "Subir Documento"}
-              </button>
+            {error && <div className="error-message-upload">{error}</div>}
+
+            {/* Caso */}
+            <div className="form-group">
+              <label htmlFor="id_caso">
+                Caso asociado <span className="required">*</span>
+              </label>
+              <CustomSelect
+                name="id_caso"
+                options={[
+                  { value: "", label: "Seleccionar caso..." },
+                  ...casos.map((c) => ({
+                    value: String(c.id_caso),
+                    label: `#${c.id_caso} - ${c.cliente?.nombre || ""} ${
+                      c.cliente?.apellido || ""
+                    }`,
+                  })),
+                ]}
+                value={idCaso ? String(idCaso) : ""}
+                onChange={(val) => setIdCaso(val)}
+                disabled={loading || idCasoPredefinido}
+                required
+              />
             </div>
-          </form>
-        )}
-      </div>
-    </div>
+          </div>
+
+          <div className="modal-footer">
+            <button
+              type="button"
+              className="btn-cancel"
+              onClick={() => onClose(false)}
+              disabled={loading}
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              className="btn-submit"
+              disabled={loading || !archivo || !idCaso}
+            >
+              {loading ? "Subiendo..." : "Subir Documento"}
+            </button>
+          </div>
+        </form>
+      )}
+    </ModalFrame>
   );
 };
 

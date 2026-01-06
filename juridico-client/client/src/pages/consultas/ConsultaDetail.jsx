@@ -3,7 +3,22 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import api from "../../services/api";
 import ConsultaForm from "./ConsultaForm";
 import Toast from "../../components/common/Toast";
+import DeleteModal from "../../components/common/DeleteModal";
 import "./ConsultaDetail.css";
+import {
+  AbogadosIcon,
+  ArrowLeftIcon,
+  BlueState,
+  CalendarIcon,
+  ClientIcon,
+  DocumentosIcon,
+  GreenState,
+  MessageIcon,
+  PencilIcon,
+  TrashICon,
+  YellowState,
+} from "../../components/common/Icons";
+import BackButton from "../../components/common/BackButton";
 
 const ConsultaDetail = () => {
   const { id } = useParams();
@@ -36,13 +51,18 @@ const ConsultaDetail = () => {
     }
   };
 
-  const handleEliminar = async () => {
-    if (!window.confirm("¿Estás seguro de eliminar esta consulta?")) {
-      return;
-    }
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfig, setDeleteConfig] = useState({});
 
+  const handleEliminar = () => {
+    // Abrir modal configurado
+    setDeleteConfig({ type: "DELETE_CONSULTA", id });
+    setShowDeleteModal(true);
+  };
+
+  const handleConfirmDelete = async () => {
     try {
-      await api.delete(`/consultas/${id}`);
+      await api.delete(`/consultas/${deleteConfig.id}`);
       showToast("Consulta eliminada exitosamente", "warning");
       setTimeout(() => {
         navigate("/dashboard/consultas");
@@ -53,6 +73,9 @@ const ConsultaDetail = () => {
         err.response?.data?.error || "Error al eliminar la consulta",
         "error"
       );
+    } finally {
+      setShowDeleteModal(false);
+      setDeleteConfig({});
     }
   };
 
@@ -92,9 +115,9 @@ const ConsultaDetail = () => {
 
   const getEstadoBadge = (estado) => {
     const badges = {
-      pendiente: { text: "Pendiente", color: "#f59e0b", icon: "🟡" },
-      en_progreso: { text: "En Progreso", color: "#3b82f6", icon: "🔵" },
-      resuelta: { text: "Resuelta", color: "#10b981", icon: "🟢" },
+      pendiente: { text: "Pendiente", color: "#f59e0b" },
+      en_progreso: { text: "En Progreso", color: "#3b82f6" },
+      resuelta: { text: "Resuelta", color: "#10b981" },
     };
     return badges[estado] || { text: estado, color: "#6b7280", icon: "⚪" };
   };
@@ -125,10 +148,10 @@ const ConsultaDetail = () => {
       {/* Header */}
       <div className="detail-header">
         <div>
-          <Link to="/dashboard/consultas" className="back-link">
-            ← Volver a Consultas
-          </Link>
-          <h1>💬 Consulta #{consulta.id_consulta}</h1>
+          <BackButton to="/dashboard/consultas" text="Volver a Consultas" />
+          <h1>
+            <DocumentosIcon /> Consulta #{consulta.id_consulta}
+          </h1>
           <div className="header-info">
             <span
               className="estado-badge-large"
@@ -137,7 +160,7 @@ const ConsultaDetail = () => {
               {estadoBadge.icon} {estadoBadge.text}
             </span>
             <span className="fecha-envio">
-              📅 {formatearFecha(consulta.fecha_envio)}
+              <CalendarIcon /> {formatearFecha(consulta.fecha_envio)}
             </span>
           </div>
         </div>
@@ -146,13 +169,13 @@ const ConsultaDetail = () => {
             className="btn-action-header btn-edit"
             onClick={() => setShowEditModal(true)}
           >
-            ✏️ Editar
+            <PencilIcon /> Editar
           </button>
           <button
             className="btn-action-header btn-delete"
             onClick={handleEliminar}
           >
-            🗑️ Eliminar
+            <TrashICon /> Eliminar
           </button>
         </div>
       </div>
@@ -168,7 +191,8 @@ const ConsultaDetail = () => {
             onClick={() => handleCambiarEstado("pendiente")}
             disabled={consulta.estado === "pendiente"}
           >
-            🟡 Pendiente
+            <YellowState />
+            Pendiente
           </button>
           <button
             className={`btn-estado ${
@@ -177,7 +201,7 @@ const ConsultaDetail = () => {
             onClick={() => handleCambiarEstado("en_progreso")}
             disabled={consulta.estado === "en_progreso"}
           >
-            🔵 En Progreso
+            <BlueState /> En Progreso
           </button>
           <button
             className={`btn-estado ${
@@ -186,7 +210,7 @@ const ConsultaDetail = () => {
             onClick={() => handleCambiarEstado("resuelta")}
             disabled={consulta.estado === "resuelta"}
           >
-            🟢 Resuelta
+            <GreenState /> Resuelta
           </button>
         </div>
       </div>
@@ -196,7 +220,9 @@ const ConsultaDetail = () => {
         {/* Mensaje de la consulta */}
         <div className="detail-card full-width">
           <div className="card-header">
-            <h2>📋 Mensaje de la Consulta</h2>
+            <h2>
+              <MessageIcon /> Mensaje de la Consulta
+            </h2>
           </div>
           <div className="card-body">
             <p className="mensaje-completo">{consulta.mensaje}</p>
@@ -206,7 +232,9 @@ const ConsultaDetail = () => {
         {/* Cliente */}
         <div className="detail-card">
           <div className="card-header">
-            <h2>👤 Cliente</h2>
+            <h2>
+              <ClientIcon /> Cliente
+            </h2>
             {consulta.cliente && (
               <Link
                 to={`/dashboard/clientes/${consulta.cliente.id_cliente}`}
@@ -255,7 +283,9 @@ const ConsultaDetail = () => {
         {/* Abogado Asignado */}
         <div className="detail-card">
           <div className="card-header">
-            <h2>👨‍⚖️ Abogado Asignado</h2>
+            <h2>
+              <AbogadosIcon /> Abogado Asignado
+            </h2>
           </div>
           <div className="card-body">
             {consulta.abogado ? (
@@ -305,6 +335,19 @@ const ConsultaDetail = () => {
           showToast={showToast}
         />
       )}
+
+      {/* Modal de confirmación de eliminación */}
+      <DeleteModal
+        isOpen={showDeleteModal}
+        title={"¿Eliminar Consulta?"}
+        message={
+          "La consulta será eliminada permanentemente. ¿Desea continuar?"
+        }
+        confirmLabel={"Eliminar Consulta"}
+        confirmVariant={"danger"}
+        onCancel={() => setShowDeleteModal(false)}
+        onConfirm={handleConfirmDelete}
+      />
 
       {/* Toast */}
       {toast && (

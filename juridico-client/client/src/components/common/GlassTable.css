@@ -1,0 +1,158 @@
+:root {
+  --color-primario: #0f172a; /* El azul noche de tu sidebar */
+  --color-acento: #d4af37; /* El dorado premium */
+  --color-borde: #e2e8f0;
+  --color-blanco: #f1f5f9;
+}
+/* common/GlassTable.css */
+.table-wrapper-glass {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(15, 23, 42, 0.05);
+  width: 100%;
+  margin-top: 10px;
+}
+
+.table-glass {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table-glass thead {
+  background: var(--color-primario, #0f172a);
+}
+/* En common/GlassTable.css */
+.table-glass th:last-child {
+  text-align: center !important;
+}
+.table-glass th {
+  padding: 16px 18px;
+  color: var(--color-acento, #d4af37);
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 1.2px;
+  font-weight: 700;
+  text-align: left;
+}
+
+.table-glass td {
+  padding: 16px 18px; /* Espaciado extra para que respire */
+  color: #475569;
+  font-size: 14px;
+  vertical-align: middle;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.5);
+}
+
+.table-glass tbody tr {
+  transition: all 0.2s ease;
+}
+
+.table-glass tbody tr:hover {
+  background-color: rgba(212, 175, 55, 0.03);
+}
+
+/* Ensure action cells are always centered */
+.table-glass td.actions-cell {
+  display: table-cell !important;
+  vertical-align: middle !important;
+  text-align: center !important;
+  padding: 0 10px !important; /* Quitamos los paddings exagerados */
+  border-bottom: 1px solid rgba(226, 232, 240, 0.5) !important;
+  width: 140px; /* Ancho fijo para evitar que los botones se amontonen */
+}
+.table-glass td:first-child {
+  text-align: center;
+}
+/* Unificar padding y centrado vertical */
+.table-glass th,
+.table-glass td {
+  padding: 16px 18px;
+  vertical-align: middle;
+}
+.table-glass thead th {
+  padding: 15px 18px;
+  text-align: left;
+  vertical-align: middle;
+}
+/* Asegurar que el encabezado 'Acciones' esté centrado */
+.table-glass thead th:last-child {
+  text-align: center !important;
+  justify-content: center;
+}
+.actions-wrapper {
+  display: flex !important;
+  flex-direction: row !important; /* Fuerza horizontal */
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 8px !important;
+  height: 100%;
+  min-height: 55px;
+}
+/* Reglas de mayor especificidad para evitar pisoteos de otras hojas */
+.table-wrapper-glass .table-glass tbody tr td.actions-cell,
+.table-wrapper-glass .table-glass td.actions-cell {
+  padding-top: 28px !important; /* empuja los botones hacia abajo */
+  padding-bottom: 14px !important;
+  box-sizing: border-box;
+}
+
+/* Garantizar que los botones no empujen hacia arriba */
+/* 1. Definición base de todos los botones de acción */
+.btn-action {
+  width: 38px !important;
+  height: 38px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 8px !important;
+  border: none !important;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin: 0 !important;
+  padding: 0 !important;
+  color: white !important; /* Asegura que el icono sea blanco */
+}
+
+/* 2. Colores obligatorios para cada tipo (esto es lo que te falta) */
+.btn-view {
+  background-color: #8b5cf6 !important; /* Violeta */
+}
+
+.btn-edit {
+  background-color: #3b82f6 !important; /* El AZUL premium */
+}
+
+.btn-delete {
+  background-color: #ef4444 !important; /* Rojo */
+}
+
+/* 3. Hover: solo movimiento y un poquito de brillo */
+.btn-action:hover {
+  transform: translateY(-3px) !important;
+  filter: brightness(1.1);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+/* 4. Aseguramos que los iconos (SVG) dentro sean blancos */
+.btn-action svg {
+  width: 18px !important;
+  height: 18px !important;
+  fill: white !important;
+}
+.table-glass td.actions-cell .btn-action,
+.actions-cell .btn-action {
+  margin: 0 !important;
+  vertical-align: middle;
+  width: 40px;
+  height: 40px;
+}
+.estado-badge {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: white;
+}

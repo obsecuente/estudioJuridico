@@ -3,7 +3,15 @@ import { Link } from "react-router-dom";
 import api from "../../services/api";
 import CasoForm from "./CasoForm";
 import Toast from "../../components/common/Toast";
+import GlassTable from "../../components/common/GlassTable";
 import "./CasosList.css";
+import {
+  AddIcon,
+  EyeIcon,
+  PencilIcon,
+  TrashICon,
+} from "../../components/common/Icons";
+import DeleteModal from "../../components/common/DeleteModal";
 
 const CasosList = () => {
   const [casos, setCasos] = useState([]);
@@ -12,6 +20,8 @@ const CasosList = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [estadoFiltro, setEstadoFiltro] = useState("todos");
   const [showModal, setShowModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [idToDelete, setIdToDelete] = useState(null);
   const [editingCaso, setEditingCaso] = useState(null);
   const [pagination, setPagination] = useState({
     page: 1,
@@ -33,19 +43,14 @@ const CasosList = () => {
     try {
       setLoading(true);
       setError("");
-
       const params = {
         page: pagination.page,
         limit: pagination.limit,
         search: searchTerm,
       };
-
-      if (estadoFiltro !== "todos") {
-        params.estado = estadoFiltro;
-      }
+      if (estadoFiltro !== "todos") params.estado = estadoFiltro;
 
       const response = await api.get("/casos", { params });
-
       setCasos(response.data.data);
       setPagination((prev) => ({
         ...prev,
@@ -53,7 +58,6 @@ const CasosList = () => {
         totalPages: response.data.pagination.totalPages,
       }));
     } catch (err) {
-      console.error("Error al cargar casos:", err);
       setError("Error al cargar los casos");
     } finally {
       setLoading(false);
@@ -80,30 +84,28 @@ const CasosList = () => {
     setShowModal(true);
   };
 
-  const handleEliminarCaso = async (id) => {
-    if (!window.confirm("¿Estás seguro de eliminar este caso?")) {
-      return;
-    }
+  const handleEliminarCaso = (id) => {
+    setIdToDelete(id);
+    setShowDeleteModal(true);
+  };
 
+  const confirmDelete = async () => {
     try {
-      await api.delete(`/casos/${id}`);
+      await api.delete(`/casos/${idToDelete}`);
       cargarCasos();
       showToast("Caso eliminado exitosamente", "warning");
     } catch (err) {
-      console.error("Error al eliminar caso:", err);
-      showToast(
-        err.response?.data?.error || "Error al eliminar el caso",
-        "error"
-      );
+      showToast("Error al eliminar", "error");
+    } finally {
+      setShowDeleteModal(false);
+      setIdToDelete(null);
     }
   };
 
   const handleCloseModal = (reload = false) => {
     setShowModal(false);
     setEditingCaso(null);
-    if (reload) {
-      cargarCasos();
-    }
+    if (reload) cargarCasos();
   };
 
   const handlePageChange = (newPage) => {
@@ -125,25 +127,33 @@ const CasosList = () => {
     return badges[estado] || { text: estado, color: "#6b7280" };
   };
 
+  const columnas = [
+    "ID",
+    "Cliente",
+    "Descripción",
+    "Estado",
+    "Abogado",
+    "Fecha Inicio",
+    "Acciones",
+  ];
+
   return (
     <div className="casos-container">
-      {/* Header */}
       <div className="casos-header">
         <div>
           <h1>Gestión de Casos</h1>
           <p>Administrá los casos legales del estudio</p>
         </div>
         <button className="btn-nuevo" onClick={handleNuevoCaso}>
-          ➕ Nuevo Caso
+          <AddIcon /> Nuevo Caso
         </button>
       </div>
 
-      {/* Filtros */}
       <div className="filters-bar">
         <div className="search-bar">
           <input
             type="text"
-            placeholder="🔍 Buscar por cliente, descripción o abogado..."
+            placeholder="Buscar por cliente, descripción o abogado..."
             value={searchTerm}
             onChange={handleSearch}
             className="search-input"
@@ -163,7 +173,7 @@ const CasosList = () => {
             }`}
             onClick={() => handleEstadoFilter("abierto")}
           >
-            🟢 Abiertos
+            Abiertos
           </button>
           <button
             className={`filter-btn ${
@@ -171,162 +181,120 @@ const CasosList = () => {
             }`}
             onClick={() => handleEstadoFilter("cerrado")}
           >
-            ⚫ Cerrados
+            Cerrados
           </button>
         </div>
       </div>
 
-      {/* Error */}
       {error && <div className="error-message">{error}</div>}
 
-      {/* Loading */}
-      {loading ? (
-        <div className="loading-container">
-          <div className="spinner"></div>
-          <p>Cargando casos...</p>
+      <GlassTable columns={columnas} loading={loading}>
+        {casos.length === 0 ? (
+          <tr>
+            <td colSpan={columnas.length} className="empty-state">
+              No se encontraron casos
+            </td>
+          </tr>
+        ) : (
+          casos.map((caso) => {
+            const badge = getEstadoBadge(caso.estado);
+            return (
+              <tr key={caso.id_caso}>
+                <td style={{ textAlign: "center", fontWeight: "bold" }}>
+                  {caso.id_caso}
+                </td>
+                <td className="cliente-cell">
+                  {caso.cliente ? (
+                    <Link to={`/dashboard/clientes/${caso.cliente.id_cliente}`}>
+                      {caso.cliente.nombre} {caso.cliente.apellido}
+                    </Link>
+                  ) : (
+                    "No disponible"
+                  )}
+                </td>
+                <td className="descripcion-cell">
+                  {caso.descripcion?.substring(0, 45)}...
+                </td>
+                <td>
+                  <span
+                    className="estado-badge"
+                    style={{ backgroundColor: badge.color }}
+                  >
+                    {badge.text}
+                  </span>
+                </td>
+                <td className="abogado-cell">
+                  {caso.abogado ? (
+                    `${caso.abogado.nombre} ${caso.abogado.apellido}`
+                  ) : (
+                    <span className="sin-asignar">Sin asignar</span>
+                  )}
+                </td>
+                <td>{formatearFecha(caso.fecha_inicio)}</td>
+                <td className="actions-cell">
+                  <div className="actions-wrapper">
+                    <Link
+                      to={`/dashboard/casos/${caso.id_caso}`}
+                      className="btn-action btn-view"
+                      title="Ver"
+                    >
+                      <EyeIcon />
+                    </Link>
+                    <button
+                      className="btn-action btn-edit"
+                      onClick={() => handleEditarCaso(caso)}
+                      title="Editar"
+                    >
+                      <PencilIcon />
+                    </button>
+                    <button
+                      className="btn-action btn-delete"
+                      onClick={() => handleEliminarCaso(caso.id_caso)}
+                      title="Eliminar"
+                    >
+                      <TrashICon />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            );
+          })
+        )}
+      </GlassTable>
+
+      {pagination.totalPages > 1 && (
+        <div className="pagination">
+          <button
+            onClick={() => handlePageChange(pagination.page - 1)}
+            disabled={pagination.page === 1}
+            className="btn-page"
+          >
+            ← Anterior
+          </button>
+          <div className="page-numbers">
+            {[...Array(pagination.totalPages)].map((_, i) => (
+              <button
+                key={i + 1}
+                onClick={() => handlePageChange(i + 1)}
+                className={`btn-page-number ${
+                  pagination.page === i + 1 ? "active" : ""
+                }`}
+              >
+                {i + 1}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={() => handlePageChange(pagination.page + 1)}
+            disabled={pagination.page === pagination.totalPages}
+            className="btn-page"
+          >
+            Siguiente →
+          </button>
         </div>
-      ) : (
-        <>
-          {/* Tabla */}
-          <div className="table-container">
-            {casos.length === 0 ? (
-              <div className="empty-state">
-                <p>No se encontraron casos</p>
-                {(searchTerm || estadoFiltro !== "todos") && (
-                  <button
-                    onClick={() => {
-                      setSearchTerm("");
-                      setEstadoFiltro("todos");
-                    }}
-                    className="btn-clear"
-                  >
-                    Limpiar filtros
-                  </button>
-                )}
-              </div>
-            ) : (
-              <table className="casos-table">
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>Cliente</th>
-                    <th>Descripción</th>
-                    <th>Estado</th>
-                    <th>Abogado</th>
-                    <th>Fecha Inicio</th>
-                    <th>Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {casos.map((caso) => {
-                    const badge = getEstadoBadge(caso.estado);
-                    return (
-                      <tr key={caso.id_caso}>
-                        <td>{caso.id_caso}</td>
-                        <td className="cliente-cell">
-                          {caso.cliente ? (
-                            <Link
-                              to={`/dashboard/clientes/${caso.cliente.id_cliente}`}
-                            >
-                              {caso.cliente.nombre} {caso.cliente.apellido}
-                            </Link>
-                          ) : (
-                            "Cliente no disponible"
-                          )}
-                        </td>
-                        <td className="descripcion-cell">
-                          {caso.descripcion?.substring(0, 50)}...
-                        </td>
-                        <td>
-                          <span
-                            className="estado-badge"
-                            style={{ backgroundColor: badge.color }}
-                          >
-                            {badge.text}
-                          </span>
-                        </td>
-                        <td className="abogado-cell">
-                          {caso.abogado ? (
-                            `${caso.abogado.nombre} ${caso.abogado.apellido}`
-                          ) : (
-                            <span className="sin-asignar">Sin asignar</span>
-                          )}
-                        </td>
-                        <td>{formatearFecha(caso.fecha_inicio)}</td>
-                        <td className="actions-cell">
-                          <Link
-                            to={`/dashboard/casos/${caso.id_caso}`}
-                            className="btn-action btn-view"
-                            title="Ver detalles"
-                          >
-                            👁️
-                          </Link>
-                          <button
-                            className="btn-action btn-edit"
-                            onClick={() => handleEditarCaso(caso)}
-                            title="Editar"
-                          >
-                            ✏️
-                          </button>
-                          <button
-                            className="btn-action btn-delete"
-                            onClick={() => handleEliminarCaso(caso.id_caso)}
-                            title="Eliminar"
-                          >
-                            🗑️
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            )}
-          </div>
-
-          {/* Paginación */}
-          {pagination.totalPages > 1 && (
-            <div className="pagination">
-              <button
-                onClick={() => handlePageChange(pagination.page - 1)}
-                disabled={pagination.page === 1}
-                className="btn-page"
-              >
-                ← Anterior
-              </button>
-
-              <div className="page-numbers">
-                {[...Array(pagination.totalPages)].map((_, index) => (
-                  <button
-                    key={index + 1}
-                    onClick={() => handlePageChange(index + 1)}
-                    className={`btn-page-number ${
-                      pagination.page === index + 1 ? "active" : ""
-                    }`}
-                  >
-                    {index + 1}
-                  </button>
-                ))}
-              </div>
-
-              <button
-                onClick={() => handlePageChange(pagination.page + 1)}
-                disabled={pagination.page === pagination.totalPages}
-                className="btn-page"
-              >
-                Siguiente →
-              </button>
-            </div>
-          )}
-
-          {/* Info de paginación */}
-          <div className="pagination-info">
-            Mostrando {casos.length} de {pagination.total} casos
-          </div>
-        </>
       )}
 
-      {/* Modal de formulario */}
+      {/* MODALES Y TOAST AL FINAL */}
       {showModal && (
         <CasoForm
           caso={editingCaso}
@@ -335,7 +303,18 @@ const CasosList = () => {
         />
       )}
 
-      {/* Toast */}
+      {showDeleteModal && (
+        <DeleteModal
+          isOpen={showDeleteModal}
+          onConfirm={confirmDelete}
+          onCancel={() => setShowDeleteModal(false)}
+          title="¿Eliminar caso?"
+          message="Esta acción no se puede deshacer y eliminará todos los datos asociados."
+          confirmLabel={"Eliminar Caso"}
+          confirmVariant={"danger"}
+        />
+      )}
+
       {toast && (
         <Toast
           message={toast.message}

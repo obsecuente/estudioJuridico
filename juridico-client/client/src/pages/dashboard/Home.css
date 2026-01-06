@@ -1,253 +1,149 @@
+/* Contenedor Principal */
 .home-container {
   max-width: 1400px;
   margin: 0 auto;
-}
-
-.welcome-section {
-  margin-bottom: 40px;
+  padding: 20px;
 }
 
 .welcome-section h1 {
-  margin: 0 0 10px 0;
   font-size: 32px;
-  color: #0f172a;
-  font-weight: 700;
+  color: #1a1f2b; /* Azul Noche */
+  font-weight: 800;
+  margin-bottom: 8px;
 }
 
-.welcome-section p {
-  margin: 0;
-  font-size: 16px;
-  color: #64748b;
-}
-
+/* Grilla de Estadísticas */
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 24px;
   margin-bottom: 40px;
 }
 
+/* Card con borde fino a la izquierda */
 .stat-card {
-  background: white;
+  background: #1a1f2b; /* Fondo oscuro como el de tu imagen */
   padding: 24px;
-  border-radius: 16px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02),
-    0 2px 4px -1px rgba(0, 0, 0, 0.01);
+  border-radius: 12px;
   display: flex;
   gap: 20px;
   align-items: center;
-  border-left: 4px solid #d4af37;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   text-decoration: none;
-  color: inherit;
-  border-top: none;
+  color: white;
+
+  /* ESTO ES LO IMPORTANTE */
+  border: none; /* Quitamos bordes generales */
+  border-left: 5px solid #f1c40f; /* Forzamos la línea dorada a la izquierda */
+
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+  position: relative;
+  margin-top: 15px;
 }
 
+/* HOVER UNIFICADO: Card y Borde se vuelven dorados */
 .stat-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.08);
-  border-left-color: #0f172a;
+  border-left-color: #f1c40f; /* El Dorado que buscamos */
+  box-shadow: 0 12px 20px rgba(26, 31, 43, 0.1);
+  background-color: #1a1f2b; /* Fondo azul noche al hover opcional, o mantener blanco */
+}
+
+/* Cambiar texto a blanco/dorado cuando la card está en hover */
+.stat-card:hover .stat-info h3,
+.stat-card:hover .stat-value {
+  color: #ffffff;
 }
 
 .stat-icon {
-  width: 64px;
-  height: 64px;
-  border-radius: 12px;
+  width: 56px;
+  height: 56px;
+  background: #f1f5f9;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
-  /* Fondo muy suave para que el icono resalte */
-  background-color: #f1f5f9 !important;
-  color: #0f172a !important; /* Forzamos el azul noche en el icono */
+  color: #1a1f2b;
+  transition: all 0.3s ease;
 }
 
-.stat-icon svg {
-  width: 28px;
-  height: 28px; /* Tamaño del icono dentro de la caja */
-}
-
-.stat-info {
-  flex: 1;
+.stat-card:hover .stat-icon {
+  background: rgba(241, 196, 15, 0.1);
+  color: #f1c40f;
 }
 
 .stat-info h3 {
-  margin: 0 0 4px 0;
-  font-size: 16px;
-  color: #0f172a;
-  font-weight: 600;
+  margin: 0;
+  font-size: 13px;
+  color: #64748b;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
 }
 
 .stat-value {
-  margin: 0;
-  font-size: 30px;
+  margin: 5px 0;
+  font-size: 28px;
   font-weight: 800;
-  color: #0f172a;
+  color: #1a1f2b;
 }
 
+/* Botón "Ver Todos" dentro de la card */
 .stat-link {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  justify-content: center;
-
-  margin-top: 15px;
-  padding: 8px 16px;
-
-  /* Colores base: Neutros para no cansar la vista */
-  background-color: #f1f5f9;
-  color: #0f172a; /* Azul Noche */
-
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-
-  font-size: 12px;
+  gap: 8px;
+  font-size: 11px;
   font-weight: 700;
+  color: #1a1f2b;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  text-decoration: none; /* Por si es un <a> */
-
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  cursor: pointer;
+  transition: all 0.3s ease;
 }
 
-.stat-link:hover {
-  background-color: #0f172a; /* Fondo Azul Noche */
-  color: #d4af37; /* Texto Dorado */
-  border-color: #d4af37; /* Borde Dorado */
-
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
-}
-.stat-link:active {
-  transform: scale(0.95);
-}
+/* El botón reacciona al hover de la card madre */
 .stat-card:hover .stat-link {
-  border-color: #d4af37;
-  background-color: #0f172a;
-  color: #d4af37;
+  color: #f1c40f;
 }
 
-.quick-actions {
-  margin-bottom: 40px;
+/* --- ACCIONES RÁPIDAS --- */
+.quick-actions h2 {
+  font-size: 20px;
+  color: #1a1f2b;
+  margin-bottom: 20px;
 }
 
-.quick-actions h2,
-.recent-activity h2 {
-  margin: 0 0 20px 0;
-  font-size: 22px;
-  color: #0f172a;
-  font-weight: 700;
-}
 .actions-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 16px;
 }
 
 .action-btn {
   background: white;
   border: 1px solid #e2e8f0;
-  padding: 18px 24px;
+  padding: 16px;
   border-radius: 12px;
   display: flex;
   align-items: center;
-  gap: 14px;
-  transition: all 0.2s ease;
-  color: #1e293b;
+  gap: 12px;
+  color: #1a1f2b;
+  font-weight: 600;
   text-decoration: none;
+  transition: all 0.3s ease;
 }
 
+/* Hover Dorado para Acciones Rápidas */
 .action-btn:hover {
-  border-color: #d4af37;
-  background: #0f172a; /* Fondo oscuro al hover */
-  color: white; /* Texto blanco al hover */
+  border-color: #f1c40f;
+  background: #1a1f2b;
+  color: #f1c40f;
   transform: translateY(-3px);
 }
 
-.action-btn:hover .action-icon {
-  color: #d4af37; /* Icono dorado al hover */
-}
-
 .action-icon {
-  font-size: 20px;
-  color: #0f172a;
-  display: flex;
-  transition: color 0.2s ease;
+  color: #1a1f2b;
+  transition: color 0.3s ease;
 }
 
-.recent-activity {
-  margin-bottom: 40px;
-}
-
-.recent-activity h2 {
-  margin: 0 0 20px 0;
-  font-size: 24px;
-  color: #333;
-}
-
-.activity-card {
-  background: white;
-  padding: 60px;
-  border-radius: 16px;
-  border: 1px dashed #e2e8f0; /* Estilo más moderno para estados vacíos */
-  text-align: center;
-}
-
-.empty-state {
-  color: #999;
-  font-size: 16px;
-  margin: 0;
-}
-
-/* Skeleton loading */
-.skeleton {
-  animation: pulse 1.5s ease-in-out infinite;
-  pointer-events: none;
-}
-
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
-}
-
-.skeleton-icon {
-  width: 80px;
-  height: 80px;
-  background: #e5e7eb;
-  border-radius: 12px;
-  flex-shrink: 0;
-}
-
-.skeleton-text {
-  flex: 1;
-  height: 60px;
-  background: #e5e7eb;
-  border-radius: 8px;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .welcome-section h1 {
-    font-size: 24px;
-  }
-
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .stat-card {
-    flex-direction: column;
-    text-align: center;
-  }
-
-  .actions-grid {
-    grid-template-columns: 1fr;
-  }
+.action-btn:hover .action-icon {
+  color: #f1c40f;
 }

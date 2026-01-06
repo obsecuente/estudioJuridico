@@ -3,9 +3,27 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import api from "../../services/api";
 import CasoForm from "./CasoForm";
 import DocumentoUpload from "../documentos/DocumentoUpload";
-import DocumentoViewer from "../../components/DocumentoViewer";
 import Toast from "../../components/common/Toast";
+import DeleteModal from "../../components/common/DeleteModal";
 import "./CasoDetail.css";
+import {
+  AbogadosIcon,
+  ArrowLeftIcon,
+  CalendarIcon,
+  ClientIcon,
+  DocumentosIcon,
+  DownLoadIcon,
+  excelIcon,
+  EyeIcon,
+  pdfIcon,
+  PencilIcon,
+  photoIcon,
+  TrashICon,
+  txtIcon,
+  wordIcon,
+  zipIcon,
+} from "../../components/common/Icons";
+import BackButton from "../../components/common/BackButton";
 
 const CasoDetail = () => {
   const { id } = useParams();
@@ -15,9 +33,12 @@ const CasoDetail = () => {
   const [loading, setLoading] = useState(true);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
-  const [showViewerModal, setShowViewerModal] = useState(false);
   const [documentoActual, setDocumentoActual] = useState(null);
   const [toast, setToast] = useState(null);
+
+  // Delete/confirm modal
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfig, setDeleteConfig] = useState({});
 
   useEffect(() => {
     cargarCaso();
@@ -41,66 +62,19 @@ const CasoDetail = () => {
     }
   };
 
-  const handleEliminar = async () => {
-    if (!window.confirm("¿Estás seguro de eliminar este caso?")) {
-      return;
-    }
-
-    try {
-      await api.delete(`/casos/${id}`);
-      showToast("Caso eliminado exitosamente", "warning");
-      setTimeout(() => {
-        navigate("/dashboard/casos");
-      }, 1500);
-    } catch (err) {
-      console.error("Error al eliminar caso:", err);
-      showToast(
-        err.response?.data?.error || "Error al eliminar el caso",
-        "error"
-      );
-    }
+  const handleEliminar = () => {
+    setDeleteConfig({ type: "DELETE_CASE", id });
+    setShowDeleteModal(true);
   };
 
   const handleCerrarCaso = async () => {
-    if (!window.confirm("¿Estás seguro de cerrar este caso?")) {
-      return;
-    }
-
-    try {
-      await api.put(`/casos/${id}`, {
-        descripcion: caso.descripcion,
-        estado: "cerrado",
-        fecha_inicio: caso.fecha_inicio,
-        id_cliente: caso.id_cliente,
-        id_abogado: caso.id_abogado,
-      });
-      showToast("Caso cerrado exitosamente", "success");
-      cargarCaso();
-    } catch (err) {
-      console.error("Error al cerrar caso:", err);
-      showToast("Error al cerrar el caso", "error");
-    }
+    setDeleteConfig({ type: "CLOSE_CASE", id });
+    setShowDeleteModal(true);
   };
 
   const handleReabrirCaso = async () => {
-    if (!window.confirm("¿Estás seguro de reabrir este caso?")) {
-      return;
-    }
-
-    try {
-      await api.put(`/casos/${id}`, {
-        descripcion: caso.descripcion,
-        estado: "abierto",
-        fecha_inicio: caso.fecha_inicio,
-        id_cliente: caso.id_cliente,
-        id_abogado: caso.id_abogado,
-      });
-      showToast("Caso reabierto exitosamente", "success");
-      cargarCaso();
-    } catch (err) {
-      console.error("Error al reabrir caso:", err);
-      showToast("Error al reabrir el caso", "error");
-    }
+    setDeleteConfig({ type: "REOPEN_CASE", id });
+    setShowDeleteModal(true);
   };
 
   const handleCloseModal = (reload = false) => {
@@ -117,29 +91,108 @@ const CasoDetail = () => {
     }
   };
 
-  const getFileIcon = (nombreArchivo) => {
-    if (!nombreArchivo) return "📄";
-    const extension = nombreArchivo.split(".").pop().toLowerCase();
-    const icons = {
-      pdf: "📕",
-      doc: "📘",
-      docx: "📘",
-      xls: "📗",
-      xlsx: "📗",
-      txt: "📄",
-      jpg: "🖼️",
-      jpeg: "🖼️",
-      png: "🖼️",
-      gif: "🖼️",
-      zip: "📦",
-      rar: "📦",
-    };
-    return icons[extension] || "📄";
+  const handleConfirmAction = async () => {
+    try {
+      if (deleteConfig.type === "DELETE_CASE") {
+        await api.delete(`/casos/${deleteConfig.id}`);
+        showToast("Caso eliminado exitosamente", "warning");
+        setTimeout(() => navigate("/dashboard/casos"), 1500);
+      } else if (deleteConfig.type === "CLOSE_CASE") {
+        await api.put(`/casos/${deleteConfig.id}`, { estado: "cerrado" });
+        showToast("Caso cerrado exitosamente", "success");
+        cargarCaso();
+      } else if (deleteConfig.type === "REOPEN_CASE") {
+        await api.put(`/casos/${deleteConfig.id}`, { estado: "abierto" });
+        showToast("Caso reabierto exitosamente", "success");
+        cargarCaso();
+      }
+    } catch (err) {
+      console.error("Error al ejecutar acción:", err);
+      showToast("Error al procesar la acción", "error");
+    } finally {
+      setShowDeleteModal(false);
+      setDeleteConfig({});
+    }
   };
 
-  const handleVerDocumento = (documento) => {
-    setDocumentoActual(documento);
-    setShowViewerModal(true);
+  const getFileIcon = (nombreArchivo) => {
+    if (!nombreArchivo) return <txtIcon />;
+    const extension = nombreArchivo.split(".").pop().toLowerCase();
+
+    // Mapeamos la extensión a la VARIABLE del componente importado
+    // Pero para que React lo entienda, asignamos el componente a una variable con Mayúscula
+    const icons = {
+      pdf: pdfIcon,
+      doc: wordIcon,
+      docx: wordIcon,
+      xls: excelIcon,
+      xlsx: excelIcon,
+      txt: txtIcon,
+      jpg: photoIcon,
+      jpeg: photoIcon,
+      png: photoIcon,
+      gif: photoIcon,
+      zip: zipIcon,
+      rar: zipIcon,
+    };
+
+    // Obtenemos el componente (la referencia, no el JSX todavía)
+    const IconComponent = icons[extension] || txtIcon;
+
+    // Devolvemos el componente bien renderizado con Mayúscula
+    return <IconComponent />;
+  };
+
+  const handleVerDocumento = async (documento) => {
+    try {
+      showToast("Generando vista previa...", "info");
+
+      const response = await api.get(
+        `/documentos/${documento.id_documento}/descargar`,
+        { responseType: "blob" }
+      );
+
+      // 1. Forzamos el tipo de contenido basándonos en la extensión si el header falla
+      const extension = documento.nombre_archivo.split(".").pop().toLowerCase();
+      let mimeType = response.headers["content-type"];
+
+      if (extension === "pdf") mimeType = "application/pdf";
+      if (["jpg", "jpeg", "png"].includes(extension))
+        mimeType = `image/${extension === "jpg" ? "jpeg" : extension}`;
+
+      // 2. Creamos el Blob con el tipo explícito
+      const file = new Blob([response.data], { type: mimeType });
+
+      // 3. Creamos la URL
+      const fileURL = window.URL.createObjectURL(file);
+
+      // 4. Abrimos la pestaña
+      const win = window.open();
+      if (win) {
+        // Le damos un título a la pestaña y embebemos el archivo
+        win.document.title = documento.nombre_archivo;
+
+        // Creamos un elemento iframe que ocupe toda la nueva pestaña
+        const iframe = win.document.createElement("iframe");
+        iframe.src = fileURL;
+        iframe.style.width = "100%";
+        iframe.style.height = "100%";
+        iframe.style.border = "none";
+        iframe.style.position = "fixed";
+        iframe.style.inset = "0";
+
+        win.document.body.style.margin = "0";
+        win.document.body.appendChild(iframe);
+
+        // Limpiamos la URL de memoria cuando la pestaña se cierre (opcional pero recomendado)
+        win.onbeforeunload = () => window.URL.revokeObjectURL(fileURL);
+      } else {
+        showToast("El navegador bloqueó la ventana emergente", "error");
+      }
+    } catch (err) {
+      console.error("Error al visualizar:", err);
+      showToast("Error de conexión con el servidor", "error");
+    }
   };
 
   const handleDescargarDocumento = async (documento) => {
@@ -177,10 +230,10 @@ const CasoDetail = () => {
 
   const getEstadoBadge = (estado) => {
     const badges = {
-      abierto: { text: "Abierto", color: "#10b981", icon: "🟢" },
-      cerrado: { text: "Cerrado", color: "#6b7280", icon: "⚫" },
+      abierto: { text: "Abierto", color: "#10b981" },
+      cerrado: { text: "Cerrado", color: "#6b7280" },
     };
-    return badges[estado] || { text: estado, color: "#6b7280", icon: "⚪" };
+    return badges[estado] || { text: estado, color: "#6b7280" };
   };
 
   if (loading) {
@@ -210,9 +263,12 @@ const CasoDetail = () => {
       <div className="detail-header">
         <div>
           <Link to="/dashboard/casos" className="back-link">
-            ← Volver a Casos
+            <BackButton to="/dashboard/casos" text="Volver a casos" />
           </Link>
-          <h1>📂 Caso #{caso.id_caso}</h1>
+          <h1>
+            {" "}
+            <DocumentosIcon /> Caso N°{caso.id_caso}
+          </h1>
           <div className="header-info">
             <span
               className="estado-badge-large"
@@ -221,7 +277,7 @@ const CasoDetail = () => {
               {estadoBadge.icon} {estadoBadge.text}
             </span>
             <span className="fecha-envio">
-              📅 Inicio: {formatearFecha(caso.fecha_inicio)}
+              <CalendarIcon /> Inicio: {formatearFecha(caso.fecha_inicio)}
             </span>
           </div>
         </div>
@@ -230,13 +286,13 @@ const CasoDetail = () => {
             className="btn-action-header btn-edit"
             onClick={() => setShowEditModal(true)}
           >
-            ✏️ Editar
+            <PencilIcon /> Editar
           </button>
           <button
             className="btn-action-header btn-delete"
             onClick={handleEliminar}
           >
-            🗑️ Eliminar
+            <TrashICon /> Eliminar
           </button>
         </div>
       </div>
@@ -250,14 +306,14 @@ const CasoDetail = () => {
               className="btn-estado btn-cerrar"
               onClick={handleCerrarCaso}
             >
-              🔒 Cerrar Caso
+              Cerrar Caso
             </button>
           ) : (
             <button
               className="btn-estado btn-reabrir"
               onClick={handleReabrirCaso}
             >
-              🔓 Reabrir Caso
+              Reabrir Caso
             </button>
           )}
         </div>
@@ -268,7 +324,9 @@ const CasoDetail = () => {
         {/* Descripción del caso */}
         <div className="detail-card full-width">
           <div className="card-header">
-            <h2>📋 Descripción del Caso</h2>
+            <h2>
+              <DocumentosIcon /> Descripción del Caso
+            </h2>
           </div>
           <div className="card-body">
             <p className="descripcion-completa">{caso.descripcion}</p>
@@ -278,7 +336,9 @@ const CasoDetail = () => {
         {/* Cliente */}
         <div className="detail-card">
           <div className="card-header">
-            <h2>👤 Cliente</h2>
+            <h2>
+              <ClientIcon /> Cliente
+            </h2>
             {caso.cliente && (
               <Link
                 to={`/dashboard/clientes/${caso.cliente.id_cliente}`}
@@ -327,7 +387,9 @@ const CasoDetail = () => {
         {/* Abogado Asignado */}
         <div className="detail-card">
           <div className="card-header">
-            <h2>👨‍⚖️ Abogado Asignado</h2>
+            <h2>
+              <AbogadosIcon /> Abogado Asignado
+            </h2>
           </div>
           <div className="card-body">
             {caso.abogado ? (
@@ -362,7 +424,9 @@ const CasoDetail = () => {
         {/* Documentos */}
         <div className="detail-card full-width">
           <div className="card-header">
-            <h2>📄 Documentos ({caso.documentos?.length || 0})</h2>
+            <h2>
+              <DocumentosIcon /> Documentos ({caso.documentos?.length || 0})
+            </h2>
             <button
               className="btn-small btn-primary"
               onClick={() => setShowUploadModal(true)}
@@ -395,14 +459,14 @@ const CasoDetail = () => {
                         onClick={() => handleVerDocumento(documento)}
                         title="Ver documento"
                       >
-                        👁️
+                        <EyeIcon />
                       </button>
                       <button
                         className="item-action-btn btn-download"
                         onClick={() => handleDescargarDocumento(documento)}
                         title="Descargar"
                       >
-                        ⬇️
+                        <DownLoadIcon />
                       </button>
                     </div>
                   </div>
@@ -435,17 +499,40 @@ const CasoDetail = () => {
         />
       )}
 
-      {/* Modal visor de documentos */}
-      {showViewerModal && documentoActual && (
-        <DocumentoViewer
-          documento={documentoActual}
-          onClose={() => {
-            setShowViewerModal(false);
-            setDocumentoActual(null);
-          }}
-          onDownload={() => handleDescargarDocumento(documentoActual)}
-        />
-      )}
+      {/* Modal de confirmación (Cerrar / Reabrir / Eliminar caso) */}
+      <DeleteModal
+        isOpen={showDeleteModal}
+        title={
+          deleteConfig.type === "DELETE_CASE"
+            ? "¿Eliminar Caso?"
+            : deleteConfig.type === "CLOSE_CASE"
+            ? "¿Cerrar Caso?"
+            : "¿Reabrir Caso?"
+        }
+        message={
+          deleteConfig.type === "DELETE_CASE"
+            ? "Esto eliminará el caso y sus archivos asociados. ¿Continuar?"
+            : deleteConfig.type === "CLOSE_CASE"
+            ? "El caso se cerrará y archivará. ¿Desea continuar?"
+            : "El caso será reabierto y volverá a estar activo. ¿Desea continuar?"
+        }
+        confirmLabel={
+          deleteConfig.type === "DELETE_CASE"
+            ? "Eliminar Caso"
+            : deleteConfig.type === "CLOSE_CASE"
+            ? "Cerrar Caso"
+            : "Reabrir Caso"
+        }
+        confirmVariant={
+          deleteConfig.type === "DELETE_CASE"
+            ? "danger"
+            : deleteConfig.type === "CLOSE_CASE"
+            ? "warning"
+            : "success"
+        }
+        onCancel={() => setShowDeleteModal(false)}
+        onConfirm={handleConfirmAction}
+      />
 
       {/* Toast */}
       {toast && (

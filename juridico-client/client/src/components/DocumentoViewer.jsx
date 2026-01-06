@@ -1,6 +1,7 @@
 import { useState } from "react";
 import api from "../services/api";
 import "./DocumentoViewer.css";
+import { DocumentosIcon, DownLoadIcon } from "./common/Icons";
 
 const DocumentoViewer = ({ documento, onClose, onDownload }) => {
   const [loading, setLoading] = useState(true);
@@ -33,7 +34,7 @@ const DocumentoViewer = ({ documento, onClose, onDownload }) => {
               onClick={onDownload}
               title="Descargar"
             >
-              ⬇️ Descargar
+              <DownLoadIcon /> Descargar
             </button>
             <button
               className="viewer-btn viewer-btn-close"
@@ -58,7 +59,7 @@ const DocumentoViewer = ({ documento, onClose, onDownload }) => {
 
               {error && (
                 <div className="viewer-error">
-                  <p>❌ Error al cargar el documento</p>
+                  <p>Error al cargar el documento</p>
                   <button
                     className="viewer-btn viewer-btn-download"
                     onClick={onDownload}
@@ -96,7 +97,9 @@ const DocumentoViewer = ({ documento, onClose, onDownload }) => {
             </>
           ) : (
             <div className="viewer-no-preview">
-              <div className="no-preview-icon">📄</div>
+              <div className="no-preview-icon">
+                <DocumentosIcon />
+              </div>
               <h3>Vista previa no disponible</h3>
               <p>Este tipo de archivo no se puede visualizar en el navegador</p>
               <p className="file-type">Tipo: {extension.toUpperCase()}</p>
@@ -104,7 +107,7 @@ const DocumentoViewer = ({ documento, onClose, onDownload }) => {
                 className="viewer-btn viewer-btn-download"
                 onClick={onDownload}
               >
-                ⬇️ Descargar archivo
+                <DownLoadIcon /> Descargar archivo
               </button>
             </div>
           )}

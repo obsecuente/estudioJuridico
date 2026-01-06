@@ -1,0 +1,28 @@
+.back-button-container {
+  margin-bottom: 20px;
+}
+
+.btn-back-premium {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background-color: #f1f5f9;
+  color: #0f172a;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  text-decoration: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-back-premium:hover {
+  background-color: #0f172a;
+  color: #d4af37;
+  border-color: #d4af37;
+  transform: translateX(-4px);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+}

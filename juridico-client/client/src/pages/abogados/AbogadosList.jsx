@@ -3,8 +3,11 @@ import { Link } from "react-router-dom";
 import api from "../../services/api";
 import AbogadoForm from "./AbogadoForm";
 import Toast from "../../components/common/Toast";
+import DeleteModal from "../../components/common/DeleteModal";
+import { EyeIcon, PencilIcon, TrashICon } from "../../components/common/Icons";
 import { AuthContext } from "../../context/AuthContext";
 import "./AbogadosList.css";
+import "../../components/common/GlassTable.css"; /* glass styling shared */
 
 const AbogadosList = () => {
   // Obtener el rol del usuario logueado
@@ -24,6 +27,8 @@ const AbogadosList = () => {
     totalPages: 0,
   });
   const [toast, setToast] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfig, setDeleteConfig] = useState({ id: null, nombre: "" });
 
   // Cargar abogados
   useEffect(() => {
@@ -85,22 +90,26 @@ const AbogadosList = () => {
     setShowModal(true);
   };
 
-  // Eliminar abogado
-  const handleEliminarAbogado = async (id, nombreCompleto) => {
-    if (!window.confirm(`¿Estas seguro de eliminar a ${nombreCompleto}?`)) {
-      return;
-    }
+  // Mostrar modal de confirmación para eliminar
+  const handleOpenDelete = (id, nombre) => {
+    setDeleteConfig({ id, nombre });
+    setShowDeleteModal(true);
+  };
 
+  const handleConfirmDelete = async () => {
     try {
-      await api.delete(`/abogados/${id}`);
-      cargarAbogados();
+      await api.delete(`/abogados/${deleteConfig.id}`);
       showToast("Abogado eliminado exitosamente", "success");
+      cargarAbogados();
     } catch (err) {
       console.error("Error al eliminar abogado:", err);
       showToast(
         err.response?.data?.error || "Error al eliminar el abogado",
         "error"
       );
+    } finally {
+      setShowDeleteModal(false);
+      setDeleteConfig({ id: null, nombre: "" });
     }
   };
 
@@ -167,8 +176,8 @@ const AbogadosList = () => {
           </div>
         ) : (
           <>
-            {/* Tabla */}
-            <div className="table-container">
+            {/* Tabla (Glass) */}
+            <div className="table-wrapper-glass">
               {abogados.length === 0 ? (
                 <div className="empty-state">
                   <p>No se encontraron abogados</p>
@@ -182,7 +191,7 @@ const AbogadosList = () => {
                   )}
                 </div>
               ) : (
-                <table className="abogados-table">
+                <table className="table-glass">
                   <thead>
                     <tr>
                       <th>ID</th>
@@ -196,51 +205,52 @@ const AbogadosList = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {abogados.map(
-                      (
-                        abogado // Mapeo de la data
-                      ) => (
-                        <tr key={abogado.id_abogado}>
-                          <td>{abogado.id_abogado}</td>
-                          <td>{abogado.dni || "-"}</td>
-                          <td className="nombre-cell">
-                            {abogado.nombre} {abogado.apellido}
-                          </td>
-                          <td>{abogado.email}</td>
-                          <td>{abogado.telefono || "-"}</td>
-                          <td>{abogado.especialidad || "-"}</td>
-                          <td>{abogado.rol}</td>
-                          <td className="actions-cell">
+                    {abogados.map((abogado) => (
+                      <tr key={abogado.id_abogado}>
+                        <td>{abogado.id_abogado}</td>
+                        <td>{abogado.dni || "-"}</td>
+                        <td className="nombre-cell">
+                          {abogado.nombre} {abogado.apellido}
+                        </td>
+                        <td>{abogado.email}</td>
+                        <td>{abogado.telefono || "-"}</td>
+                        <td>{abogado.especialidad || "-"}</td>
+                        <td>{abogado.rol}</td>
+                        <td className="actions-cell">
+                          <div className="actions-wrapper">
                             <Link
                               to={`/dashboard/abogados/${abogado.id_abogado}`}
                               className="btn-action btn-view"
-                              title="Ver"
+                              title={`Ver ${abogado.nombre} ${abogado.apellido}`}
+                              aria-label={`Ver ${abogado.nombre} ${abogado.apellido}`}
                             >
-                              👁️
+                              <EyeIcon />
                             </Link>
                             <button
                               className="btn-action btn-edit"
                               onClick={() => handleEditarAbogado(abogado)}
                               title="Editar"
+                              aria-label={`Editar ${abogado.nombre} ${abogado.apellido}`}
                             >
-                              ✏️
+                              <PencilIcon />
                             </button>
                             <button
                               className="btn-action btn-delete"
                               onClick={() =>
-                                handleEliminarAbogado(
+                                handleOpenDelete(
                                   abogado.id_abogado,
                                   `${abogado.nombre} ${abogado.apellido}`
                                 )
                               }
                               title="Eliminar"
+                              aria-label={`Eliminar ${abogado.nombre} ${abogado.apellido}`}
                             >
-                              🗑️
+                              <TrashICon />
                             </button>
-                          </td>
-                        </tr>
-                      )
-                    )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               )}
@@ -295,6 +305,17 @@ const AbogadosList = () => {
           showToast={showToast}
         />
       )}
+
+      {/* DeleteModal */}
+      <DeleteModal
+        isOpen={showDeleteModal}
+        title={`¿Eliminar abogado?`}
+        message={`Se eliminará a ${deleteConfig.nombre}. Esta acción no se puede deshacer.`}
+        confirmLabel={"Eliminar Abogado"}
+        confirmVariant={"danger"}
+        onCancel={() => setShowDeleteModal(false)}
+        onConfirm={handleConfirmDelete}
+      />
 
       {/* Toast de notificaciones */}
       {toast && (

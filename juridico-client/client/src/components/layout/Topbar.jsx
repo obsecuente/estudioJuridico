@@ -14,9 +14,9 @@ const Topbar = () => {
 
   const getRolBadge = (rol) => {
     const badges = {
-      admin: { text: "Admin", color: "#f59e0b" },
-      abogado: { text: "Abogado", color: "#10b981" },
-      asistente: { text: "Asistente", color: "#3b82f6" },
+      admin: { text: "Admin", color: "#e67e22" }, // Un naranja más terracota/cuero
+      abogado: { text: "Abogado", color: "#27ae60" }, // Un verde esmeralda más serio
+      asistente: { text: "Asistente", color: "#2980b9" }, // Un azul acero,
     };
     return badges[rol] || badges.abogado;
   };

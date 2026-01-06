@@ -24,23 +24,10 @@
   font-size: 14px;
 }
 
-/* Botón Nuevo Cliente */
+/* Botón Nuevo Cliente (se redefine más abajo con dorado/acento) */
+/* Mantener selector pero vaciado para evitar duplicados */
 .btn-nuevo {
-  padding: 12px 24px;
-  background: #10b981;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s;
-  font-size: 15px;
-}
-
-.btn-nuevo:hover {
-  background: #059669;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  /* estilos aplicados más abajo (dorado) */
 }
 
 /* Barra de búsqueda */
@@ -62,49 +49,36 @@
   border-color: #667eea;
 }
 
-/* Contenedor de la tabla */
-.table-container {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  overflow: hidden;
+/* Usamos la wrapper glass compartida */
+.table-wrapper-glass {
   margin-bottom: 20px;
 }
 
-/* Tabla */
-.abogados-table {
-  width: 100%;
-  border-collapse: collapse;
+/* Botón primario: dorado/acento */
+.btn-nuevo {
+  padding: 12px 24px;
+  background: linear-gradient(135deg, var(--color-acento) 0%, #b78f2a 100%);
+  color: var(--color-primario);
+  border: none;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 15px;
+  box-shadow: 0 6px 20px rgba(212, 175, 55, 0.12);
 }
 
-.abogados-table thead {
-  background: #f9fafb;
+.btn-nuevo:hover {
+  transform: translateY(-2px);
+  filter: brightness(0.98);
+  box-shadow: 0 10px 30px rgba(212, 175, 55, 0.18);
 }
 
-.abogados-table th {
-  padding: 16px;
+/* Tabla: ahora usamos el estilo compartido .table-glass para apariencia glass y encabezado dorado */
+/* Reglas específicas si necesitamos ajustes puntuales */
+.table-glass thead th {
   text-align: left;
-  font-weight: 600;
-  color: #374151;
-  font-size: 14px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  border-bottom: 2px solid #e5e7eb;
-}
-
-.abogados-table tbody tr {
-  border-bottom: 1px solid #f3f4f6;
-  transition: background-color 0.2s;
-}
-
-.abogados-table tbody tr:hover {
-  background: #f9fafb;
-}
-
-.abogados-table td {
-  padding: 16px;
-  color: #4b5563;
-  font-size: 14px;
+  padding: 15px 18px;
 }
 
 .nombre-cell {
@@ -133,7 +107,8 @@
 
 .btn-edit:hover {
   background: #3b82f6;
-  transform: scale(1.1);
+  color: white;
+  box-shadow: 0 6px 18px rgba(59, 130, 246, 0.18);
 }
 
 .btn-view {
@@ -143,7 +118,7 @@
 .btn-view:hover {
   background: #8b5cf6; /* purple */
   color: #fff;
-  transform: scale(1.08);
+  box-shadow: 0 6px 18px rgba(139, 92, 246, 0.14);
 }
 
 .btn-delete {
@@ -152,7 +127,8 @@
 
 .btn-delete:hover {
   background: #ef4444;
-  transform: scale(1.1);
+  color: white;
+  box-shadow: 0 6px 18px rgba(239, 68, 68, 0.18);
 }
 
 /* Paginación */
@@ -282,11 +258,11 @@
     width: 100%;
   }
 
-  .table-container {
+  .table-wrapper-glass {
     overflow-x: auto;
   }
 
-  .abogados-table {
+  .table-glass {
     min-width: 700px;
   }
 
@@ -295,17 +271,16 @@
   }
 }
 
-/* --- Modificaciones para el manejo de texto en tablas --- */
+/* --- Modificaciones para el manejo de texto en tablas (glass) --- */
 
-.abogados-table {
+.table-glass {
   width: 100%;
   border-collapse: collapse;
-
   table-layout: fixed;
 }
 
-/* 🚨 2. Estilos para que el texto de todas las celdas se envuelva */
-.abogados-table td {
+/* 2. Estilos para que el texto de todas las celdas se envuelva */
+.table-glass td {
   padding: 16px;
   color: #4b5563;
   font-size: 14px;
@@ -314,17 +289,19 @@
   word-wrap: break-word; /* Soporte adicional para ruptura de palabras largas */
 }
 
-/* 🚨 3. Definir un ancho adecuado para la columna de Especialidad */
-/* Esto asume que 'Especialidad' es la 6ta columna (ID, DNI, Nombre, Email, Teléfono, Especialidad) */
-/* Si tu tabla solo muestra: ID, DNI, Nombre, Email, Especialidad, Rol, Acciones, entonces es la 5ta. */
-/* Contemos en tu listado: ID, DNI, Nombre, Email, Especialidad, Rol, Acciones. Es la 5ta visible. */
-.abogados-table td:nth-child(5) {
+/* 3. Definir un ancho adecuado para la columna de Especialidad */
+.table-glass td:nth-child(5) {
   width: 150px; /* Dale un ancho fijo en píxeles */
 }
 
-/* 🚨 4. Ajustar el ancho de las celdas de Acciones para que el resto tenga más espacio */
-.actions-cell {
+/* 4. Ajustar el ancho de las celdas de Acciones para que el resto tenga más espacio */
+.table-glass td.actions-cell {
   width: 140px; /* Fija un ancho para los botones de acción */
+  display: table-cell;
+  vertical-align: middle;
+}
+
+.actions-cell {
   display: flex;
   gap: 8px;
   justify-content: flex-end;
@@ -338,4 +315,20 @@
   height: 36px;
   padding: 0 8px;
   border-radius: 6px;
+}
+/* Icon sizing and focus accessibility */
+.btn-action svg {
+  width: 18px;
+  height: 18px;
+}
+
+.btn-action:focus-visible {
+  outline: 3px solid rgba(102, 126, 234, 0.24);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* Force no hover on rows for this table to keep stable visuals */
+.table-wrapper-glass .table-glass tbody tr:hover {
+  background: none !important;
 }

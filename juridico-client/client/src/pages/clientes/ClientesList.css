@@ -1,10 +1,18 @@
-/* Contenedor principal */
+:root {
+  --color-primario: #0f172a;
+  --color-acento: #d4af37;
+  --color-borde: #e2e8f0;
+  --color-blanco: #f1f5f9;
+  --hover-row: #eff6ff;
+}
+
 .clientes-container {
   max-width: 1400px;
   margin: 0 auto;
+  padding: 30px;
+  background-color: #f8fafc;
 }
 
-/* Header con título y botón */
 .clientes-header {
   display: flex;
   justify-content: space-between;
@@ -24,285 +32,112 @@
   font-size: 14px;
 }
 
-/* Botón Nuevo Cliente */
-.btn-nuevo {
-  padding: 12px 24px;
-  background: #10b981;
-  color: white;
-  border: none;
-  border-radius: 8px;
+/* BOTÓN NUEVO: Restaurado con tus estilos originales */
+.clientes-header .btn-nuevo {
+  background: var(--color-primario);
+  color: var(--color-acento);
+  border: 1px solid rgba(212, 175, 55, 0.12);
+  padding: 10px 18px;
+  border-radius: 6px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s;
-  font-size: 15px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  font-size: 14px;
+  letter-spacing: 0.4px;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
 }
 
-.btn-nuevo:hover {
-  background: #059669;
+.clientes-header .btn-nuevo:hover {
+  background: rgba(212, 175, 55, 0.98);
+  color: var(--color-primario);
+  border-color: rgba(15, 23, 42, 0.06);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
 }
 
-/* Barra de búsqueda */
-.search-bar {
-  margin-bottom: 20px;
-}
-
-.search-input {
-  width: 100%;
-  padding: 14px 20px;
-  font-size: 15px;
-  border: 2px solid #e5e7eb;
-  border-radius: 8px;
-  transition: border-color 0.3s;
-}
-
-.search-input:focus {
-  outline: none;
-  border-color: #667eea;
-}
-
-/* Contenedor de la tabla */
-.table-container {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  overflow: hidden;
-  margin-bottom: 20px;
-}
-
-/* Tabla */
+/* TABLA Y FILAS: Recuperamos el hover delicado */
 .clientes-table {
   width: 100%;
   border-collapse: collapse;
 }
 
 .clientes-table thead {
-  background: #f9fafb;
+  background: var(--color-primario);
 }
 
 .clientes-table th {
   padding: 16px;
   text-align: left;
   font-weight: 600;
-  color: #374151;
-  font-size: 14px;
+  color: var(--color-acento);
+  font-size: 12px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  border-bottom: 2px solid #e5e7eb;
+  letter-spacing: 1px;
 }
 
 .clientes-table tbody tr {
   border-bottom: 1px solid #f3f4f6;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s ease;
 }
 
 .clientes-table tbody tr:hover {
-  background: #f9fafb;
+  background: var(--hover-row); /* Tu azul delicado */
 }
 
 .clientes-table td {
   padding: 16px;
   color: #4b5563;
   font-size: 14px;
+  vertical-align: middle;
 }
 
 .nombre-cell {
   font-weight: 600;
-  color: #1f2937;
+  color: #1e293b;
 }
 
-/* Botones de acción */
+/* ACCIONES: Corregido el desfase sin perder el estilo */
 .actions-cell {
-  display: flex;
-  gap: 8px;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 10px;
+  padding: 8px !important; /* Eliminamos los 28px de padding-top que rompían todo */
 }
 
 .btn-action {
-  padding: 8px 12px;
-  border: none;
-  border-radius: 6px;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
   cursor: pointer;
-  transition: all 0.2s;
-  font-size: 16px;
+  border: none;
+  color: white;
 }
 
+.btn-view {
+  background: #8b5cf6;
+}
 .btn-edit {
-  background: #dbeafe;
-}
-
-.btn-edit:hover {
   background: #3b82f6;
-  transform: scale(1.1);
 }
-
 .btn-delete {
-  background: #fee2e2;
-}
-
-.btn-delete:hover {
   background: #ef4444;
-  transform: scale(1.1);
 }
 
-/* Paginación */
-.pagination {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 10px;
-  margin: 20px 0;
+.btn-action:hover {
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.15);
 }
 
-.page-numbers {
-  display: flex;
-  gap: 5px;
-}
-
-.btn-page {
-  padding: 10px 16px;
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-weight: 500;
-}
-
-.btn-page:hover:not(:disabled) {
-  background: #f3f4f6;
-  border-color: #667eea;
-}
-
-.btn-page:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-page-number {
-  padding: 8px 14px;
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-weight: 500;
-  min-width: 40px;
-}
-
-.btn-page-number:hover {
-  background: #f3f4f6;
-  border-color: #667eea;
-}
-
-.btn-page-number.active {
-  background: #667eea;
-  color: white;
-  border-color: #667eea;
-}
-
-.pagination-info {
-  text-align: center;
-  color: #6b7280;
-  font-size: 14px;
-  margin-bottom: 20px;
-}
-
-/* Estados */
-.loading-container {
-  text-align: center;
-  padding: 60px 20px;
-}
-
-.spinner {
-  width: 50px;
-  height: 50px;
-  border: 4px solid #f3f4f6;
-  border-top-color: #667eea;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  margin: 0 auto 20px;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.empty-state {
-  text-align: center;
-  padding: 60px 20px;
-  color: #6b7280;
-}
-
-.btn-clear {
-  margin-top: 15px;
-  padding: 10px 20px;
-  background: #667eea;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 500;
-}
-
-.btn-clear:hover {
-  background: #5568d3;
-}
-
-.error-message {
-  background: #fee2e2;
-  color: #dc2626;
-  padding: 16px;
-  border-radius: 8px;
-  margin-bottom: 20px;
-  border-left: 4px solid #dc2626;
-}
-.btn-view {
-  background: #8b5cf6;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.btn-view:hover {
-  background: #7c3aed;
-}
-/* Responsive */
-@media (max-width: 768px) {
-  .clientes-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 15px;
-  }
-
-  .btn-nuevo {
-    width: 100%;
-  }
-
-  .table-container {
-    overflow-x: auto;
-  }
-
-  .clientes-table {
-    min-width: 700px;
-  }
-
-  .pagination {
-    flex-wrap: wrap;
-  }
-}
-
-.btn-view {
-  background: #8b5cf6;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.btn-view:hover {
-  background: #7c3aed;
+.btn-action svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
 }

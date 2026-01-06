@@ -14,17 +14,14 @@ import {
 
 const Home = () => {
   const { user } = useContext(AuthContext);
-
   const [stats, setStats] = useState({
     clientes: 0,
     consultas: 0,
     casos: 0,
     documentos: 0,
   });
-
   const [loading, setLoading] = useState(true);
 
-  // Cargar estadísticas reales
   useEffect(() => {
     cargarEstadisticas();
   }, []);
@@ -32,8 +29,6 @@ const Home = () => {
   const cargarEstadisticas = async () => {
     try {
       setLoading(true);
-
-      // Hacer todas las peticiones en paralelo
       const [clientesRes, consultasRes, casosRes, documentosRes] =
         await Promise.all([
           api.get("/clientes?limit=1"),
@@ -60,28 +55,24 @@ const Home = () => {
       title: "Clientes",
       value: stats.clientes,
       icon: <ClientIcon />,
-      color: "#3b82f6",
       link: "/dashboard/clientes",
     },
     {
       title: "Consultas",
       value: stats.consultas,
       icon: <ConsultasIcon />,
-      color: "#10b981",
       link: "/dashboard/consultas",
     },
     {
       title: "Casos",
       value: stats.casos,
       icon: <CasosIcon />,
-      color: "#f59e0b",
       link: "/dashboard/casos",
     },
     {
       title: "Documentos",
       value: stats.documentos,
       icon: <DocumentosIcon />,
-      color: "#8b5cf6",
       link: "/dashboard/documentos",
     },
   ];
@@ -93,71 +84,58 @@ const Home = () => {
         <p>Panel de gestión para tu estudio jurídico</p>
       </div>
 
-      {/* Estadísticas */}
       <div className="stats-grid">
         {loading
-          ? // Skeleton loading
-            [...Array(4)].map((_, index) => (
-              <div key={index} className="stat-card skeleton">
+          ? [...Array(4)].map((_, i) => (
+              <div key={i} className="stat-card skeleton">
                 <div className="skeleton-icon"></div>
                 <div className="skeleton-text"></div>
               </div>
             ))
           : statsData.map((stat, index) => (
-              <Link
-                to={stat.link}
-                key={index}
-                className="stat-card"
-                style={{ borderTopColor: stat.color }}
-              >
+              <Link to={stat.link} key={index} className="stat-card">
                 <div className="stat-icon">{stat.icon}</div>
                 <div className="stat-info">
                   <h3>{stat.title}</h3>
                   <p className="stat-value">{stat.value}</p>
                   <span className="stat-link">
-                    Ver todos <NextIcon />
+                    VER TODOS <NextIcon />
                   </span>
                 </div>
               </Link>
             ))}
       </div>
 
-      {/* Acciones Rápidas */}
       <div className="quick-actions">
         <h2>Acciones Rápidas</h2>
         <div className="actions-grid">
           <Link to="/dashboard/clientes" className="action-btn">
             <span className="action-icon">
-              {" "}
-              <ClientIcon />{" "}
+              <ClientIcon />
             </span>
             <span>Nuevo Cliente</span>
           </Link>
           <Link to="/dashboard/consultas" className="action-btn">
             <span className="action-icon">
-              {" "}
-              <ConsultasIcon />{" "}
+              <ConsultasIcon />
             </span>
             <span>Nueva Consulta</span>
           </Link>
           <Link to="/dashboard/casos" className="action-btn">
             <span className="action-icon">
-              {" "}
-              <CasosIcon />{" "}
+              <CasosIcon />
             </span>
             <span>Nuevo Caso</span>
           </Link>
           <Link to="/dashboard/documentos" className="action-btn">
             <span className="action-icon">
-              {" "}
-              <DocumentosIcon />{" "}
+              <DocumentosIcon />
             </span>
             <span>Subir Documento</span>
           </Link>
         </div>
       </div>
 
-      {/* Actividad Reciente */}
       <div className="recent-activity">
         <h2>Actividad Reciente</h2>
         <div className="activity-card">

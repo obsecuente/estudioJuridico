@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import api from "../../services/api";
+import ModalFrame from "../../components/common/ModalFrame";
 import "./ClienteForm.css";
 
 const ClienteForm = ({ cliente, onClose, showToast }) => {
@@ -124,138 +125,124 @@ const ClienteForm = ({ cliente, onClose, showToast }) => {
   };
 
   return (
-    <div className="modal-overlay" onClick={() => onClose(false)}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        {/* Header del modal */}
-        <div className="modal-header">
-          <h2>{cliente ? "Editar Cliente" : "Nuevo Cliente"}</h2>
-          <button
-            className="btn-close-modal"
-            onClick={() => onClose(false)}
-            type="button"
-          >
-            ✕
-          </button>
+    <ModalFrame
+      title={cliente ? "Editar Cliente" : "Nuevo Cliente"}
+      onClose={onClose}
+    >
+      <form onSubmit={handleSubmit}>
+        <div className="form-body">
+          {/* Nombre */}
+          <div className="form-group">
+            <label htmlFor="nombre">
+              Nombre <span className="required">*</span>
+            </label>
+            <input
+              type="text"
+              id="nombre"
+              name="nombre"
+              value={formData.nombre}
+              onChange={handleChange}
+              className={errors.nombre ? "input-error" : ""}
+              disabled={loading}
+              placeholder="Juan"
+            />
+            {errors.nombre && (
+              <span className="error-text">{errors.nombre}</span>
+            )}
+          </div>
+
+          {/* Apellido */}
+          <div className="form-group">
+            <label htmlFor="apellido">
+              Apellido <span className="required">*</span>
+            </label>
+            <input
+              type="text"
+              id="apellido"
+              name="apellido"
+              value={formData.apellido}
+              onChange={handleChange}
+              className={errors.apellido ? "input-error" : ""}
+              disabled={loading}
+              placeholder="Pérez"
+            />
+            {errors.apellido && (
+              <span className="error-text">{errors.apellido}</span>
+            )}
+          </div>
+
+          {/* Email */}
+          <div className="form-group">
+            <label htmlFor="email">
+              Email <span className="required">*</span>
+            </label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              className={errors.email ? "input-error" : ""}
+              disabled={loading}
+              placeholder="juan.perez@email.com"
+            />
+            {errors.email && <span className="error-text">{errors.email}</span>}
+          </div>
+
+          {/* Teléfono */}
+          <div className="form-group">
+            <label htmlFor="telefono">Teléfono</label>
+            <input
+              type="tel"
+              id="telefono"
+              name="telefono"
+              value={formData.telefono}
+              onChange={handleChange}
+              className={errors.telefono ? "input-error" : ""}
+              disabled={loading}
+              placeholder="+5492995123456"
+            />
+            {errors.telefono && (
+              <span className="error-text">{errors.telefono}</span>
+            )}
+            <span className="help-text">
+              Formato internacional: +54 (código de área) número
+            </span>
+          </div>
+
+          {/* Consentimiento */}
+          <div className="form-group-checkbox">
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                name="consentimiento_datos"
+                checked={formData.consentimiento_datos}
+                onChange={handleChange}
+                disabled={loading}
+              />
+              <span>
+                El cliente otorga consentimiento para el uso de sus datos
+              </span>
+            </label>
+          </div>
         </div>
 
-        {/* Formulario */}
-        <form onSubmit={handleSubmit}>
-          <div className="form-body">
-            {/* Nombre */}
-            <div className="form-group">
-              <label htmlFor="nombre">
-                Nombre <span className="required">*</span>
-              </label>
-              <input
-                type="text"
-                id="nombre"
-                name="nombre"
-                value={formData.nombre}
-                onChange={handleChange}
-                className={errors.nombre ? "input-error" : ""}
-                disabled={loading}
-                placeholder="Juan"
-              />
-              {errors.nombre && (
-                <span className="error-text">{errors.nombre}</span>
-              )}
-            </div>
-
-            {/* Apellido */}
-            <div className="form-group">
-              <label htmlFor="apellido">
-                Apellido <span className="required">*</span>
-              </label>
-              <input
-                type="text"
-                id="apellido"
-                name="apellido"
-                value={formData.apellido}
-                onChange={handleChange}
-                className={errors.apellido ? "input-error" : ""}
-                disabled={loading}
-                placeholder="Pérez"
-              />
-              {errors.apellido && (
-                <span className="error-text">{errors.apellido}</span>
-              )}
-            </div>
-
-            {/* Email */}
-            <div className="form-group">
-              <label htmlFor="email">
-                Email <span className="required">*</span>
-              </label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                className={errors.email ? "input-error" : ""}
-                disabled={loading}
-                placeholder="juan.perez@email.com"
-              />
-              {errors.email && (
-                <span className="error-text">{errors.email}</span>
-              )}
-            </div>
-
-            {/* Teléfono */}
-            <div className="form-group">
-              <label htmlFor="telefono">Teléfono</label>
-              <input
-                type="tel"
-                id="telefono"
-                name="telefono"
-                value={formData.telefono}
-                onChange={handleChange}
-                className={errors.telefono ? "input-error" : ""}
-                disabled={loading}
-                placeholder="+5492995123456"
-              />
-              {errors.telefono && (
-                <span className="error-text">{errors.telefono}</span>
-              )}
-              <span className="help-text">
-                Formato internacional: +54 (código de área) número
-              </span>
-            </div>
-
-            {/* Consentimiento */}
-            <div className="form-group-checkbox">
-              <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  name="consentimiento_datos"
-                  checked={formData.consentimiento_datos}
-                  onChange={handleChange}
-                  disabled={loading}
-                />
-                <span>
-                  El cliente otorga consentimiento para el uso de sus datos
-                </span>
-              </label>
-            </div>
-          </div>
-
-          {/* Footer con botones */}
-          <div className="modal-footer">
-            <button
-              type="button"
-              className="btn-cancel"
-              onClick={() => onClose(false)}
-              disabled={loading}
-            >
-              Cancelar
-            </button>
-            <button type="submit" className="btn-submit" disabled={loading}>
-              {loading ? "Guardando..." : "Guardar"}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        {/* Footer con botones */}
+        <div className="modal-footer">
+          <button
+            type="button"
+            className="btn-cancel"
+            onClick={() => onClose(false)}
+            disabled={loading}
+          >
+            Cancelar
+          </button>
+          <button type="submit" className="btn-submit" disabled={loading}>
+            {loading ? "Guardando..." : "Guardar"}
+          </button>
+        </div>
+      </form>
+    </ModalFrame>
   );
 };
 

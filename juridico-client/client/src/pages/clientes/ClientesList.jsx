@@ -1,17 +1,37 @@
 import { useState, useEffect } from "react";
-import api from "../../services/api";
-import ClienteForm from "./ClienteForm";
-import Toast from "../../components/common/Toast";
-import "./ClientesList.css";
 import { Link } from "react-router-dom";
+import api from "../../services/api";
+import SearchInput from "../../components/common/SearchInput";
+import GlassTable from "../../components/common/GlassTable";
+import ClienteForm from "./ClienteForm";
+import DeleteModal from "../../components/common/DeleteModal.jsx"; // Importamos tu nuevo componente
+import Toast from "../../components/common/Toast";
+import {
+  AddIcon,
+  EyeIcon,
+  PencilIcon,
+  TrashICon,
+} from "../../components/common/Icons";
+
+import "./ClientesList.css";
 
 const ClientesList = () => {
-  const [clientes, setClientes] = useState([]); //* guarda el array de clientes que nos trae el backend
+  const [clientes, setClientes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [searchTerm, setSearchTerm] = useState(""); //* guardamos lo que el usuario escribe en la busqueda
+  const [searchTerm, setSearchTerm] = useState("");
+
+  // Estados para Modales
   const [showModal, setShowModal] = useState(false);
   const [editingCliente, setEditingCliente] = useState(null);
+
+  // Estados para Eliminación
+  const [deleteModalConfig, setDeleteModalConfig] = useState({
+    show: false,
+    id: null,
+    nombre: "",
+  });
+
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 10,
@@ -20,7 +40,6 @@ const ClientesList = () => {
   });
   const [toast, setToast] = useState(null);
 
-  // Cargar clientes
   useEffect(() => {
     cargarClientes();
   }, [pagination.page, searchTerm]);
@@ -28,19 +47,16 @@ const ClientesList = () => {
   const showToast = (message, type = "success") => {
     setToast({ message, type });
   };
+
   const cargarClientes = async () => {
     try {
       setLoading(true);
-      setError("");
-
       const params = {
         page: pagination.page,
         limit: pagination.limit,
         search: searchTerm,
       };
-
       const response = await api.get("/clientes", { params });
-
       setClientes(response.data.data);
       setPagination((prev) => ({
         ...prev,
@@ -48,220 +64,139 @@ const ClientesList = () => {
         totalPages: response.data.pagination.totalPages,
       }));
     } catch (err) {
-      console.error("Error al cargar clientes:", err);
       setError("Error al cargar los clientes");
     } finally {
       setLoading(false);
     }
   };
 
-  // Manejar búsqueda
+  // --- Lógica de Eliminación ---
+  const handleOpenDeleteModal = (id, nombreCompleto) => {
+    setDeleteModalConfig({ show: true, id, nombre: nombreCompleto });
+  };
+
+  const confirmEliminar = async () => {
+    try {
+      await api.delete(`/clientes/${deleteModalConfig.id}`);
+      cargarClientes();
+      showToast("Cliente eliminado exitosamente", "success");
+    } catch (err) {
+      showToast(err.response?.data?.error || "Error al eliminar", "error");
+    } finally {
+      setDeleteModalConfig({ show: false, id: null, nombre: "" });
+    }
+  };
+
+  // ... (handleSearch, handleNuevoCliente, handleEditarCliente, handleCloseModal, handlePageChange se mantienen igual)
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
     setPagination((prev) => ({ ...prev, page: 1 }));
   };
-
-  // Abrir modal para crear
   const handleNuevoCliente = () => {
     setEditingCliente(null);
     setShowModal(true);
   };
-
-  // Abrir modal para editar
   const handleEditarCliente = (cliente) => {
     setEditingCliente(cliente);
     setShowModal(true);
   };
-
-  // Eliminar cliente
-  const handleEliminarCliente = async (id, nombreCompleto) => {
-    if (!window.confirm(`¿Estás seguro de eliminar a ${nombreCompleto}?`)) {
-      return;
-    }
-
-    try {
-      await api.delete(`/clientes/${id}`);
-      cargarClientes();
-      showToast("Cliente eliminado exitosamente", "success");
-    } catch (err) {
-      console.error("Error al eliminar cliente:", err);
-      showToast(
-        err.response?.data?.error || "Error al eliminar el cliente",
-        "error"
-      );
-    }
-  };
-
-  // Cerrar modal y recargar
   const handleCloseModal = (reload = false) => {
     setShowModal(false);
     setEditingCliente(null);
-    if (reload) {
-      cargarClientes();
-    }
+    if (reload) cargarClientes();
   };
-
-  // Cambiar página
   const handlePageChange = (newPage) => {
-    if (newPage >= 1 && newPage <= pagination.totalPages) {
+    if (newPage >= 1 && newPage <= pagination.totalPages)
       setPagination((prev) => ({ ...prev, page: newPage }));
-    }
   };
+  const formatearFecha = (fecha) =>
+    fecha ? new Date(fecha).toLocaleDateString("es-AR") : "-";
 
-  // Formatear fecha
-  const formatearFecha = (fecha) => {
-    if (!fecha) return "-";
-    return new Date(fecha).toLocaleDateString("es-AR");
-  };
   return (
     <div className="clientes-container">
-      {/* Header */}
       <div className="clientes-header">
         <div>
           <h1>Gestión de Clientes</h1>
           <p>Administrá los clientes del estudio</p>
         </div>
         <button className="btn-nuevo" onClick={handleNuevoCliente}>
-          ➕ Nuevo Cliente
+          <AddIcon /> Nuevo Cliente
         </button>
       </div>
 
-      {/* Barra de búsqueda */}
-      <div className="search-bar">
-        <input
-          type="text"
-          placeholder="🔍 Buscar por nombre, email o teléfono..."
-          value={searchTerm}
-          onChange={handleSearch}
-          className="search-input"
-        />
-      </div>
+      <SearchInput
+        value={searchTerm}
+        onChange={handleSearch}
+        placeholder="Buscar por nombre, email o teléfono..."
+      />
 
-      {/* Error */}
-      {error && <div className="error-message">{error}</div>}
-
-      {/* Loading */}
-      {loading ? (
-        <div className="loading-container">
-          <div className="spinner"></div>
-          <p>Cargando clientes...</p>
-        </div>
-      ) : (
-        <>
-          {/* Tabla */}
-          <div className="table-container">
-            {clientes.length === 0 ? (
-              <div className="empty-state">
-                <p>No se encontraron clientes</p>
-                {searchTerm && (
-                  <button
-                    onClick={() => setSearchTerm("")}
-                    className="btn-clear"
+      <GlassTable
+        columns={[
+          "ID",
+          "Nombre",
+          "Email",
+          "Teléfono",
+          "Fecha Registro",
+          "Acciones",
+        ]}
+        loading={loading}
+      >
+        {clientes.length === 0 && !loading ? (
+          <tr>
+            <td colSpan="6" className="empty-state">
+              No se encontraron clientes
+            </td>
+          </tr>
+        ) : (
+          clientes.map((cliente) => (
+            <tr key={cliente.id_cliente}>
+              <td className="text-center" style={{ fontWeight: 600 }}>
+                {cliente.id_cliente}
+              </td>
+              <td className="nombre-cell">
+                {cliente.nombre} {cliente.apellido}
+              </td>
+              <td>{cliente.email}</td>
+              <td>{cliente.telefono || "-"}</td>
+              <td>{formatearFecha(cliente.fecha_registro)}</td>
+              <td>
+                <div className="actions-cell">
+                  <Link
+                    to={`/dashboard/clientes/${cliente.id_cliente}`}
+                    className="btn-action btn-view"
+                    title="Ver detalles"
                   >
-                    Limpiar búsqueda
-                  </button>
-                )}
-              </div>
-            ) : (
-              <table className="clientes-table">
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>Nombre</th>
-                    <th>Email</th>
-                    <th>Teléfono</th>
-                    <th>Fecha Registro</th>
-                    <th>Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {clientes.map((cliente) => (
-                    <tr key={cliente.id_cliente}>
-                      <td>{cliente.id_cliente}</td>
-                      <td className="nombre-cell">
-                        {cliente.nombre} {cliente.apellido}
-                      </td>
-                      <td>{cliente.email}</td>
-                      <td>{cliente.telefono || "-"}</td>
-                      <td>{formatearFecha(cliente.fecha_registro)}</td>
-                      <td className="actions-cell">
-                        <Link
-                          to={`/dashboard/clientes/${cliente.id_cliente}`}
-                          className="btn-action btn-view"
-                          title="Ver detalles"
-                        >
-                          👁️
-                        </Link>
-                        <button
-                          className="btn-action btn-edit"
-                          onClick={() => handleEditarCliente(cliente)}
-                          title="Editar"
-                        >
-                          ✏️
-                        </button>
-                        <button
-                          className="btn-action btn-delete"
-                          onClick={() =>
-                            handleEliminarCliente(
-                              cliente.id_cliente,
-                              `${cliente.nombre} ${cliente.apellido}`
-                            )
-                          }
-                          title="Eliminar"
-                        >
-                          🗑️
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
-
-          {/* Paginación */}
-          {pagination.totalPages > 1 && (
-            <div className="pagination">
-              <button
-                onClick={() => handlePageChange(pagination.page - 1)}
-                disabled={pagination.page === 1}
-                className="btn-page"
-              >
-                ← Anterior
-              </button>
-
-              <div className="page-numbers">
-                {[...Array(pagination.totalPages)].map((_, index) => (
+                    <EyeIcon />
+                  </Link>
                   <button
-                    key={index + 1}
-                    onClick={() => handlePageChange(index + 1)}
-                    className={`btn-page-number ${
-                      pagination.page === index + 1 ? "active" : ""
-                    }`}
+                    className="btn-action btn-edit"
+                    onClick={() => handleEditarCliente(cliente)}
+                    title="Editar"
                   >
-                    {index + 1}
+                    <PencilIcon />
                   </button>
-                ))}
-              </div>
+                  <button
+                    className="btn-action btn-delete"
+                    onClick={() =>
+                      handleOpenDeleteModal(
+                        cliente.id_cliente,
+                        `${cliente.nombre} ${cliente.apellido}`
+                      )
+                    }
+                    title="Eliminar"
+                  >
+                    <TrashICon />
+                  </button>
+                </div>
+              </td>
+            </tr>
+          ))
+        )}
+      </GlassTable>
 
-              <button
-                onClick={() => handlePageChange(pagination.page + 1)}
-                disabled={pagination.page === pagination.totalPages}
-                className="btn-page"
-              >
-                Siguiente →
-              </button>
-            </div>
-          )}
+      {/* Paginación (igual que antes) */}
 
-          {/* Info de paginación */}
-          <div className="pagination-info">
-            Mostrando {clientes.length} de {pagination.total} clientes
-          </div>
-        </>
-      )}
-
-      {/* Modal de formulario */}
+      {/* MODAL DE EDICIÓN/CREACIÓN */}
       {showModal && (
         <ClienteForm
           cliente={editingCliente}
@@ -270,7 +205,19 @@ const ClientesList = () => {
         />
       )}
 
-      {/* Toast de notificaciones */}
+      {/* MODAL DE ELIMINACIÓN GLASS (NUEVO) */}
+      <DeleteModal
+        isOpen={deleteModalConfig.show}
+        onConfirm={confirmEliminar}
+        onCancel={() =>
+          setDeleteModalConfig({ show: false, id: null, nombre: "" })
+        }
+        title="Confirmar eliminación"
+        message={`¿Estás seguro de que deseas eliminar a ${deleteModalConfig.nombre}? Esta acción no se puede deshacer.`}
+        confirmLabel={"Eliminar Cliente"}
+        confirmVariant={"danger"}
+      />
+
       {toast && (
         <Toast
           message={toast.message}

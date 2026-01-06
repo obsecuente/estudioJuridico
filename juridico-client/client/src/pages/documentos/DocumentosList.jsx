@@ -4,6 +4,20 @@ import api from "../../services/api";
 import DocumentoUpload from "./DocumentoUpload";
 import Toast from "../../components/common/Toast";
 import "./DocumentosList.css";
+import {
+  CasosIcon,
+  DownLoadIcon,
+  excelIcon,
+  EyeIcon,
+  pdfIcon,
+  PencilIcon,
+  photoIcon,
+  TrashICon,
+  txtIcon,
+  UploadIcon,
+  wordIcon,
+  zipIcon,
+} from "../../components/common/Icons";
 
 const DocumentosList = () => {
   const [documentos, setDocumentos] = useState([]);
@@ -18,6 +32,8 @@ const DocumentosList = () => {
     totalPages: 0,
   });
   const [toast, setToast] = useState(null);
+  const [editingDoc, setEditingDoc] = useState(null);
+  const [newName, setNewName] = useState("");
 
   useEffect(() => {
     cargarDocumentos();
@@ -69,7 +85,10 @@ const DocumentosList = () => {
       setLoading(false);
     }
   };
-
+  const handleEditClick = (doc) => {
+    setEditingDoc(doc);
+    setNewName(doc.nombre_archivo);
+  };
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
     setPagination((prev) => ({ ...prev, page: 1 }));
@@ -78,7 +97,18 @@ const DocumentosList = () => {
   const handleNuevoDocumento = () => {
     setShowUploadModal(true);
   };
-
+  const handleUpdateNombre = async () => {
+    try {
+      await api.put(`/documentos/${editingDoc.id_documento}`, {
+        nombre_archivo: newName,
+      });
+      showToast("Nombre actualizado", "success");
+      setEditingDoc(null);
+      cargarDocumentos(); // Recarga la lista
+    } catch (err) {
+      showToast("Error al actualizar", "error");
+    }
+  };
   const handleEliminarDocumento = async (id, nombre) => {
     if (!window.confirm(`¿Estás seguro de eliminar "${nombre}"?`)) {
       return;
@@ -132,23 +162,31 @@ const DocumentosList = () => {
   };
 
   const getFileIcon = (nombreArchivo) => {
-    if (!nombreArchivo) return "📄";
+    if (!nombreArchivo) return <txtIcon />;
     const extension = nombreArchivo.split(".").pop().toLowerCase();
+
+    // Mapeamos la extensión a la VARIABLE del componente importado
+    // Pero para que React lo entienda, asignamos el componente a una variable con Mayúscula
     const icons = {
-      pdf: "📕",
-      doc: "📘",
-      docx: "📘",
-      xls: "📗",
-      xlsx: "📗",
-      txt: "📄",
-      jpg: "🖼️",
-      jpeg: "🖼️",
-      png: "🖼️",
-      gif: "🖼️",
-      zip: "📦",
-      rar: "📦",
+      pdf: pdfIcon,
+      doc: wordIcon,
+      docx: wordIcon,
+      xls: excelIcon,
+      xlsx: excelIcon,
+      txt: txtIcon,
+      jpg: photoIcon,
+      jpeg: photoIcon,
+      png: photoIcon,
+      gif: photoIcon,
+      zip: zipIcon,
+      rar: zipIcon,
     };
-    return icons[extension] || "📄";
+
+    // Obtenemos el componente (la referencia, no el JSX todavía)
+    const IconComponent = icons[extension] || txtIcon;
+
+    // Devolvemos el componente bien renderizado con Mayúscula
+    return <IconComponent />;
   };
 
   const getFileSize = (bytes) => {
@@ -167,7 +205,7 @@ const DocumentosList = () => {
           <p>Administrá los archivos del estudio</p>
         </div>
         <button className="btn-nuevo" onClick={handleNuevoDocumento}>
-          ⬆️ Subir Documento
+          <UploadIcon /> Subir Documento
         </button>
       </div>
 
@@ -175,7 +213,7 @@ const DocumentosList = () => {
       <div className="search-bar">
         <input
           type="text"
-          placeholder="🔍 Buscar por nombre de archivo..."
+          placeholder="Buscar por nombre de archivo..."
           value={searchTerm}
           onChange={handleSearch}
           className="search-input"
@@ -220,7 +258,7 @@ const DocumentosList = () => {
                     <p className="documento-caso">
                       {doc.caso ? (
                         <Link to={`/dashboard/casos/${doc.caso.id_caso}`}>
-                          📂 Caso #{doc.caso.id_caso}
+                          <CasosIcon /> Caso #{doc.caso.id_caso}
                         </Link>
                       ) : (
                         <span className="sin-caso">Sin caso asignado</span>
@@ -235,15 +273,22 @@ const DocumentosList = () => {
                       }
                       title="Descargar"
                     >
-                      ⬇️
+                      <DownLoadIcon />
                     </button>
                     <Link
                       to={`/dashboard/documentos/${doc.id_documento}`}
                       className="btn-action btn-view"
                       title="Ver detalles"
                     >
-                      👁️
+                      <EyeIcon />
                     </Link>
+                    <button
+                      className="btn-action btn-edit"
+                      onClick={() => handleEditClick(doc)}
+                      title="Editar nombre"
+                    >
+                      <PencilIcon />
+                    </button>
                     <button
                       className="btn-action btn-delete"
                       onClick={() =>
@@ -254,7 +299,7 @@ const DocumentosList = () => {
                       }
                       title="Eliminar"
                     >
-                      🗑️
+                      <TrashICon />
                     </button>
                   </div>
                 </div>
@@ -316,6 +361,41 @@ const DocumentosList = () => {
           type={toast.type}
           onClose={() => setToast(null)}
         />
+      )}
+      {editingDoc && (
+        <div className="modal-overlay">
+          <div className="modal-edit-card">
+            <h2>Editar nombre del archivo</h2>
+            <p
+              style={{
+                fontSize: "12px",
+                color: "#64748b",
+                marginBottom: "10px",
+              }}
+            >
+              Archivo original: {editingDoc.nombre_archivo}
+            </p>
+            <input
+              type="text"
+              className="edit-input"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              autoFocus
+              onKeyDown={(e) => e.key === "Enter" && handleUpdateNombre()}
+            />
+            <div className="modal-buttons">
+              <button
+                className="btn-cancel"
+                onClick={() => setEditingDoc(null)}
+              >
+                Cancelar
+              </button>
+              <button className="btn-save" onClick={handleUpdateNombre}>
+                Guardar Cambios
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
