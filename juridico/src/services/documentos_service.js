@@ -257,6 +257,24 @@ export const obtenerTodos = async (opciones = {}) => {
     },
   };
 };
+export const actualizarNombre = async (id, nuevoNombre) => {
+  /**
+   * Actualiza el nombre de un documento en la BD
+   * * @param {number} id - ID del documento
+   * @param {string} nuevoNombre - Nuevo nombre para el archivo
+   * @returns {Promise<Object>} Documento actualizado
+   */
+  const documento = await Documento.findByPk(id);
+
+  if (!documento) {
+    throw new AppError("Documento no encontrado", 404);
+  }
+
+  // Actualizamos en la base de datos
+  await documento.update({ nombre_archivo: nuevoNombre });
+
+  return documento;
+};
 export default {
   crear,
   obtenerPorCaso,
@@ -264,4 +282,5 @@ export default {
   eliminar,
   descargar,
   obtenerTodos,
+  actualizarNombre,
 };

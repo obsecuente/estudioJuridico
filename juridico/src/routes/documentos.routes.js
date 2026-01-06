@@ -8,6 +8,7 @@ import {
   obtenerDocumentosPorCaso,
   eliminarDocumento,
   descargarDocumento,
+  actualizarNombreDocumento,
 } from "../controllers/documentos_controller.js";
 import authMiddleware from "../middleware/authMiddleware.js";
 import { audit } from "../middleware/auditMiddleware.js";
@@ -66,5 +67,7 @@ router.post("/", upload.array("archivo", 5), subirDocumento);
 
 // DELETE con audit
 router.delete("/:id", audit("ELIMINAR", "documento"), eliminarDocumento);
+
+router.put("/:id", audit("ACTUALIZAR", "documento"), actualizarNombreDocumento);
 
 export default router;
