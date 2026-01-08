@@ -7,7 +7,7 @@ import rateLimit from "express-rate-limit";
 import { testConnection, syncDatabase } from "./src/config/database.js";
 import logger from "./src/config/logger.js"; // NUEVO
 import httpLogger from "./src/middleware/loggerMiddleware.js"; // NUEVO
-
+import iaRoutes from "./src/routes/ia.routes.js";
 // Importar modelos para establecer relaciones
 import "./src/models/index.js";
 
@@ -44,7 +44,7 @@ const limiter = rateLimit({
 });
 
 app.use("/api/", limiter);
-
+app.use("/api/ia", iaRoutes);
 // Middlewares de Express
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));

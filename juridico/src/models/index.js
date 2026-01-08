@@ -5,7 +5,7 @@ import Consulta from "./Consulta.js";
 import Caso from "./Caso.js";
 import Documento from "./Documento.js";
 import Auditoria from "./Auditoria.js";
-
+import IA from "./ResumenIA.js";
 /**
  * DEFINICIÓN DE RELACIONES (ASOCIACIONES)
  *
@@ -98,7 +98,23 @@ Auditoria.belongsTo(Abogado, {
   foreignKey: "id_usuario",
   as: "usuario",
 });
+import ResumenIA from "./ResumenIA.js";
 
+// Relaciones con ResumenIA
+ResumenIA.belongsTo(Documento, {
+  foreignKey: "id_documento",
+  as: "documento",
+});
+
+Documento.hasOne(ResumenIA, {
+  foreignKey: "id_documento",
+  as: "resumen",
+});
+
+ResumenIA.belongsTo(Abogado, {
+  foreignKey: "id_usuario_creo",
+  as: "usuario",
+});
 export {
   sequelize,
   Cliente,

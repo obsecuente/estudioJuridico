@@ -21,6 +21,7 @@ import {
   zipIcon,
 } from "../../components/common/Icons";
 import BackButton from "../../components/common/BackButton";
+import ResumenIA from "../../components/ia/ResumenIA";
 
 const DocumentoDetail = () => {
   const { id } = useParams();
@@ -261,6 +262,7 @@ const DocumentoDetail = () => {
       </div>
 
       <div className="detail-grid">
+        {/* TABLA 1: INFORMACIÓN */}
         <div className="detail-card">
           <div className="card-header">
             <h2>
@@ -279,6 +281,7 @@ const DocumentoDetail = () => {
           </div>
         </div>
 
+        {/* TABLA 2: CASO ASOCIADO */}
         <div className="detail-card">
           <div className="card-header">
             <h2>
@@ -315,17 +318,13 @@ const DocumentoDetail = () => {
           </div>
         </div>
 
+        {/* TABLA 3: RESUMEN IA (OCUPA TODO EL ANCHO) */}
+        {/* IMPORTANTE: Un solo div con ambas clases para que el grid lo estire */}
         <div className="detail-card full-width">
-          <div className="card-header">
-            <h2>🤖 Análisis con IA</h2>
-          </div>
-          <div className="card-body">
-            <div className="ia-placeholder">
-              <p>
-                Funcionalidad de resumen automático disponible próximamente.
-              </p>
-            </div>
-          </div>
+          <ResumenIA
+            idDocumento={documento.id_documento}
+            nombreDocumento={documento.nombre_archivo}
+          />
         </div>
       </div>
 
