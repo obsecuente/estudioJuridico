@@ -115,8 +115,42 @@
   color: #d4af37;
 }
 
-/* Botones de acción en su lugar */
-.documento-actions {
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  .documentos-container {
+    padding: 16px;
+  }
+
+  .documentos-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .documento-card {
+    padding: 14px;
+    min-height: 160px;
+    border-left-width: 6px;
+  }
+
+  .documento-icon {
+    padding: 12px;
+  }
+
+  .documento-nombre {
+    font-size: 14px;
+    white-space: normal;
+    -webkit-line-clamp: 2;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .documento-actions {
+    justify-content: flex-start;
+    gap: 8px;
+    padding-top: 12px;
+  }
+}
   display: flex;
   justify-content: flex-end;
   gap: 10px;

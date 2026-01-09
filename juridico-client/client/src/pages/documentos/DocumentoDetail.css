@@ -197,3 +197,42 @@
   background: #f1c40f;
   color: #1a1f2b;
 }
+
+/* Responsive adjustments: stack layout on small screens */
+@media (max-width: 768px) {
+  .detail-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .h1-text-clickable {
+    font-size: 20px;
+  }
+
+  .subtitle-detail {
+    margin: 6px 0 0 0;
+    font-size: 13px;
+  }
+
+  .input-clean-edit {
+    width: 100%;
+    max-width: 100%;
+    font-size: 20px;
+  }
+
+  .header-actions {
+    width: 100%;
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+  }
+
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .card-body {
+    padding: 16px;
+  }
+}

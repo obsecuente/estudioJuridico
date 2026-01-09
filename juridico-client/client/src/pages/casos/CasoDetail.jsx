@@ -18,9 +18,11 @@ import {
   pdfIcon,
   PencilIcon,
   photoIcon,
+  SaveIcon,
   TrashICon,
   txtIcon,
   wordIcon,
+  Xicon,
   zipIcon,
 } from "../../components/common/Icons";
 import BackButton from "../../components/common/BackButton";
@@ -35,11 +37,17 @@ const CasoDetail = () => {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [documentoActual, setDocumentoActual] = useState(null);
   const [toast, setToast] = useState(null);
-
+  const [isEditingDescripcion, setIsEditingDescripcion] = useState(false);
+  const [nuevaDescripcion, setNuevaDescripcion] = useState("");
   // Delete/confirm modal
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfig, setDeleteConfig] = useState({});
 
+  useEffect(() => {
+    if (caso) {
+      setNuevaDescripcion(caso.descripcion);
+    }
+  }, [caso]);
   useEffect(() => {
     cargarCaso();
   }, [id]);
@@ -112,6 +120,23 @@ const CasoDetail = () => {
     } finally {
       setShowDeleteModal(false);
       setDeleteConfig({});
+    }
+  };
+  const handleSaveDescripcion = async () => {
+    if (!nuevaDescripcion.trim() || nuevaDescripcion === caso.descripcion) {
+      setIsEditingDescripcion(false);
+      setNuevaDescripcion(caso.descripcion);
+      return;
+    }
+
+    try {
+      await api.put(`/casos/${id}`, { descripcion: nuevaDescripcion.trim() });
+      showToast("Descripción actualizada correctamente");
+      setIsEditingDescripcion(false);
+      cargarCaso(); // Recargar el caso
+    } catch (err) {
+      showToast("Error al actualizar la descripción", "error");
+      setNuevaDescripcion(caso.descripcion);
     }
   };
 
@@ -259,28 +284,31 @@ const CasoDetail = () => {
 
   return (
     <div className="detail-container">
-      {/* Header */}
       <div className="detail-header">
-        <div>
-          <Link to="/dashboard/casos" className="back-link">
-            <BackButton to="/dashboard/casos" text="Volver a casos" />
-          </Link>
-          <h1>
-            {" "}
-            <DocumentosIcon /> Caso N°{caso.id_caso}
-          </h1>
-          <div className="header-info">
-            <span
-              className="estado-badge-large"
-              style={{ backgroundColor: estadoBadge.color }}
-            >
-              {estadoBadge.icon} {estadoBadge.text}
-            </span>
-            <span className="fecha-envio">
-              <CalendarIcon /> Inicio: {formatearFecha(caso.fecha_inicio)}
-            </span>
+        <div className="title-section">
+          <BackButton to="/dashboard/casos" text="Volver a casos" />
+
+          <div className="editable-header">
+            <div className="main-file-icon">
+              <DocumentosIcon />
+            </div>
+
+            <div className="title-and-badge">
+              <h1>Caso N°{caso.id_caso}</h1>
+              <span
+                className="estado-badge-large"
+                style={{ backgroundColor: estadoBadge.color }}
+              >
+                {estadoBadge.text}
+              </span>
+            </div>
           </div>
+
+          <span className="subtitle-detail">
+            <CalendarIcon /> Inicio: {formatearFecha(caso.fecha_inicio)}
+          </span>
         </div>
+
         <div className="header-actions">
           <button
             className="btn-action-header btn-edit"
@@ -322,6 +350,7 @@ const CasoDetail = () => {
       {/* Grid principal */}
       <div className="detail-grid">
         {/* Descripción del caso */}
+        {/* Descripción del caso - EDITABLE */}
         <div className="detail-card full-width">
           <div className="card-header">
             <h2>
@@ -329,7 +358,52 @@ const CasoDetail = () => {
             </h2>
           </div>
           <div className="card-body">
-            <p className="descripcion-completa">{caso.descripcion}</p>
+            {isEditingDescripcion ? (
+              <div className="edit-descripcion-container">
+                <textarea
+                  className="textarea-clean-edit"
+                  value={nuevaDescripcion}
+                  onChange={(e) => setNuevaDescripcion(e.target.value)}
+                  autoFocus
+                  rows={6}
+                  onKeyDown={(e) => {
+                    if (e.key === "Escape") {
+                      setIsEditingDescripcion(false);
+                      setNuevaDescripcion(caso.descripcion);
+                    }
+                  }}
+                />
+                <div className="edit-actions">
+                  <button
+                    onClick={handleSaveDescripcion}
+                    className="btn-mini-save"
+                    title="Guardar"
+                  >
+                    <SaveIcon /> Guardar
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsEditingDescripcion(false);
+                      setNuevaDescripcion(caso.descripcion);
+                    }}
+                    className="btn-mini-cancel"
+                    title="Cancelar"
+                  >
+                    <Xicon /> Cancelar
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <p
+                className="descripcion-completa descripcion-clickable"
+                onClick={() => setIsEditingDescripcion(true)}
+              >
+                {caso.descripcion}
+                <span className="icon-edit-inline">
+                  <PencilIcon />
+                </span>
+              </p>
+            )}
           </div>
         </div>
 

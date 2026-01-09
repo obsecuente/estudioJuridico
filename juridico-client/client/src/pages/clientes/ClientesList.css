@@ -141,3 +141,44 @@
   height: 18px;
   fill: currentColor;
 }
+
+@media (max-width: 768px) {
+  /* Mantenemos solo Nombre, Fecha y Acciones para que el scroll sea corto */
+  .clientes-table th:nth-child(1),
+  .clientes-table td:nth-child(1),
+  .clientes-table th:nth-child(3),
+  .clientes-table td:nth-child(3),
+  .clientes-table th:nth-child(4),
+  .clientes-table td:nth-child(4) {
+    display: none;
+  }
+
+  .clientes-table {
+    min-width: 450px; /* Suficiente para que Nombre + Fecha + Botones no se pisen */
+    width: 100%;
+  }
+
+  .clientes-container {
+    padding: 15px 10px;
+  }
+
+  /* Estilo para las celdas de datos */
+  .clientes-table td {
+    padding: 15px 10px;
+    font-size: 14px;
+    white-space: nowrap; /* Evita que el nombre se parta en dos líneas */
+  }
+
+  /* Ajuste de botones para que no se vean pegados al borde */
+  .actions-cell {
+    padding-right: 5px;
+    justify-content: flex-end;
+  }
+
+  /* Cabecera más elegante */
+  .clientes-table th {
+    padding: 12px 10px;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+  }
+}

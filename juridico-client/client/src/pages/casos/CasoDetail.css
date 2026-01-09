@@ -450,3 +450,279 @@
   background: #059669;
   transform: scale(1.1);
 }
+
+/* Edición de Descripción */
+.descripcion-clickable {
+  cursor: pointer;
+  position: relative;
+  padding: 10px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.descripcion-clickable:hover {
+  background: #f9fafb;
+}
+
+.icon-edit-inline {
+  opacity: 0;
+  margin-left: 8px;
+  transition: opacity 0.2s;
+}
+
+.icon-edit-inline svg {
+  width: 14px;
+  height: 14px;
+  color: #9ca3af;
+}
+
+.descripcion-clickable:hover .icon-edit-inline {
+  opacity: 1;
+}
+
+.edit-descripcion-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.textarea-clean-edit {
+  width: 100%;
+  font-size: 15px;
+  font-family: inherit;
+  border: 2px solid #f1c40f;
+  border-radius: 8px;
+  outline: none;
+  color: #1a1f2b;
+  padding: 12px;
+  resize: vertical;
+  min-height: 120px;
+}
+
+.edit-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-mini-save,
+.btn-mini-cancel {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.btn-mini-save {
+  background: #1a1f2b;
+  color: white;
+}
+
+.btn-mini-save:hover {
+  background: #0f172a;
+}
+
+.btn-mini-cancel {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.btn-mini-cancel:hover {
+  background: #d1d5db;
+}
+
+.btn-mini-save svg,
+.btn-mini-cancel svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Ajuste del header para que sea similar a DocumentoDetail */
+.title-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.editable-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-top: 10px;
+}
+
+.main-file-icon svg {
+  width: 36px;
+  height: 36px;
+  color: #1a1f2b;
+}
+
+.title-and-badge {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.title-and-badge h1 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: #1a1f2b;
+}
+
+.subtitle-detail {
+  margin-left: 51px;
+  color: #6b7280;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.subtitle-detail svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Edición de Descripción */
+.descripcion-clickable {
+  cursor: pointer;
+  position: relative;
+  padding: 10px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.descripcion-clickable:hover {
+  background: #f9fafb;
+}
+
+.icon-edit-inline {
+  opacity: 0;
+  margin-left: 8px;
+  transition: opacity 0.2s;
+}
+
+.icon-edit-inline svg {
+  width: 14px;
+  height: 14px;
+  color: #9ca3af;
+}
+
+.descripcion-clickable:hover .icon-edit-inline {
+  opacity: 1;
+}
+
+.edit-descripcion-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.textarea-clean-edit {
+  width: 100%;
+  font-size: 15px;
+  font-family: inherit;
+  border: 2px solid #f1c40f;
+  border-radius: 8px;
+  outline: none;
+  color: #1a1f2b;
+  padding: 12px;
+  resize: vertical;
+  min-height: 120px;
+}
+
+.edit-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-mini-save,
+.btn-mini-cancel {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.btn-mini-save {
+  background: #1a1f2b;
+  color: white;
+}
+
+.btn-mini-save:hover {
+  background: #0f172a;
+}
+
+.btn-mini-cancel {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.btn-mini-cancel:hover {
+  background: #d1d5db;
+}
+
+.btn-mini-save svg,
+.btn-mini-cancel svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Ajuste del header para que sea similar a DocumentoDetail */
+.title-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.editable-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-top: 10px;
+}
+
+.main-file-icon svg {
+  width: 36px;
+  height: 36px;
+  color: #1a1f2b;
+}
+
+.title-and-badge {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.title-and-badge h1 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: #1a1f2b;
+}
+
+.subtitle-detail {
+  margin-left: 51px;
+  color: #6b7280;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.subtitle-detail svg {
+  width: 16px;
+  height: 16px;
+}

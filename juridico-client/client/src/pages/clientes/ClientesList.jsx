@@ -150,16 +150,22 @@ const ClientesList = () => {
         ) : (
           clientes.map((cliente) => (
             <tr key={cliente.id_cliente}>
-              <td className="text-center" style={{ fontWeight: 600 }}>
+              <td
+                data-label="ID"
+                className="text-center"
+                style={{ fontWeight: 600 }}
+              >
                 {cliente.id_cliente}
               </td>
-              <td className="nombre-cell">
+              <td data-label="Nombre" className="nombre-cell">
                 {cliente.nombre} {cliente.apellido}
               </td>
-              <td>{cliente.email}</td>
-              <td>{cliente.telefono || "-"}</td>
-              <td>{formatearFecha(cliente.fecha_registro)}</td>
-              <td>
+              <td data-label="Email">{cliente.email}</td>
+              <td data-label="Teléfono">{cliente.telefono || "-"}</td>
+              <td data-label="Registro">
+                {formatearFecha(cliente.fecha_registro)}
+              </td>
+              <td data-label="Acciones">
                 <div className="actions-cell">
                   <Link
                     to={`/dashboard/clientes/${cliente.id_cliente}`}

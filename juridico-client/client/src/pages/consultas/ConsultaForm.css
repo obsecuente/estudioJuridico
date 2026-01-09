@@ -67,3 +67,30 @@
   border-radius: 10px;
   font-weight: 600;
 }
+
+/* Mobile: stack form controls and footer */
+@media (max-width: 768px) {
+  .form-body {
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .premium-textarea {
+    padding: 10px;
+    font-size: 14px;
+  }
+
+  .modal-footer {
+    flex-direction: column;
+    gap: 10px;
+    align-items: stretch;
+    padding: 12px;
+  }
+
+  .btn-submit,
+  .btn-cancel {
+    width: 100%;
+    padding: 12px;
+    text-align: center;
+  }
+}

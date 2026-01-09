@@ -101,3 +101,24 @@
   background-color: #8b5cf6 !important;
   color: white !important;
 }
+
+/* Mobile: stack filter bar and make primary actions full width */
+@media (max-width: 768px) {
+  .filters-bar {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+
+  .filter-btn {
+    width: 100%;
+  }
+
+  .btn-nuevo {
+    width: 100%;
+  }
+
+  .search-input {
+    height: 44px;
+  }
+}

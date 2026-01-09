@@ -325,3 +325,36 @@
   opacity: 1;
   transform: translateX(3px);
 }
+
+/* Responsive: stack the detail layout on smaller screens */
+@media (max-width: 768px) {
+  .detail-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .header-actions {
+    width: 100%;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .item-sidebar {
+    width: 80px;
+  }
+
+  .list-item {
+    padding: 10px;
+    min-height: 70px;
+  }
+
+  .preview-text {
+    -webkit-line-clamp: 3;
+  }
+}

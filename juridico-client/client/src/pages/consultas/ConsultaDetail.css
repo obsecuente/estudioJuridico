@@ -97,3 +97,27 @@
   font-weight: 500;
   line-height: 1.6;
 }
+/* Mobile responsive adjustments for detail view */
+@media (max-width: 768px) {
+  .estado-badge-large {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+
+  .estado-actions {
+    padding: 12px;
+    border-radius: 12px;
+  }
+
+  .detail-card {
+    padding: 12px;
+  }
+
+  .card-header h2 {
+    font-size: 12px;
+  }
+
+  .mensaje-completo {
+    font-size: 15px;
+  }
+}
