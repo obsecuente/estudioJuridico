@@ -96,8 +96,36 @@ export const obtenerAuditoria = async (opciones = {}) => {
     },
   };
 };
+/**
+ * Obtener actividad reciente del usuario
+ */
+export const obtenerActividadReciente = async (id_usuario, limit = 10) => {
+  try {
+    const registros = await Auditoria.findAll({
+      where: { id_usuario },
+      limit: parseInt(limit),
+      order: [["fecha", "DESC"]],
+      include: [
+        {
+          model: Abogado,
+          as: "usuario",
+          attributes: ["id_abogado", "nombre", "apellido"],
+        },
+      ],
+    });
+
+    return registros;
+  } catch (error) {
+    logger.error("Error al obtener actividad reciente", {
+      error: error.message,
+      id_usuario,
+    });
+    throw error;
+  }
+};
 
 export default {
   registrarAuditoria,
   obtenerAuditoria,
+  obtenerActividadReciente,
 };

@@ -18,6 +18,7 @@ import casosRoutes from "./src/routes/casos.routes.js";
 import documentosRoutes from "./src/routes/documentos.routes.js";
 import abogadosRoutes from "./src/routes/abogados.routes.js";
 import authRoutes from "./src/routes/auth.routes.js";
+import auditoriaRoutes from "./src/routes/auditoria.routes.js";
 
 // Inicializar Express
 const app = express();
@@ -59,6 +60,7 @@ app.use("/api/consultas", consultasRoutes);
 app.use("/api/casos", casosRoutes);
 app.use("/api/documentos", documentosRoutes);
 app.use("/api/abogados", abogadosRoutes);
+app.use("/api/auditoria", auditoriaRoutes);
 
 // Ruta de health check
 app.get("/health", (req, res) => {
