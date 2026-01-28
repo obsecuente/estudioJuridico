@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import api from "../../services/api";
+import useDebounce from "../../hooks/useDebounce";
 import CasoForm from "./CasoForm";
 import Toast from "../../components/common/Toast";
 import GlassTable from "../../components/common/GlassTable";
@@ -31,9 +32,12 @@ const CasosList = () => {
   });
   const [toast, setToast] = useState(null);
 
+  // Aplicar debounce al searchTerm
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+
   useEffect(() => {
     cargarCasos();
-  }, [pagination.page, searchTerm, estadoFiltro]);
+  }, [pagination.page, debouncedSearchTerm, estadoFiltro]);
 
   const showToast = (message, type = "success") => {
     setToast({ message, type });
@@ -46,7 +50,7 @@ const CasosList = () => {
       const params = {
         page: pagination.page,
         limit: pagination.limit,
-        search: searchTerm,
+        search: debouncedSearchTerm,
       };
       if (estadoFiltro !== "todos") params.estado = estadoFiltro;
 

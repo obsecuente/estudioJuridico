@@ -48,7 +48,7 @@ const Vencimiento = sequelize.define(
     },
 
     fecha_limite: {
-      type: DataTypes.DATEONLY,
+      type: DataTypes.DATE,
       allowNull: false,
     },
 

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import api from "../../services/api";
+import useDebounce from "../../hooks/useDebounce";
 import DocumentoUpload from "./DocumentoUpload";
 import Toast from "../../components/common/Toast";
 import "./DocumentosList.css";
@@ -18,6 +19,7 @@ import {
   wordIcon,
   zipIcon,
 } from "../../components/common/Icons";
+import DeleteModal from "../../components/common/DeleteModal";
 
 const DocumentosList = () => {
   const [documentos, setDocumentos] = useState([]);
@@ -34,10 +36,15 @@ const DocumentosList = () => {
   const [toast, setToast] = useState(null);
   const [editingDoc, setEditingDoc] = useState(null);
   const [newName, setNewName] = useState("");
+  // Estado para modal de eliminación
+  const [deleteConfig, setDeleteConfig] = useState({ show: false, id: null, nombre: "" });
+
+  // Aplicar debounce al término de búsqueda
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
   useEffect(() => {
     cargarDocumentos();
-  }, [pagination.page, searchTerm]);
+  }, [pagination.page, debouncedSearchTerm]);
 
   const showToast = (message, type = "success") => {
     setToast({ message, type });
@@ -51,7 +58,7 @@ const DocumentosList = () => {
       const params = {
         page: pagination.page,
         limit: pagination.limit,
-        search: searchTerm,
+        search: debouncedSearchTerm,
       };
 
       const response = await api.get("/documentos", { params });
@@ -109,13 +116,13 @@ const DocumentosList = () => {
       showToast("Error al actualizar", "error");
     }
   };
-  const handleEliminarDocumento = async (id, nombre) => {
-    if (!window.confirm(`¿Estás seguro de eliminar "${nombre}"?`)) {
-      return;
-    }
+  const handleEliminarDocumento = (id, nombre) => {
+    setDeleteConfig({ show: true, id, nombre });
+  };
 
+  const confirmEliminar = async () => {
     try {
-      await api.delete(`/documentos/${id}`);
+      await api.delete(`/documentos/${deleteConfig.id}`);
       cargarDocumentos();
       showToast("Documento eliminado exitosamente", "warning");
     } catch (err) {
@@ -124,6 +131,8 @@ const DocumentosList = () => {
         err.response?.data?.error || "Error al eliminar el documento",
         "error"
       );
+    } finally {
+        setDeleteConfig({ show: false, id: null, nombre: "" });
     }
   };
 
@@ -397,6 +406,17 @@ const DocumentosList = () => {
           </div>
         </div>
       )}
+      
+      {/* Modal de eliminación consistente */}
+      <DeleteModal
+        isOpen={deleteConfig.show}
+        onConfirm={confirmEliminar}
+        onCancel={() => setDeleteConfig({ show: false, id: null, nombre: "" })}
+        title="¿Eliminar documento?"
+        message={`¿Estás seguro de que deseas eliminar "${deleteConfig.nombre}"? Esta acción es irreversible.`}
+        confirmLabel="Eliminar Archivo"
+        confirmVariant="danger"
+      />
     </div>
   );
 };

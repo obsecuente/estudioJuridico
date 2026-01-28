@@ -10,8 +10,9 @@ import {
   TrashICon,
   EyeIcon,
 } from "../../components/common/Icons";
+import DeleteModal from "../../components/common/DeleteModal";
 import EventoForm from "./EventoForm";
-import "./EventosList.css";
+// ... existing imports ...
 
 const EventosList = () => {
   const [eventos, setEventos] = useState([]);
@@ -21,6 +22,8 @@ const EventosList = () => {
   const [filtroAño, setFiltroAño] = useState(new Date().getFullYear());
 
   const [showModal, setShowModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [idToDelete, setIdToDelete] = useState(null);
   const [selectedEvento, setSelectedEvento] = useState(null);
 
   useEffect(() => {
@@ -48,11 +51,14 @@ const EventosList = () => {
     }
   };
 
-  const eliminarEvento = async (id) => {
-    if (!window.confirm("¿Estás seguro de eliminar este evento?")) return;
+  const eliminarEvento = (id) => {
+    setIdToDelete(id);
+    setShowDeleteModal(true);
+  };
 
+  const confirmDelete = async () => {
     try {
-      await eventosService.delete(id);
+      await eventosService.delete(idToDelete);
       setToast({
         message: "Evento eliminado correctamente",
         type: "success",
@@ -64,6 +70,9 @@ const EventosList = () => {
         message: "Error al eliminar el evento",
         type: "error",
       });
+    } finally {
+        setShowDeleteModal(false);
+        setIdToDelete(null);
     }
   };
 
@@ -159,6 +168,8 @@ const EventosList = () => {
                 <th>Fecha</th>
                 <th>Hora</th>
                 <th>Título</th>
+                <th>Caso</th>
+                <th>Cliente</th>
                 <th>Tipo</th>
                 <th>Estado</th>
                 <th>Acciones</th>
@@ -169,12 +180,17 @@ const EventosList = () => {
                 <tr key={evento.id_evento}>
                   <td>{new Date(evento.fecha_inicio).toLocaleDateString()}</td>
                   <td>
-                    {new Date(evento.fecha_inicio).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
+                    {evento.hora_inicio ? evento.hora_inicio.substring(0, 5) : "-"}
                   </td>
                   <td>{evento.titulo}</td>
+                  <td>
+                    {evento.caso ? evento.caso.descripcion : "-"}
+                  </td>
+                  <td>
+                    {evento.cliente
+                      ? `${evento.cliente.nombre} ${evento.cliente.apellido}`
+                      : "-"}
+                  </td>
                   <td>
                     <span className="badge badge-info">{evento.tipo}</span>
                   </td>
@@ -190,13 +206,6 @@ const EventosList = () => {
                     </span>
                   </td>
                   <td className="actions-cell">
-                    <button
-                      className="btn-icon"
-                      title="Ver detalle"
-                      onClick={() => alert("Implementar Ver Detalle")}
-                    >
-                      <EyeIcon />
-                    </button>
                     <button
                       className="btn-icon"
                       title="Editar"
@@ -232,6 +241,16 @@ const EventosList = () => {
           message={toast.message}
           type={toast.type}
           onClose={() => setToast(null)}
+        />
+      )}
+
+      {showDeleteModal && (
+        <DeleteModal
+          isOpen={showDeleteModal}
+          onClose={() => setShowDeleteModal(false)}
+          onConfirm={confirmDelete}
+          title="Eliminar Evento"
+          message="¿Estás seguro de que deseas eliminar este evento? Esta acción no se puede deshacer."
         />
       )}
     </div>

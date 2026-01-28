@@ -55,6 +55,6 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
-accessToken: localStorage.getItem("accessToken");
+
 
 export default api;

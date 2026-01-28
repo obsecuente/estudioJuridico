@@ -1,6 +1,7 @@
 import { useState, useEffect, useContext } from "react";
 import { Link } from "react-router-dom";
 import api from "../../services/api";
+import useDebounce from "../../hooks/useDebounce";
 import AbogadoForm from "./AbogadoForm";
 import Toast from "../../components/common/Toast";
 import DeleteModal from "../../components/common/DeleteModal";
@@ -30,6 +31,9 @@ const AbogadosList = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfig, setDeleteConfig] = useState({ id: null, nombre: "" });
 
+  // Aplicar debounce al término de búsqueda
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+
   // Cargar abogados
   useEffect(() => {
     // Ejecutar carga solo si el usuario es admin (por la restriccion en las rutas)
@@ -41,7 +45,7 @@ const AbogadosList = () => {
         "Acceso denegado. Solo administradores pueden gestionar abogados."
       );
     }
-  }, [pagination.page, searchTerm, isAdmin]);
+  }, [pagination.page, debouncedSearchTerm, isAdmin]);
 
   const showToast = (message, type = "success") => {
     setToast({ message, type });
@@ -55,7 +59,7 @@ const AbogadosList = () => {
       const params = {
         page: pagination.page,
         limit: pagination.limit,
-        search: searchTerm,
+        search: debouncedSearchTerm,
       };
 
       const response = await api.get("/abogados", { params });

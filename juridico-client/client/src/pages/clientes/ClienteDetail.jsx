@@ -132,10 +132,6 @@ const ClienteDetail = () => {
               <span className="info-label">Teléfono</span>
               <span className="info-value">{cliente.telefono || "-"}</span>
             </div>
-            <div className="info-row">
-              <span className="info-label">DNI / CUIT</span>
-              <span className="info-value">{cliente.dni || "-"}</span>
-            </div>
           </div>
         </div>
 

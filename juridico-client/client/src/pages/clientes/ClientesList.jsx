@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import api from "../../services/api";
+import useDebounce from "../../hooks/useDebounce";
 import SearchInput from "../../components/common/SearchInput";
 import GlassTable from "../../components/common/GlassTable";
 import ClienteForm from "./ClienteForm";
@@ -40,9 +41,12 @@ const ClientesList = () => {
   });
   const [toast, setToast] = useState(null);
 
+  // Aplicar debounce al searchTerm para evitar requests excesivos
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+
   useEffect(() => {
     cargarClientes();
-  }, [pagination.page, searchTerm]);
+  }, [pagination.page, debouncedSearchTerm]);
 
   const showToast = (message, type = "success") => {
     setToast({ message, type });
@@ -54,7 +58,7 @@ const ClientesList = () => {
       const params = {
         page: pagination.page,
         limit: pagination.limit,
-        search: searchTerm,
+        search: debouncedSearchTerm,
       };
       const response = await api.get("/clientes", { params });
       setClientes(response.data.data);

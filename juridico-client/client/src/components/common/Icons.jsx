@@ -536,7 +536,6 @@ export const AlarmIcon = () => (
     />
   </svg>
 );
-
 export const EventIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -550,7 +549,6 @@ export const EventIcon = () => (
     />
   </svg>
 );
-
 export const RedState = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -562,5 +560,13 @@ export const RedState = () => (
       fill="#EF4444"
       d="M30 16c0 7.732-6.268 14-14 14S2 23.732 2 16S8.268 2 16 2s14 6.268 14 14"
     />
+  </svg>
+);
+export const CheckIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 20 20"><path fill="currentColor" d="M8.294 16.998c-.435 0-.847-.203-1.111-.553L3.61 11.724a1.39 1.39 0 0 1 .27-1.951a1.39 1.39 0 0 1 1.953.27l2.351 3.104l5.911-9.492a1.396 1.396 0 0 1 1.921-.445c.653.406.854 1.266.446 1.92L9.478 16.34a1.39 1.39 0 0 1-1.12.656z"/></svg>)
+export const SpinnerIcon = () => (
+  <svg className="spinner-icon" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+    <path fill="currentColor" d="M12,4V2A10,10 0 0,0 2,12H4A8,8 0 0,1 12,4Z">
+      <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="0.8s" repeatCount="indefinite" />
+    </path>
   </svg>
 );

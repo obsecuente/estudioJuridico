@@ -260,53 +260,53 @@ export const obtenerResumen = async (id_abogado = null) => {
 
   const baseWhere = id_abogado ? { id_abogado } : {};
 
-  // vencidos
-  const vencidos = await Vencimiento.count({
-    where: {
-      ...baseWhere,
-      fecha_limite: { [Op.lt]: hoyStr },
-      estado: "pendiente",
-    },
-  });
-
-  // vencen hoy
-  const vencenHoy = await Vencimiento.count({
-    where: {
-      ...baseWhere,
-      fecha_limite: hoyStr,
-      estado: "pendiente",
-    },
-  });
-
-  // próximos 7 días
+  // Fechas helper
   const en7dias = new Date();
   en7dias.setDate(hoy.getDate() + 7);
-  const proximos7dias = await Vencimiento.count({
-    where: {
-      ...baseWhere,
-      fecha_limite: {
-        [Op.between]: [hoyStr, en7dias.toISOString().split("T")[0]],
-      },
-      estado: "pendiente",
-    },
-  });
-
-  // total pendientes
-  const totalPendientes = await Vencimiento.count({
-    where: {
-      ...baseWhere,
-      estado: "pendiente",
-    },
-  });
-
-  // alta prioridad
-  const altaPrioridad = await Vencimiento.count({
-    where: {
-      ...baseWhere,
-      estado: "pendiente",
-      prioridad: "alta",
-    },
-  });
+  
+  const [vencidos, vencenHoy, proximos7dias, totalPendientes, altaPrioridad] = await Promise.all([
+    // vencidos
+    Vencimiento.count({
+        where: {
+        ...baseWhere,
+        fecha_limite: { [Op.lt]: hoyStr },
+        estado: "pendiente",
+        },
+    }),
+    // vencen hoy
+    Vencimiento.count({
+        where: {
+        ...baseWhere,
+        fecha_limite: hoyStr,
+        estado: "pendiente",
+        },
+    }),
+    // próximos 7 días
+    Vencimiento.count({
+        where: {
+        ...baseWhere,
+        fecha_limite: {
+            [Op.between]: [hoyStr, en7dias.toISOString().split("T")[0]],
+        },
+        estado: "pendiente",
+        },
+    }),
+    // total pendientes
+    Vencimiento.count({
+        where: {
+        ...baseWhere,
+        estado: "pendiente",
+        },
+    }),
+    // alta prioridad
+    Vencimiento.count({
+        where: {
+        ...baseWhere,
+        estado: "pendiente",
+        prioridad: "alta",
+        },
+    })
+  ]);
 
   return {
     vencidos,

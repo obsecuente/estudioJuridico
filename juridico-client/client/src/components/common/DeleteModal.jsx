@@ -31,6 +31,7 @@ const DeleteModal = ({
   isOpen,
   onConfirm,
   onCancel,
+  onClose,
   title,
   message,
   confirmLabel = "Eliminar permanentemente",
@@ -61,7 +62,7 @@ const DeleteModal = ({
         </p>
 
         <div className="delete-modal-actions">
-          <button className="btn-modal-cancel" onClick={onCancel}>
+          <button className="btn-modal-cancel" onClick={onCancel || onClose}>
             Cancelar
           </button>
           <button

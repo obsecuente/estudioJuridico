@@ -337,26 +337,29 @@ const Home = () => {
       <div className="dashboard-widgets-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '30px' }}>
           
           {/* Widget Eventos */}
-          <div className="widget-card card">
-            <div className="widget-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '15px', borderBottom: '1px solid #eee' }}>
-                <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div className="widget-card">
+            <div className="widget-header">
+                <h3>
                     <CalendarIcon /> Agenda (7 días)
                 </h3>
-                <Link to="/dashboard/eventos" className="text-sm">Ver todo</Link>
+                <Link to="/dashboard/eventos">Ver todo</Link>
             </div>
-            <div className="widget-body" style={{ padding: '15px' }}>
+            <div className="widget-body">
                 {loadingWidgets ? (
-                    <p>Cargando...</p>
+                    <p className="text-muted">Cargando...</p>
                 ) : proximosEventos.length === 0 ? (
                     <p className="text-muted">No hay eventos próximos.</p>
                 ) : (
                     <div className="events-list">
                         {proximosEventos.map(evt => (
-                            <div key={evt.id_evento} className="event-item" style={{ marginBottom: '10px', paddingBottom: '10px', borderBottom: '1px solid #f9f9f9' }}>
-                                <div style={{ fontWeight: 'bold' }}>{evt.titulo}</div>
-                                <div style={{ fontSize: '0.85em', color: '#666' }}>
-                                    {new Date(evt.fecha_inicio).toLocaleDateString()} - {new Date(evt.fecha_inicio).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}
+                            <div key={evt.id_evento} className="event-item" style={{display:'flex', justifyContent:'space-between', alignItems:'center', gap: '10px'}}>
+                                <div style={{flex: 1}}>
+                                    <div>{evt.titulo}</div>
+                                    <div style={{fontSize: '0.85em', color: '#94a3b8'}}>
+                                        {new Date(evt.fecha_inicio).toLocaleDateString()} - {evt.hora_inicio ? evt.hora_inicio.substring(0, 5) : "-"}
+                                    </div>
                                 </div>
+                                <span className="badge badge-info" style={{ textTransform: 'capitalize' }}>{evt.tipo}</span>
                             </div>
                         ))}
                     </div>
@@ -365,30 +368,33 @@ const Home = () => {
           </div>
 
           {/* Widget Vencimientos */}
-           <div className="widget-card card">
-            <div className="widget-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '15px', borderBottom: '1px solid #eee' }}>
-                <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
+           <div className="widget-card">
+            <div className="widget-header">
+                <h3>
                     <AlarmIcon /> Vencimientos (7 días)
                 </h3>
-                <Link to="/dashboard/vencimientos" className="text-sm">Ver todo</Link>
+                <Link to="/dashboard/vencimientos">Ver todo</Link>
             </div>
-             <div className="widget-body" style={{ padding: '15px' }}>
+             <div className="widget-body">
                 {loadingWidgets ? (
-                    <p>Cargando...</p>
+                    <p className="text-muted">Cargando...</p>
                 ) : proximosVencimientos.length === 0 ? (
                     <p className="text-muted">No hay vencimientos próximos.</p>
                 ) : (
                     <div className="vencimientos-list">
                          {proximosVencimientos.map(venc => (
-                            <div key={venc.id_vencimiento} className="vencimiento-item" style={{ marginBottom: '10px', paddingBottom: '10px', borderBottom: '1px solid #f9f9f9', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-                                <div>
-                                    <div style={{ fontWeight: 'bold' }}>{venc.titulo}</div>
-                                    <div style={{ fontSize: '0.85em', color: '#666' }}>
-                                        Vence: {new Date(venc.fecha_vencimiento).toLocaleDateString()} {new Date(venc.fecha_vencimiento).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}
+                            <div key={venc.id_vencimiento} className="vencimiento-item" style={{display:'flex', justifyContent:'space-between', alignItems:'center', gap: '10px'}}>
+                                <div style={{flex: 1}}>
+                                    <div>{venc.titulo}</div>
+                                    <div style={{fontSize: '0.85em', color: '#94a3b8'}}>
+                                        Vence: {new Date(venc.fecha_limite).toLocaleDateString()} {venc.fecha_limite ? new Date(venc.fecha_limite).toISOString().substring(11, 16) : ''}
                                     </div>
                                 </div>
-                                <div>
-                                    <span className="badge badge-warning">{venc.tipo_vencimiento}</span>
+                                <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+                                    <span title={`Prioridad: ${venc.prioridad}`}>
+                                      {venc.prioridad === 'alta' ? <RedState /> : venc.prioridad === 'baja' ? <GreenState /> : <YellowState />}
+                                    </span>
+                                    <span className="badge badge-warning" style={{ textTransform: 'uppercase' }}>{venc.tipo_vencimiento}</span>
                                 </div>
                             </div>
                         ))}

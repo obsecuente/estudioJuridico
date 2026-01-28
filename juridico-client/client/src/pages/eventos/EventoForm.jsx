@@ -12,7 +12,7 @@ const EventoForm = ({ evento, onClose, showToast }) => {
     descripcion: "",
     fecha_inicio: "",
     hora: "",
-    tipo: "TAREA",
+    tipo: "tarea",
     id_caso: "",
     id_cliente: "",
     ubicacion: "",
@@ -27,22 +27,39 @@ const EventoForm = ({ evento, onClose, showToast }) => {
   useEffect(() => {
     cargarSelects();
     if (evento) {
-        // Aseguramos formato de fecha y hora para inputs
+      let fechaStr = "";
+      let horaStr = "";
+
+      if (evento.fecha_inicio) {
         const fecha = new Date(evento.fecha_inicio);
-        const fechaStr = fecha.toISOString().split('T')[0];
-        // Extraer hora HH:MM de la fecha ISO o usar la hora guardada
-        const horaStr = fecha.toTimeString().split(' ')[0].substring(0,5);
+        // Validar que la fecha sea válida antes de llamar a toISOString
+        if (!isNaN(fecha.getTime())) {
+          try {
+            fechaStr = fecha.toISOString().split("T")[0];
+            // Intentar sacar la hora del objeto fecha
+            horaStr = fecha.toTimeString().split(" ")[0].substring(0, 5);
+          } catch (e) {
+            console.error("Error parseando fecha:", e);
+          }
+        }
+      }
+
+      // Si tenemos hora explícita en el objeto (hora_inicio), usamos esa preferentemente
+      if (evento.hora_inicio) {
+          // Asumiendo formato "HH:MM:SS" o similar
+          horaStr = evento.hora_inicio.substring(0, 5);
+      }
 
       setFormData({
         titulo: evento.titulo || "",
         descripcion: evento.descripcion || "",
         fecha_inicio: fechaStr,
         hora: horaStr,
-        tipo: evento.tipo || "TAREA",
+        tipo: evento.tipo || "tarea",
         id_caso: evento.id_caso || "",
         id_cliente: evento.id_cliente || "",
         ubicacion: evento.ubicacion || "",
-        recordatorio_dias: evento.recordatorio_dias || 0
+        recordatorio_dias: evento.recordatorio_dias || 0,
       });
     }
   }, [evento]);
@@ -87,16 +104,15 @@ const EventoForm = ({ evento, onClose, showToast }) => {
 
     setLoading(true);
     try {
-      // Combinar fecha y hora
-      const fechaCompleta = new Date(`${formData.fecha_inicio}T${formData.hora}:00`);
-      
       const payload = {
           ...formData,
-          fecha_inicio: fechaCompleta.toISOString(),
-          // Limpiar strings vacíos
-          id_caso: formData.id_caso || null,
-          id_cliente: formData.id_cliente || null,
-          // Si no hay id_abogado, el backend usa el del usuario (ver controlador)
+          fecha_inicio: formData.fecha_inicio, // Enviar YYYY-MM-DD directo
+          hora_inicio: formData.hora,          // Mapear hora -> hora_inicio
+          hora_fin: null,                      // Opcional, por ahora null
+          // Limpiar strings vacíos y asegurar enteros
+          id_caso: formData.id_caso ? parseInt(formData.id_caso) : null,
+          id_cliente: formData.id_cliente ? parseInt(formData.id_cliente) : null,
+          id_abogado: user?.id_abogado || null, // Asegurar envío de ID abogado
       };
 
       if (evento) {
@@ -164,11 +180,10 @@ const EventoForm = ({ evento, onClose, showToast }) => {
           <div className="form-group">
             <label>Tipo</label>
             <select name="tipo" value={formData.tipo} onChange={handleChange}>
-                <option value="AUDIENCIA">Audiencia</option>
-                <option value="REUNION">Reunión</option>
-                <option value="TAREA">Tarea</option>
-                <option value="CITA">Cita</option>
-                <option value="OTRO">Otro</option>
+                <option value="audiencia">Audiencia</option>
+                <option value="reunion">Reunión / Cita</option>
+                <option value="tarea">Tarea</option>
+                <option value="otro">Otro</option>
             </select>
           </div>
 
@@ -178,7 +193,7 @@ const EventoForm = ({ evento, onClose, showToast }) => {
                 <select name="id_caso" value={formData.id_caso} onChange={handleChange}>
                     <option value="">-- Seleccionar Caso --</option>
                     {casos.map(c => (
-                        <option key={c.id_caso} value={c.id_caso}>{c.caratula} {c.numero_expediente ? `(${c.numero_expediente})` : ''}</option>
+                        <option key={c.id_caso} value={c.id_caso}>{c.descripcion} {c.numero_expediente ? `(${c.numero_expediente})` : ''}</option>
                     ))}
                 </select>
              </div>

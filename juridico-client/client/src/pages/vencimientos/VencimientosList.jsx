@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import vencimientosService from "../../services/vencimientos.service";
+import DeleteModal from "../../components/common/DeleteModal";
 import Toast from "../../components/common/Toast";
 import {
   AddIcon,
@@ -9,22 +10,12 @@ import {
   EyeIcon,
   GreenState,
   YellowState,
+  RedState,
+  CheckIcon,
   
 } from "../../components/common/Icons";
 import VencimientoForm from "./VencimientoForm";
 import "./VencimientosList.css";
-
-// Icono rojo simple para urgencia alta
-const RedState = () => (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="1em"
-      height="1em"
-      viewBox="0 0 32 32"
-    >
-      <circle cx="16" cy="16" r="14" fill="#FF5252" />
-    </svg>
-  );
 
 const VencimientosList = () => {
   const [vencimientos, setVencimientos] = useState([]);
@@ -33,6 +24,8 @@ const VencimientosList = () => {
   const [filtroEstado, setFiltroEstado] = useState("PENDIENTE");
   
   const [showModal, setShowModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [idToDelete, setIdToDelete] = useState(null);
   const [selectedVencimiento, setSelectedVencimiento] = useState(null);
 
   useEffect(() => {
@@ -58,11 +51,14 @@ const VencimientosList = () => {
     }
   };
 
-  const eliminarVencimiento = async (id) => {
-    if (!window.confirm("¿Estás seguro de eliminar este vencimiento?")) return;
+  const eliminarVencimiento = (id) => {
+    setIdToDelete(id);
+    setShowDeleteModal(true);
+  };
 
+  const confirmDelete = async () => {
     try {
-      await vencimientosService.delete(id);
+      await vencimientosService.delete(idToDelete);
       setToast({
         message: "Vencimiento eliminado correctamente",
         type: "success",
@@ -74,6 +70,9 @@ const VencimientosList = () => {
         message: "Error al eliminar el vencimiento",
         type: "error",
       });
+    } finally {
+      setShowDeleteModal(false);
+      setIdToDelete(null);
     }
   };
 
@@ -115,17 +114,31 @@ const VencimientosList = () => {
   }
 
   // Lógica de semáforo simple
-  const getSemaforo = (fechaVencimiento, estado) => {
+  const getSemaforo = (fechaLimite, estado) => {
     if (estado === "CUMPLIDO") return <GreenState />;
     
     const hoy = new Date();
-    const venc = new Date(fechaVencimiento);
+    const venc = new Date(fechaLimite);
     const diffTime = venc - hoy;
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
     if (diffDays < 3) return <RedState />; // Menos de 3 días o vencido
     if (diffDays < 7) return <YellowState />; // Menos de una semana
     return <GreenState />; // Más de una semana
+  };
+
+  // Icono según prioridad del vencimiento
+  const getPrioridadIcono = (prioridad) => {
+    switch (prioridad) {
+      case "alta":
+        return <RedState />;
+      case "media":
+        return <YellowState />;
+      case "baja":
+        return <GreenState />;
+      default:
+        return <YellowState />;
+    }
   };
 
   return (
@@ -172,11 +185,12 @@ const VencimientosList = () => {
           <table className="data-table">
             <thead>
               <tr>
-                <th style={{ width: "50px" }}></th>
                 <th>Fecha Venc.</th>
                 <th>Título</th>
                 <th>Tipo</th>
-                <th>Casos/Cliente</th>
+                <th>Descripción del Caso</th>
+                <th>Cliente</th>
+                <th style={{ width: "80px", textAlign: "center" }}>Prioridad</th>
                 <th>Estado</th>
                 <th>Acciones</th>
               </tr>
@@ -184,18 +198,21 @@ const VencimientosList = () => {
             <tbody>
               {vencimientos.map((venc) => (
                 <tr key={venc.id_vencimiento}>
-                  <td title="Prioridad/Urgencia">
-                    {getSemaforo(venc.fecha_vencimiento, venc.estado)}
-                  </td>
-                  <td className={new Date(venc.fecha_vencimiento) < new Date() && venc.estado !== 'CUMPLIDO' ? 'text-danger fw-bold' : ''}>
-                    {new Date(venc.fecha_vencimiento).toLocaleDateString()}
+                  <td className={new Date(venc.fecha_limite) < new Date() && venc.estado !== 'CUMPLIDO' ? 'text-danger fw-bold' : ''}>
+                    {new Date(venc.fecha_limite).toLocaleDateString()}
                     <br/>
-                    <small>{new Date(venc.fecha_vencimiento).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</small>
+                    <small>{venc.fecha_limite ? new Date(venc.fecha_limite).toISOString().substring(11, 16) : ''}</small>
                   </td>
                   <td>{venc.titulo}</td>
                   <td>{venc.tipo_vencimiento}</td>
+                  <td>{venc.caso ? venc.caso.descripcion : "-"}</td>
                   <td>
-                    {venc.caso ? `Caso: ${venc.caso.caratula}` : venc.cliente ? `Cliente: ${venc.cliente.nombre} ${venc.cliente.apellido}` : '-'}
+                    {venc.caso && venc.caso.cliente
+                      ? `${venc.caso.cliente.nombre} ${venc.caso.cliente.apellido}`
+                      : "-"}
+                  </td>
+                  <td style={{ textAlign: "center" }} title={`Prioridad: ${venc.prioridad}`}>
+                    {getPrioridadIcono(venc.prioridad)}
                   </td>
                   <td>
                     <span
@@ -215,7 +232,7 @@ const VencimientosList = () => {
                             title="Marcar Cumplido"
                             onClick={() => marcarComoCumplido(venc.id_vencimiento)}
                         >
-                            ✓
+                            <CheckIcon />
                         </button>
                     )}
                      <button
@@ -225,13 +242,8 @@ const VencimientosList = () => {
                     >
                       <PencilIcon />
                     </button>
-                    <button
-                      className="btn-icon"
-                      title="Ver detalle"
-                      onClick={() => handleEdit(venc)} // Reusamos el form para ver detalle/editar
-                    >
-                      <EyeIcon />
-                    </button>
+
+
                     <button
                       className="btn-icon delete"
                       title="Eliminar"
@@ -260,6 +272,16 @@ const VencimientosList = () => {
           message={toast.message}
           type={toast.type}
           onClose={() => setToast(null)}
+        />
+      )}
+
+      {showDeleteModal && (
+        <DeleteModal
+          isOpen={showDeleteModal}
+          onClose={() => setShowDeleteModal(false)}
+          onConfirm={confirmDelete}
+          title="Eliminar Vencimiento"
+          message="¿Estás seguro de que deseas eliminar este vencimiento? Esta acción no se puede deshacer."
         />
       )}
     </div>

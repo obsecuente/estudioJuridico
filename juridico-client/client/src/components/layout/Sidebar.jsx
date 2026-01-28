@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import { useContext } from "react";
 import { AuthContext } from "../../context/AuthContext.jsx";
 import {
@@ -15,6 +15,12 @@ import "./Sidebar.css";
 
 const Sidebar = () => {
   const { user } = useContext(AuthContext);
+  const location = useLocation();
+
+  const isPathActive = (path) => {
+    if (path === "/dashboard") return location.pathname === "/dashboard";
+    return location.pathname.startsWith(path);
+  };
 
   return (
     <aside className="sidebar">
@@ -27,9 +33,7 @@ const Sidebar = () => {
         <NavLink
           to="/dashboard"
           end
-          className={({ isActive }) =>
-            isActive ? "nav-link active" : "nav-link"
-          }
+          className={isPathActive("/dashboard") ? "nav-link active" : "nav-link"}
         >
           <span className="nav-icon">
             <HomeIcon />
@@ -39,9 +43,7 @@ const Sidebar = () => {
 
         <NavLink
           to="/dashboard/clientes"
-          className={({ isActive }) =>
-            isActive ? "nav-link active" : "nav-link"
-          }
+          className={isPathActive("/dashboard/clientes") ? "nav-link active" : "nav-link"}
         >
           <span className="nav-icon">
             <ClientIcon />
@@ -51,9 +53,7 @@ const Sidebar = () => {
 
         <NavLink
           to="/dashboard/consultas"
-          className={({ isActive }) =>
-            isActive ? "nav-link active" : "nav-link"
-          }
+          className={isPathActive("/dashboard/consultas") ? "nav-link active" : "nav-link"}
         >
           <span className="nav-icon">
             <ConsultasIcon />
@@ -63,9 +63,7 @@ const Sidebar = () => {
 
         <NavLink
           to="/dashboard/casos"
-          className={({ isActive }) =>
-            isActive ? "nav-link active" : "nav-link"
-          }
+          className={isPathActive("/dashboard/casos") ? "nav-link active" : "nav-link"}
         >
           <span className="nav-icon">
             {" "}
@@ -76,9 +74,7 @@ const Sidebar = () => {
 
         <NavLink
           to="/dashboard/documentos"
-          className={({ isActive }) =>
-            isActive ? "nav-link active" : "nav-link"
-          }
+          className={isPathActive("/dashboard/documentos") ? "nav-link active" : "nav-link"}
         >
           <span className="nav-icon">
             {" "}
@@ -89,9 +85,7 @@ const Sidebar = () => {
 
         <NavLink
           to="/dashboard/eventos"
-          className={({ isActive }) =>
-            isActive ? "nav-link active" : "nav-link"
-          }
+          className={isPathActive("/dashboard/eventos") ? "nav-link active" : "nav-link"}
         >
           <span className="nav-icon">
             <EventIcon />
@@ -101,9 +95,7 @@ const Sidebar = () => {
 
         <NavLink
           to="/dashboard/vencimientos"
-          className={({ isActive }) =>
-            isActive ? "nav-link active" : "nav-link"
-          }
+          className={isPathActive("/dashboard/vencimientos") ? "nav-link active" : "nav-link"}
         >
           <span className="nav-icon">
             <AlarmIcon />
@@ -115,9 +107,7 @@ const Sidebar = () => {
         {user?.rol === "admin" && (
           <NavLink
             to="/dashboard/abogados"
-            className={({ isActive }) =>
-              isActive ? "nav-link active" : "nav-link"
-            }
+            className={isPathActive("/dashboard/abogados") ? "nav-link active" : "nav-link"}
           >
             <span className="nav-icon">
               {" "}

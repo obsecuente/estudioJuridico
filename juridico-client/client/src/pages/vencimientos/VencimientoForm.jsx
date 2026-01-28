@@ -12,8 +12,8 @@ const VencimientoForm = ({ vencimiento, onClose, showToast }) => {
     descripcion: "",
     fecha_vencimiento: "",
     hora: "09:00", // Hora default
-    tipo_vencimiento: "TRASLADO",
-    prioridad: "MEDIA",
+    tipo_vencimiento: "traslado",
+    prioridad: "media",
     id_caso: "",
     id_cliente: ""
   });
@@ -26,17 +26,39 @@ const VencimientoForm = ({ vencimiento, onClose, showToast }) => {
   useEffect(() => {
     cargarSelects();
     if (vencimiento) {
-        const fecha = new Date(vencimiento.fecha_vencimiento);
-        const fechaStr = fecha.toISOString().split('T')[0];
-        const horaStr = fecha.toTimeString().split(' ')[0].substring(0,5);
+        // Usar fecha_limite (backend) o fecha_vencimiento (legacy/frontend state)
+        const fechaRaw = vencimiento.fecha_limite || vencimiento.fecha_vencimiento;
+        
+        let fechaStr = "";
+        let horaStr = "09:00";
+
+        if (fechaRaw) {
+              // Asumimos que viene en ISO string Z (UTC)
+              // Usamos split directamente para tomar los valores "visuales" que guardamos
+              // fechaRaw ejemplo: "2026-01-30T09:00:00.000Z"
+              try {
+                const parts = fechaRaw.split('T');
+                fechaStr = parts[0]; // 2026-01-30
+                if (parts[1]) {
+                    horaStr = parts[1].substring(0, 5); // 09:00, ignoramos segundos/milis
+                }
+              } catch (e) {
+                  // Fallback por si no es ISO
+                  const fecha = new Date(fechaRaw);
+                  if (!isNaN(fecha)) {
+                      fechaStr = fecha.toISOString().split('T')[0];
+                      horaStr = fecha.toTimeString().substring(0, 5);
+                  }
+              }
+        }
 
       setFormData({
         titulo: vencimiento.titulo || "",
         descripcion: vencimiento.descripcion || "",
         fecha_vencimiento: fechaStr,
         hora: horaStr,
-        tipo_vencimiento: vencimiento.tipo_vencimiento || "TRASLADO",
-        prioridad: vencimiento.prioridad || "MEDIA",
+        tipo_vencimiento: vencimiento.tipo_vencimiento || "traslado",
+        prioridad: vencimiento.prioridad || "media",
         id_caso: vencimiento.id_caso || "",
         id_cliente: vencimiento.id_cliente || ""
       });
@@ -71,6 +93,7 @@ const VencimientoForm = ({ vencimiento, onClose, showToast }) => {
     const newErrors = {};
     if (!formData.titulo.trim()) newErrors.titulo = "El título es obligatorio";
     if (!formData.fecha_vencimiento) newErrors.fecha_vencimiento = "La fecha es obligatoria";
+    if (!formData.id_caso) newErrors.id_caso = "Debe seleccionar un caso";
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -82,14 +105,17 @@ const VencimientoForm = ({ vencimiento, onClose, showToast }) => {
 
     setLoading(true);
     try {
-      // Combinar fecha y hora
-      const fechaCompleta = new Date(`${formData.fecha_vencimiento}T${formData.hora}:00`);
-      
+      // "UTC as Local" strategy: Construimos la fecha nosotros mismos como si fuera UTC
+      // para que "09:00" en el form se guarde como "...T09:00:00.000Z" en la DB
+      // y al leerlo de vuelta (UTC) obtengamos "09:00".
+      const fechaLimiteISO = `${formData.fecha_vencimiento}T${formData.hora || "00:00"}:00.000Z`;
+
       const payload = {
           ...formData,
-          fecha_vencimiento: fechaCompleta.toISOString(),
+          fecha_limite: fechaLimiteISO,
           id_caso: formData.id_caso || null,
           id_cliente: formData.id_cliente || null,
+          id_abogado: user?.id_abogado, // Agregar id_abogado del usuario logueado
       };
 
       if (vencimiento) {
@@ -110,15 +136,15 @@ const VencimientoForm = ({ vencimiento, onClose, showToast }) => {
   };
 
   const tiposVencimiento = [
-    { value: "CONTESTACION_DEMANDA", label: "Contestación de Demanda (15 días)" },
-    { value: "APELACION", label: "Apelación (5 días)" },
-    { value: "RECURSO", label: "Recurso (5 días)" },
-    { value: "TRASLADO", label: "Traslado (5 días)" },
-    { value: "OFRECIMIENTO_PRUEBA", label: "Ofrecimiento de Prueba (10 días)" },
-    { value: "ALEGATO", label: "Alegato (6 días)" },
-    { value: "EXPRESION_AGRAVIOS", label: "Expresión de Agravios (10 días)" },
-    { value: "PRESCRIPCION", label: "Prescripción / Caducidad (30 días)" },
-    { value: "OTRO", label: "Otro" }
+    { value: "contestacion_demanda", label: "Contestación de Demanda" },
+    { value: "apelacion", label: "Apelación" },
+    { value: "recurso", label: "Recurso" },
+    { value: "traslado", label: "Traslado" },
+    { value: "ofrecimiento_prueba", label: "Ofrecimiento de Prueba " },
+    { value: "alegato", label: "Alegato " },
+    { value: "expresion_agravios", label: "Expresión de Agravios " },
+    { value: "prescripcion", label: "Prescripción / Caducidad " },
+    { value: "otro", label: "Otro" }
   ];
 
   return (
@@ -176,22 +202,28 @@ const VencimientoForm = ({ vencimiento, onClose, showToast }) => {
             <div className="form-group">
                 <label>Prioridad</label>
                 <select name="prioridad" value={formData.prioridad} onChange={handleChange}>
-                    <option value="ALTA">Alta</option>
-                    <option value="MEDIA">Media</option>
-                    <option value="BAJA">Baja</option>
+                    <option value="alta">Alta</option>
+                    <option value="media">Media</option>
+                    <option value="baja">Baja</option>
                 </select>
             </div>
           </div>
 
           <div className="form-row">
              <div className="form-group">
-                <label>Caso (Recomendado)</label>
-                <select name="id_caso" value={formData.id_caso} onChange={handleChange}>
+                <label>Caso <span className="required">*</span></label>
+                <select 
+                  name="id_caso" 
+                  value={formData.id_caso} 
+                  onChange={handleChange}
+                  className={errors.id_caso ? "input-error" : ""}
+                >
                     <option value="">-- Seleccionar Caso --</option>
                     {casos.map(c => (
-                        <option key={c.id_caso} value={c.id_caso}>{c.caratula}</option>
+                        <option key={c.id_caso} value={c.id_caso}>{c.descripcion}</option>
                     ))}
                 </select>
+                {errors.id_caso && <span className="error-text">{errors.id_caso}</span>}
              </div>
              <div className="form-group">
                 <label>Cliente</label>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import api from "../../services/api";
+import useDebounce from "../../hooks/useDebounce";
 
 // Componentes comunes
 import GlassTable from "../../components/common/GlassTable";
@@ -26,6 +27,8 @@ const ConsultasList = () => {
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [estadoFiltro, setEstadoFiltro] = useState("todas");
+  const [abogados, setAbogados] = useState([]);
+  const [idAbogadoFiltro, setIdAbogadoFiltro] = useState("");
 
   // Estados para Modales
   const [showModal, setShowModal] = useState(false);
@@ -40,9 +43,25 @@ const ConsultasList = () => {
   });
   const [toast, setToast] = useState(null);
 
+  // Aplicar debounce al término de búsqueda
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+
+  useEffect(() => {
+    cargarAbogados();
+  }, []);
+
   useEffect(() => {
     cargarConsultas();
-  }, [pagination.page, searchTerm, estadoFiltro]);
+  }, [pagination.page, debouncedSearchTerm, estadoFiltro, idAbogadoFiltro]);
+
+  const cargarAbogados = async () => {
+    try {
+      const response = await api.get("/abogados");
+      setAbogados(response.data.data);
+    } catch (err) {
+      console.error("Error al cargar abogados para filtro", err);
+    }
+  };
 
   const showToast = (message, type = "success") => {
     setToast({ message, type });
@@ -55,9 +74,10 @@ const ConsultasList = () => {
       const params = {
         page: pagination.page,
         limit: pagination.limit,
-        search: searchTerm,
+        search: debouncedSearchTerm,
       };
       if (estadoFiltro !== "todas") params.estado = estadoFiltro;
+      if (idAbogadoFiltro) params.id_abogado = idAbogadoFiltro;
 
       const response = await api.get("/consultas", { params });
       setConsultas(response.data.data);
@@ -152,15 +172,54 @@ const ConsultasList = () => {
         </div>
 
         <div className="estado-filters">
-          {["todas", "pendiente", "en_progreso", "resuelta"].map((f) => (
+          <div className="filter-group">
+            <span className="filter-label">Estado:</span>
             <button
-              key={f}
-              className={`filter-btn ${estadoFiltro === f ? "active" : ""}`}
-              onClick={() => handleEstadoFilter(f)}
+                className={`filter-btn ${estadoFiltro === "todas" ? "active" : ""}`}
+                onClick={() => handleEstadoFilter("todas")}
             >
-              {f.replace("_", " ").toUpperCase()}
+                Todas
             </button>
-          ))}
+            <button
+                className={`filter-btn ${estadoFiltro === "pendiente" ? "active" : ""}`}
+                onClick={() => handleEstadoFilter("pendiente")}
+            >
+                Pendientes
+            </button>
+            <button
+                className={`filter-btn ${estadoFiltro === "resuelta" ? "active" : ""}`}
+                onClick={() => handleEstadoFilter("resuelta")}
+            >
+                Resueltas
+            </button>
+          </div>
+
+          <div className="filter-group">
+            <span className="filter-label">Abogado:</span>
+            <select 
+              value={idAbogadoFiltro} 
+              onChange={(e) => {
+                setIdAbogadoFiltro(e.target.value);
+                setPagination(prev => ({ ...prev, page: 1 }));
+              }}
+              className="filter-select"
+              style={{
+                padding: '8px 12px',
+                borderRadius: '8px',
+                background: '#1a1f2b',
+                color: 'white',
+                border: '1px solid #d4af37',
+                marginRight: '10px'
+              }}
+            >
+              <option value="">Todos los abogados</option>
+              {abogados.map(a => (
+                <option key={a.id_abogado} value={a.id_abogado}>
+                  {a.nombre} {a.apellido}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 

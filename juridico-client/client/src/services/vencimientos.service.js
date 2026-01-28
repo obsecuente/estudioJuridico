@@ -57,7 +57,7 @@ const vencimientosService = {
 
   marcarCumplido: async (id, notas = "") => {
     try {
-      const response = await api.put(`/vencimientos/${id}/cumplido`, { notas });
+      const response = await api.patch(`/vencimientos/${id}/cumplir`, { notas });
       return response.data;
     } catch (error) {
       throw error;
