@@ -5,90 +5,64 @@ import Consulta from "./Consulta.js";
 import Caso from "./Caso.js";
 import Documento from "./Documento.js";
 import Auditoria from "./Auditoria.js";
-import IA from "./ResumenIA.js";
-/**
- * DEFINICIÓN DE RELACIONES (ASOCIACIONES)
- *
- * Tipos de relaciones en Sequelize:
- * - hasMany: "tiene muchos" (1 a muchos)
- * - belongsTo: "pertenece a" (muchos a 1)
- * - hasOne: "tiene uno" (1 a 1)
- * - belongsToMany: "pertenece a muchos" (muchos a muchos)
- */
+import ResumenIA from "./ResumenIA.js";
+import Evento from "./Evento.js";
+import Vencimiento from "./Vencimiento.js";
 
-// ====================
-// RELACIONES DE CLIENTE
-// ====================
-
-// Un Cliente puede tener muchas Consultas
+// relaciones de cliente
 Cliente.hasMany(Consulta, {
   foreignKey: "id_cliente",
-  as: "consultas", // Alias para usar en queries
+  as: "consultas",
 });
 
-// Una Consulta pertenece a un Cliente
 Consulta.belongsTo(Cliente, {
   foreignKey: "id_cliente",
   as: "cliente",
 });
 
-// Un Cliente puede tener muchos Casos
 Cliente.hasMany(Caso, {
   foreignKey: "id_cliente",
   as: "casos",
 });
 
-// Un Caso pertenece a un Cliente
 Caso.belongsTo(Cliente, {
   foreignKey: "id_cliente",
   as: "cliente",
 });
 
-// ====================
-// RELACIONES DE ABOGADO
-// ====================
-
-// Un Abogado puede tener muchas Consultas asignadas
+// relaciones de abogado
 Abogado.hasMany(Consulta, {
   foreignKey: "id_abogado_asignado",
   as: "consultas",
 });
 
-// Una Consulta puede tener un Abogado asignado (o ninguno)
 Consulta.belongsTo(Abogado, {
   foreignKey: "id_abogado_asignado",
   as: "abogado",
 });
 
-// Un Abogado puede tener muchos Casos
 Abogado.hasMany(Caso, {
   foreignKey: "id_abogado",
   as: "casos",
 });
 
-// Un Caso pertenece a un Abogado
 Caso.belongsTo(Abogado, {
   foreignKey: "id_abogado",
   as: "abogado",
 });
 
-// ====================
-// RELACIONES DE CASO
-// ====================
-
-// Un Caso puede tener muchos Documentos
+// relaciones de caso con documentos
 Caso.hasMany(Documento, {
   foreignKey: "id_caso",
   as: "documentos",
 });
 
-// Un Documento pertenece a un Caso
 Documento.belongsTo(Caso, {
   foreignKey: "id_caso",
   as: "caso",
 });
 
-// Relación con Auditoría
+// relaciones de auditoría
 Abogado.hasMany(Auditoria, {
   foreignKey: "id_usuario",
   as: "auditorias",
@@ -98,9 +72,8 @@ Auditoria.belongsTo(Abogado, {
   foreignKey: "id_usuario",
   as: "usuario",
 });
-import ResumenIA from "./ResumenIA.js";
 
-// Relaciones con ResumenIA
+// relaciones de ResumenIA
 ResumenIA.belongsTo(Documento, {
   foreignKey: "id_documento",
   as: "documento",
@@ -115,6 +88,59 @@ ResumenIA.belongsTo(Abogado, {
   foreignKey: "id_usuario_creo",
   as: "usuario",
 });
+
+// relaciones de Evento
+Evento.belongsTo(Caso, {
+  foreignKey: "id_caso",
+  as: "caso",
+});
+
+Caso.hasMany(Evento, {
+  foreignKey: "id_caso",
+  as: "eventos",
+});
+
+Evento.belongsTo(Cliente, {
+  foreignKey: "id_cliente",
+  as: "cliente",
+});
+
+Cliente.hasMany(Evento, {
+  foreignKey: "id_cliente",
+  as: "eventos",
+});
+
+Evento.belongsTo(Abogado, {
+  foreignKey: "id_abogado",
+  as: "abogado",
+});
+
+Abogado.hasMany(Evento, {
+  foreignKey: "id_abogado",
+  as: "eventos",
+});
+
+// relaciones de Vencimiento
+Vencimiento.belongsTo(Caso, {
+  foreignKey: "id_caso",
+  as: "caso",
+});
+
+Caso.hasMany(Vencimiento, {
+  foreignKey: "id_caso",
+  as: "vencimientos",
+});
+
+Vencimiento.belongsTo(Abogado, {
+  foreignKey: "id_abogado",
+  as: "abogado",
+});
+
+Abogado.hasMany(Vencimiento, {
+  foreignKey: "id_abogado",
+  as: "vencimientos",
+});
+
 export {
   sequelize,
   Cliente,
@@ -122,7 +148,10 @@ export {
   Consulta,
   Caso,
   Documento,
-  Auditoria, // NUEVO
+  Auditoria,
+  ResumenIA,
+  Evento,
+  Vencimiento,
 };
 
 export default {
@@ -132,5 +161,8 @@ export default {
   Consulta,
   Caso,
   Documento,
-  Auditoria, // NUEVO
+  Auditoria,
+  ResumenIA,
+  Evento,
+  Vencimiento,
 };

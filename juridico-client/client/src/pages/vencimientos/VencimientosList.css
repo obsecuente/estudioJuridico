@@ -1,0 +1,11 @@
+/* Vencimientos Styling - Reusing EventosList styles */
+@import "../eventos/EventosList.css";
+
+/* Specific styles for Vencimientos can go here if needed */
+.text-danger {
+    color: #ef4444;
+}
+
+.fw-bold {
+    font-weight: 700;
+}

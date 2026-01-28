@@ -1,0 +1,189 @@
+/* Reusing common dashboard styles and GlassTable */
+@import "../../components/common/GlassTable.css";
+
+.page-container {
+  padding: 30px;
+  animation: fadeIn 0.4s ease;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.header-title {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.header-title svg {
+  font-size: 32px;
+  color: #d4af37; /* Dorado */
+  filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.3));
+}
+
+.header-title h2 {
+  font-size: 28px;
+  margin: 0;
+  font-weight: 700;
+  color: #1a1f2b; /* Azul Noche si el fondo es claro, o blanco si el fondo es oscuro. Asumiendo fondo claro general. */
+  /* Si el fondo de la pagina es blanco, esto está bien. */
+}
+
+/* Filters Bar - DARK THEME */
+.filters-bar {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 25px;
+  background: #1a1f2b; /* Azul Noche */
+  padding: 20px;
+  border-radius: 12px;
+  border-left: 5px solid #d4af37; /* Dorado */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  align-items: center;
+}
+
+.filter-group {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.form-select {
+  padding: 10px 16px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #f1f5f9;
+  font-size: 14px;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 150px;
+}
+
+.form-select:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: #d4af37;
+}
+
+.form-select option {
+    background-color: #0f172a;
+    color: white;
+}
+
+/* Button Primary (Nuevo Evento) - Premium Style */
+.btn-primary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #0f172a !important;
+  color: #d4af37 !important;
+  border: 1px solid #d4af37 !important;
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.btn-primary:hover {
+  background: #d4af37 !important;
+  color: #0f172a !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+}
+
+
+/* Table Container for Eventos (if manual table used) */
+.table-container {
+  background: #1a1f2b;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-left: 5px solid #d4af37;
+  padding: 5px; /* Adjust padding */
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table th {
+  padding: 16px 18px;
+  color: #d4af37;
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 1.2px;
+  font-weight: 800;
+  text-align: left;
+  border-bottom: 2px solid #d4af37;
+  background: rgba(15, 23, 42, 0.8);
+}
+
+.data-table td {
+  padding: 16px 18px;
+  color: #f1f5f9;
+  font-size: 14px;
+  vertical-align: middle;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.data-table tbody tr:hover {
+    background-color: rgba(212, 175, 55, 0.05);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 60px;
+    color: #94a3b8;
+    font-size: 16px;
+    background: #1a1f2b;
+    border-radius: 16px;
+    border: 1px dashed rgba(255, 255, 255, 0.1);
+    border-left: 5px solid #d4af37;
+}
+
+/* Reuse action button styles if they are standard buttons */
+.btn-icon {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    padding: 8px;
+    cursor: pointer;
+    color: white;
+    transition: all 0.2s;
+    margin-right: 5px;
+}
+.btn-icon svg { fill: white; width: 16px; height: 16px; }
+.btn-icon:hover { border-color: #d4af37; color: #d4af37; }
+.btn-icon:hover svg { fill: #d4af37; }
+.btn-icon.delete:hover { border-color: #ef4444; color: #ef4444; }
+.btn-icon.delete:hover svg { fill: #ef4444; }
+
+.actions-cell {
+    display: flex;
+    gap: 5px;
+}
+
+/* Badges override */
+.badge {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}

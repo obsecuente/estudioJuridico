@@ -8,6 +8,8 @@ import { testConnection, syncDatabase } from "./src/config/database.js";
 import logger from "./src/config/logger.js"; // NUEVO
 import httpLogger from "./src/middleware/loggerMiddleware.js"; // NUEVO
 import iaRoutes from "./src/routes/ia.routes.js";
+import eventosRoutes from "./src/routes/eventos.routes.js";
+import vencimientosRoutes from "./src/routes/vencimientos.routes.js";
 // Importar modelos para establecer relaciones
 import "./src/models/index.js";
 
@@ -33,7 +35,7 @@ app.use(
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization"],
-  })
+  }),
 );
 
 const limiter = rateLimit({
@@ -61,6 +63,8 @@ app.use("/api/casos", casosRoutes);
 app.use("/api/documentos", documentosRoutes);
 app.use("/api/abogados", abogadosRoutes);
 app.use("/api/auditoria", auditoriaRoutes);
+app.use("/api/eventos", eventosRoutes);
+app.use("/api/vencimientos", vencimientosRoutes);
 
 // Ruta de health check
 app.get("/health", (req, res) => {

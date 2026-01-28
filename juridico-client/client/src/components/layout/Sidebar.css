@@ -36,6 +36,12 @@
   flex: 1;
   padding: 20px 0;
   overflow-y: auto;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.sidebar-nav::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
 }
 
 .nav-link {

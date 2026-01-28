@@ -1,16 +1,20 @@
 :root {
-  --color-primario: #0f172a; /* El azul noche de tu sidebar */
-  --color-acento: #d4af37; /* El dorado premium */
-  --color-borde: #e2e8f0;
-  --color-blanco: #f1f5f9;
+  --color-primario: #0f172a; /* Azul Noche */
+  --color-fondo-oscuro: #1a1f2b; /* Fondo Card/Tabla */
+  --color-acento: #d4af37; /* Dorado Premium */
+  --color-texto-principal: #f1f5f9; /* Blanco Humo */
+  --color-texto-secundario: #94a3b8; /* Gris azulado */
+  --color-borde: rgba(212, 175, 55, 0.3); /* Dorado sutil */
 }
-/* common/GlassTable.css */
+
+/* common/GlassTable.css - VERSION DARK/GOLD */
 .table-wrapper-glass {
-  background: white;
+  background: var(--color-fondo-oscuro, #1a1f2b);
   border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-  border: 1px solid rgba(15, 23, 42, 0.05);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-left: 5px solid var(--color-acento, #d4af37); /* Toque de diseño consistente */
   width: 100%;
   margin-top: 10px;
 }
@@ -21,28 +25,30 @@
 }
 
 .table-glass thead {
-  background: var(--color-primario, #0f172a);
+  background: rgba(15, 23, 42, 0.8); /* Encabezado ligeramente más oscuro */
+  border-bottom: 2px solid var(--color-acento, #d4af37);
 }
-/* En common/GlassTable.css */
+
 .table-glass th:last-child {
   text-align: center !important;
 }
+
 .table-glass th {
   padding: 16px 18px;
   color: var(--color-acento, #d4af37);
   text-transform: uppercase;
   font-size: 11px;
   letter-spacing: 1.2px;
-  font-weight: 700;
+  font-weight: 800;
   text-align: left;
 }
 
 .table-glass td {
-  padding: 16px 18px; /* Espaciado extra para que respire */
-  color: #475569;
+  padding: 16px 18px;
+  color: var(--color-texto-principal, #f1f5f9);
   font-size: 14px;
   vertical-align: middle;
-  border-bottom: 1px solid rgba(226, 232, 240, 0.5);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05); /* Líneas sutiles */
 }
 
 .table-glass tbody tr {
@@ -50,56 +56,37 @@
 }
 
 .table-glass tbody tr:hover {
-  background-color: rgba(212, 175, 55, 0.03);
+  background-color: rgba(212, 175, 55, 0.05); /* Toque dorado muy suave en hover */
 }
 
-/* Ensure action cells are always centered */
+/* Actions Cell */
 .table-glass td.actions-cell {
   display: table-cell !important;
   vertical-align: middle !important;
   text-align: center !important;
-  padding: 0 10px !important; /* Quitamos los paddings exagerados */
-  border-bottom: 1px solid rgba(226, 232, 240, 0.5) !important;
-  width: 140px; /* Ancho fijo para evitar que los botones se amontonen */
+  padding: 0 10px !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+  width: 140px;
 }
+
 .table-glass td:first-child {
   text-align: center;
+  color: var(--color-texto-secundario);
+  font-weight: bold;
 }
-/* Unificar padding y centrado vertical */
-.table-glass th,
-.table-glass td {
-  padding: 16px 18px;
-  vertical-align: middle;
-}
-.table-glass thead th {
-  padding: 15px 18px;
-  text-align: left;
-  vertical-align: middle;
-}
-/* Asegurar que el encabezado 'Acciones' esté centrado */
-.table-glass thead th:last-child {
-  text-align: center !important;
-  justify-content: center;
-}
+
+/* Actions Wrapper */
 .actions-wrapper {
   display: flex !important;
-  flex-direction: row !important; /* Fuerza horizontal */
+  flex-direction: row !important;
   justify-content: center !important;
   align-items: center !important;
   gap: 8px !important;
   height: 100%;
   min-height: 55px;
 }
-/* Reglas de mayor especificidad para evitar pisoteos de otras hojas */
-.table-wrapper-glass .table-glass tbody tr td.actions-cell,
-.table-wrapper-glass .table-glass td.actions-cell {
-  padding-top: 28px !important; /* empuja los botones hacia abajo */
-  padding-bottom: 14px !important;
-  box-sizing: border-box;
-}
 
-/* Garantizar que los botones no empujen hacia arriba */
-/* 1. Definición base de todos los botones de acción */
+/* Buttons Action Styling */
 .btn-action {
   width: 38px !important;
   height: 38px !important;
@@ -107,47 +94,44 @@
   align-items: center !important;
   justify-content: center !important;
   border-radius: 8px !important;
-  border: none !important;
+  border: 1px solid rgba(255,255,255,0.1) !important;
   cursor: pointer;
   transition: all 0.2s ease;
   margin: 0 !important;
   padding: 0 !important;
-  color: white !important; /* Asegura que el icono sea blanco */
+  color: white !important;
 }
 
-/* 2. Colores obligatorios para cada tipo (esto es lo que te falta) */
 .btn-view {
-  background-color: #8b5cf6 !important; /* Violeta */
+  background-color: rgba(139, 92, 246, 0.2) !important;
+  border-color: #8b5cf6 !important;
 }
+.btn-view:hover { background-color: #8b5cf6 !important; }
 
 .btn-edit {
-  background-color: #3b82f6 !important; /* El AZUL premium */
+  background-color: rgba(59, 130, 246, 0.2) !important;
+  border-color: #3b82f6 !important;
 }
+.btn-edit:hover { background-color: #3b82f6 !important; }
 
 .btn-delete {
-  background-color: #ef4444 !important; /* Rojo */
+  background-color: rgba(239, 68, 68, 0.2) !important;
+  border-color: #ef4444 !important;
 }
+.btn-delete:hover { background-color: #ef4444 !important; }
 
-/* 3. Hover: solo movimiento y un poquito de brillo */
 .btn-action:hover {
   transform: translateY(-3px) !important;
-  filter: brightness(1.1);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  filter: brightness(1.2);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
 }
 
-/* 4. Aseguramos que los iconos (SVG) dentro sean blancos */
 .btn-action svg {
   width: 18px !important;
   height: 18px !important;
-  fill: white !important;
+  fill: currentColor !important;
 }
-.table-glass td.actions-cell .btn-action,
-.actions-cell .btn-action {
-  margin: 0 !important;
-  vertical-align: middle;
-  width: 40px;
-  height: 40px;
-}
+
 .estado-badge {
   padding: 4px 10px;
   border-radius: 6px;
@@ -155,4 +139,5 @@
   font-weight: 700;
   text-transform: uppercase;
   color: white;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }

@@ -124,7 +124,7 @@
   .documentos-grid {
     grid-template-columns: 1fr;
     gap: 14px;
-  }
+    }
 
   .documento-card {
     padding: 14px;
@@ -151,6 +151,8 @@
     padding-top: 12px;
   }
 }
+
+.documento-actions {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
@@ -171,41 +173,58 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* BOTÓN DESCARGA: Azul -> Dorado */
-.btn-download {
-  background: #0f172a;
-  color: white;
+/* BOTONES DE ACCIÓN - COLORES FUERTES (SOLO LOCAL) */
+
+/* Botón Descargar: Verde Fuerte */
+/* BOTONES DE ACCIÓN - COLORES FUERTES (SOLO LOCAL) - SELECTORES ESPECÍFICOS */
+
+/* Botón Descargar: Verde Fuerte */
+.documentos-container .btn-action.btn-download {
+  background-color: #10b981 !important;
+  color: white !important;
+}
+.documentos-container .btn-action.btn-download:hover {
+  background-color: #059669 !important;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
 }
 
-.btn-download:hover {
-  background: #d4af37; /* Tu dorado institucional */
-  color: #0f172a; /* Texto/Icono oscuro para contraste */
+/* Botón Ver: Violeta Fuerte */
+.documentos-container .btn-action.btn-view {
+  background-color: #8b5cf6 !important;
+  color: white !important;
+  border: none !important;
+}
+.documentos-container .btn-action.btn-view:hover {
+  background-color: #7c3aed !important;
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+/* Botón Editar: Azul Fuerte */
+.documentos-container .btn-action.btn-edit {
+  background-color: #3b82f6 !important;
+  color: white !important;
+  border: none !important;
+}
+.documentos-container .btn-action.btn-edit:hover {
+  background-color: #2563eb !important;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* Botón Eliminar: Rojo Fuerte */
+.documentos-container .btn-action.btn-delete {
+  background-color: #ef4444 !important;
+  color: white !important;
+  border: none !important;
+}
+.documentos-container .btn-action.btn-delete:hover {
+  background-color: #dc2626 !important;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+/* Hover general para movimiento */
+.btn-action:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
-}
-
-/* BOTÓN VER (Ojo) */
-.btn-view {
-  background: #f1f5f9;
-  color: #0f172a;
-  border: 1px solid #e2e8f0;
-}
-
-.btn-view:hover {
-  background: #e2e8f0;
-  transform: translateY(-2px);
-}
-
-/* BOTÓN ELIMINAR */
-.btn-delete {
-  background: #fee2e2;
-  color: #ef4444;
-}
-
-.btn-delete:hover {
-  background: #ef4444;
-  color: white;
-  transform: translateY(-2px);
+  filter: brightness(1.1);
 }
 /* Overlay con Blur */
 .modal-overlay {

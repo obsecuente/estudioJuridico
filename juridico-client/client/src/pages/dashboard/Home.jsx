@@ -7,6 +7,10 @@ import ClienteForm from "../clientes/ClienteForm";
 import ConsultaForm from "../consultas/ConsultaForm";
 import CasoForm from "../casos/CasoForm";
 import DocumentoUpload from "../documentos/DocumentoUpload";
+import EventoForm from "../eventos/EventoForm";
+import VencimientoForm from "../vencimientos/VencimientoForm";
+import eventosService from "../../services/eventos.service";
+import vencimientosService from "../../services/vencimientos.service";
 import "./Home.css";
 import {
   AddIcon,
@@ -19,6 +23,12 @@ import {
   NextIcon,
   PencilIcon,
   TrashICon,
+  EventIcon,
+  AlarmIcon,
+  CalendarIcon,
+  YellowState,
+  RedState, // Asumiendo que existe o lo creamos inline si no
+  GreenState,
 } from "../../components/common/Icons";
 
 const Home = () => {
@@ -32,6 +42,11 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [actividadReciente, setActividadReciente] = useState([]);
   const [loadingActividad, setLoadingActividad] = useState(true);
+  
+  const [proximosEventos, setProximosEventos] = useState([]);
+  const [proximosVencimientos, setProximosVencimientos] = useState([]);
+  const [loadingWidgets, setLoadingWidgets] = useState(true);
+
   const [toast, setToast] = useState(null); // ← AGREGAR
 
   // Estados de modales
@@ -39,10 +54,14 @@ const Home = () => {
   const [showConsultaModal, setShowConsultaModal] = useState(false);
   const [showCasoModal, setShowCasoModal] = useState(false);
   const [showDocumentoModal, setShowDocumentoModal] = useState(false);
+  const [showEventoModal, setShowEventoModal] = useState(false);
+  const [showVencimientoModal, setShowVencimientoModal] = useState(false);
 
   useEffect(() => {
     cargarEstadisticas();
+    cargarEstadisticas();
     cargarActividadReciente();
+    cargarWidgets();
   }, []);
 
   // ← AGREGAR función showToast
@@ -86,6 +105,22 @@ const Home = () => {
     }
   };
 
+  const cargarWidgets = async () => {
+    setLoadingWidgets(true);
+    try {
+        const [eventosRes, vencimientosRes] = await Promise.all([
+            eventosService.getProximos(7),
+            vencimientosService.getProximos(7)
+        ]);
+        setProximosEventos(eventosRes.data || []);
+        setProximosVencimientos(vencimientosRes.data || []);
+    } catch (error) {
+        console.error("Error al cargar widgets:", error);
+    } finally {
+        setLoadingWidgets(false);
+    }
+  };
+
   // Funciones para cerrar modales
   const handleCloseCliente = (reload) => {
     setShowClienteModal(false);
@@ -116,6 +151,20 @@ const Home = () => {
     if (reload) {
       cargarEstadisticas();
       cargarActividadReciente();
+    }
+  };
+
+  const handleCloseEvento = (reload) => {
+    setShowEventoModal(false);
+    if (reload) {
+        cargarWidgets();
+    }
+  };
+
+  const handleCloseVencimiento = (reload) => {
+    setShowVencimientoModal(false);
+    if (reload) {
+        cargarWidgets();
     }
   };
 
@@ -237,6 +286,18 @@ const Home = () => {
       <div className="quick-actions">
         <h2>Acciones Rápidas</h2>
         <div className="actions-grid">
+         <button onClick={() => setShowEventoModal(true)} className="action-btn">
+            <span className="action-icon">
+              <CalendarIcon />
+            </span>
+            <span>Nuevo Evento</span>
+          </button>
+           <button onClick={() => setShowVencimientoModal(true)} className="action-btn">
+            <span className="action-icon">
+              <AlarmIcon />
+            </span>
+            <span>Nuevo Vencimiento</span>
+          </button>
           <button
             onClick={() => setShowClienteModal(true)}
             className="action-btn"
@@ -272,6 +333,73 @@ const Home = () => {
           </button>
         </div>
       </div>
+
+      <div className="dashboard-widgets-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '30px' }}>
+          
+          {/* Widget Eventos */}
+          <div className="widget-card card">
+            <div className="widget-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '15px', borderBottom: '1px solid #eee' }}>
+                <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <CalendarIcon /> Agenda (7 días)
+                </h3>
+                <Link to="/dashboard/eventos" className="text-sm">Ver todo</Link>
+            </div>
+            <div className="widget-body" style={{ padding: '15px' }}>
+                {loadingWidgets ? (
+                    <p>Cargando...</p>
+                ) : proximosEventos.length === 0 ? (
+                    <p className="text-muted">No hay eventos próximos.</p>
+                ) : (
+                    <div className="events-list">
+                        {proximosEventos.map(evt => (
+                            <div key={evt.id_evento} className="event-item" style={{ marginBottom: '10px', paddingBottom: '10px', borderBottom: '1px solid #f9f9f9' }}>
+                                <div style={{ fontWeight: 'bold' }}>{evt.titulo}</div>
+                                <div style={{ fontSize: '0.85em', color: '#666' }}>
+                                    {new Date(evt.fecha_inicio).toLocaleDateString()} - {new Date(evt.fecha_inicio).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+          </div>
+
+          {/* Widget Vencimientos */}
+           <div className="widget-card card">
+            <div className="widget-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '15px', borderBottom: '1px solid #eee' }}>
+                <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <AlarmIcon /> Vencimientos (7 días)
+                </h3>
+                <Link to="/dashboard/vencimientos" className="text-sm">Ver todo</Link>
+            </div>
+             <div className="widget-body" style={{ padding: '15px' }}>
+                {loadingWidgets ? (
+                    <p>Cargando...</p>
+                ) : proximosVencimientos.length === 0 ? (
+                    <p className="text-muted">No hay vencimientos próximos.</p>
+                ) : (
+                    <div className="vencimientos-list">
+                         {proximosVencimientos.map(venc => (
+                            <div key={venc.id_vencimiento} className="vencimiento-item" style={{ marginBottom: '10px', paddingBottom: '10px', borderBottom: '1px solid #f9f9f9', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                                <div>
+                                    <div style={{ fontWeight: 'bold' }}>{venc.titulo}</div>
+                                    <div style={{ fontSize: '0.85em', color: '#666' }}>
+                                        Vence: {new Date(venc.fecha_vencimiento).toLocaleDateString()} {new Date(venc.fecha_vencimiento).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}
+                                    </div>
+                                </div>
+                                <div>
+                                    <span className="badge badge-warning">{venc.tipo_vencimiento}</span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+          </div>
+
+      </div>
+
+
 
       <div className="recent-activity">
         <h2>Actividad Reciente</h2>
@@ -316,6 +444,12 @@ const Home = () => {
       )}
       {showDocumentoModal && (
         <DocumentoUpload onClose={handleCloseDocumento} showToast={showToast} />
+      )}
+      {showEventoModal && (
+        <EventoForm onClose={handleCloseEvento} showToast={showToast} />
+      )}
+      {showVencimientoModal && (
+        <VencimientoForm onClose={handleCloseVencimiento} showToast={showToast} />
       )}
 
       {/* Toast */}

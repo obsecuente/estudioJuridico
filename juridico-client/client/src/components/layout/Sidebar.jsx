@@ -8,6 +8,8 @@ import {
   CasosIcon,
   DocumentosIcon,
   AbogadosIcon,
+  EventIcon,
+  AlarmIcon,
 } from "../common/Icons.jsx";
 import "./Sidebar.css";
 
@@ -83,6 +85,30 @@ const Sidebar = () => {
             <DocumentosIcon />{" "}
           </span>
           <span>Documentos</span>
+        </NavLink>
+
+        <NavLink
+          to="/dashboard/eventos"
+          className={({ isActive }) =>
+            isActive ? "nav-link active" : "nav-link"
+          }
+        >
+          <span className="nav-icon">
+            <EventIcon />
+          </span>
+          <span>Agenda</span>
+        </NavLink>
+
+        <NavLink
+          to="/dashboard/vencimientos"
+          className={({ isActive }) =>
+            isActive ? "nav-link active" : "nav-link"
+          }
+        >
+          <span className="nav-icon">
+            <AlarmIcon />
+          </span>
+          <span>Vencimientos</span>
         </NavLink>
 
         {/* Solo mostrar Abogados si es admin */}

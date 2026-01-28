@@ -67,16 +67,27 @@
 }
 
 /* Botón Nuevo */
+/* Botón Nuevo - Premium Style */
 .btn-nuevo {
   height: 45px;
   padding: 0 25px;
-  background: #10b981;
-  color: white;
-  border: none;
+  background: #0f172a !important; /* Azul Noche */
+  color: #d4af37 !important; /* Dorado */
+  border: 1px solid #d4af37 !important;
   border-radius: 10px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-nuevo:hover {
+  background: #d4af37 !important;
+  color: #0f172a !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
 }
 
 /* Ajustes específicos para las celdas de Casos dentro de GlassTable */
