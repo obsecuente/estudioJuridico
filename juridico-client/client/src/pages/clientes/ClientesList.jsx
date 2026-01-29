@@ -144,15 +144,11 @@ const ClientesList = () => {
           "Acciones",
         ]}
         loading={loading}
+        isEmpty={clientes.length === 0}
+        emptyTitle="No hay clientes registrados"
+        emptyMessage="Parece que aún no hay clientes en el sistema. ¡Empeza cargando uno nuevo!"
       >
-        {clientes.length === 0 && !loading ? (
-          <tr>
-            <td colSpan="6" className="empty-state">
-              No se encontraron clientes
-            </td>
-          </tr>
-        ) : (
-          clientes.map((cliente) => (
+        {clientes.map((cliente) => (
             <tr key={cliente.id_cliente}>
               <td
                 data-label="ID"
@@ -201,7 +197,7 @@ const ClientesList = () => {
               </td>
             </tr>
           ))
-        )}
+        }
       </GlassTable>
 
       {/* Paginación (igual que antes) */}

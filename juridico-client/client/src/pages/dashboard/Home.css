@@ -311,6 +311,19 @@
 }
 
 /* --- WIDGETS DASHBOARD --- */
+.dashboard-widgets-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+@media (max-width: 1024px) {
+  .dashboard-widgets-grid {
+    grid-template-columns: 1fr; /* Una columna en tablets y móviles para que no se vea apretado */
+  }
+}
+
 .widget-card {
   background: #1a1f2b; /* Azul Noche Premium */
   border-radius: 12px;
@@ -404,6 +417,7 @@
 
 .widget-card .badge-warning {
   background-color: #f1c40f;
+  color: #1a1f2b !important; /* Texto oscuro sobre amarillo para contraste */
 }
 
 .widget-card .text-muted {

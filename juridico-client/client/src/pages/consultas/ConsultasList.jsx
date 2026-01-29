@@ -227,6 +227,9 @@ const ConsultasList = () => {
           "Acciones",
         ]}
         loading={loading}
+        isEmpty={consultas.length === 0}
+        emptyTitle="Sin consultas por ahora"
+        emptyMessage="No hay consultas que coincidan con la búsqueda. ¿Querés registrar una nueva?"
       >
         {consultas.map((consulta) => (
           <tr key={consulta.id_consulta}>

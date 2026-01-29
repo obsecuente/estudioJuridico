@@ -5,7 +5,8 @@ import useDebounce from "../../hooks/useDebounce";
 import AbogadoForm from "./AbogadoForm";
 import Toast from "../../components/common/Toast";
 import DeleteModal from "../../components/common/DeleteModal";
-import { EyeIcon, PencilIcon, TrashICon } from "../../components/common/Icons";
+import { EyeIcon, PencilIcon, TrashICon, SpinnerIcon } from "../../components/common/Icons";
+import EmptyState from "../../components/common/EmptyState";
 import { AuthContext } from "../../context/AuthContext";
 import "./AbogadosList.css";
 import "../../components/common/GlassTable.css"; /* glass styling shared */
@@ -121,12 +122,11 @@ const AbogadosList = () => {
   const handleCloseModal = (reload = false) => {
     setShowModal(false);
     setEditingAbogado(null);
-    if (reload) {
+    if (reload === true) {
       cargarAbogados();
     }
   };
 
-  // Cambiar pagina y Formatear fecha (Logica identica)
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= pagination.totalPages) {
       setPagination((prev) => ({ ...prev, page: newPage }));
@@ -143,8 +143,8 @@ const AbogadosList = () => {
       {/* Header */}
       <div className="abogados-header">
         <div>
-          <h1>Gestion de Abogados</h1>
-          <p>Administra los profesionales del estudio</p>
+          <h1>Gestión de Abogados</h1>
+          <p>Administrá los profesionales del estudio</p>
         </div>
         {/* Mostrar boton solo si es Admin */}
         {isAdmin && (
@@ -174,8 +174,8 @@ const AbogadosList = () => {
       {isAdmin &&
         !error &&
         (loading ? (
-          <div className="loading-container">
-            <div className="spinner"></div>
+          <div className="loading-container-global">
+            <SpinnerIcon />
             <p>Cargando abogados...</p>
           </div>
         ) : (
@@ -183,17 +183,10 @@ const AbogadosList = () => {
             {/* Tabla (Glass) */}
             <div className="table-wrapper-glass">
               {abogados.length === 0 ? (
-                <div className="empty-state">
-                  <p>No se encontraron abogados</p>
-                  {searchTerm && (
-                    <button
-                      onClick={() => setSearchTerm("")}
-                      className="btn-clear"
-                    >
-                      Limpiar busqueda
-                    </button>
-                  )}
-                </div>
+                <EmptyState 
+                  title="No hay profesionales registrados"
+                  message="No se encontraron abogados que coincidan con la búsqueda."
+                />
               ) : (
                 <table className="table-glass">
                   <thead>

@@ -130,7 +130,7 @@ class IAService {
 
 Usá este formato:
 
-### 📄 NATURALEZA Y OBJETO
+### NATURALEZA Y OBJETO
 (Tipo de documento legal y tema central)
 
 ### 👥 PARTES
@@ -305,6 +305,58 @@ ${textoProcesado}`;
       console.error("\n❌ === ERROR ===");
       console.error("Mensaje:", error.message);
       console.error("Stack:", error.stack);
+      throw error;
+    }
+  }
+
+  async preguntarDocumento(idDocumento, pregunta) {
+    console.log(`\n💬 === CONSULTA IA [Doc: ${idDocumento}] ===`);
+    console.log("❓ Pregunta:", pregunta);
+
+    try {
+      // 1. Obtener documento y extraer texto
+      const documento = await Documento.findByPk(idDocumento);
+      if (!documento) throw new Error("Documento no encontrado");
+
+      const rutaCompleta = path.resolve(documento.ruta);
+      const contenido = await this.leerContenidoDocumento(rutaCompleta);
+
+      // 2. Limitar texto para el prompt
+      const maxCaracteres = 15000;
+      const textoProcesado = contenido.length > maxCaracteres 
+        ? contenido.substring(0, maxCaracteres) + "\n...[Texto truncado para la consulta]..."
+        : contenido;
+
+      // 3. Llamada a Groq
+      console.log("📤 Consultando a Groq...");
+      const completion = await groq.chat.completions.create({
+        messages: [
+          {
+            role: "system",
+            content: `Sos un asistente jurídico inteligente. Tu tarea es responder preguntas ESPECÍFICAS sobre el siguiente DOCUMENTO que te proveeré. 
+            Instrucciones:
+            - Basate ÚNICAMENTE en la información del documento.
+            - Si la información no está, decilo honestamente.
+            - Sé preciso, técnico y profesional (estilo abogado argentino).
+            - Usá un tono atento pero formal.`,
+          },
+          {
+            role: "user",
+            content: `DOCUMENTO:\n${textoProcesado}\n\nPREGUNTA DEL USUARIO:\n${pregunta}`,
+          },
+        ],
+        model: "llama-3.3-70b-versatile",
+        temperature: 0.2, // Más bajo para mayor precisión
+        max_tokens: 1000,
+      });
+
+      console.log("✅ Respuesta recibida");
+      return {
+        respuesta: completion.choices[0].message.content,
+        uso: completion.usage
+      };
+    } catch (error) {
+      console.error("❌ Error en chat IA:", error);
       throw error;
     }
   }

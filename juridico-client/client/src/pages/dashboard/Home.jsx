@@ -334,7 +334,7 @@ const Home = () => {
         </div>
       </div>
 
-      <div className="dashboard-widgets-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '30px' }}>
+      <div className="dashboard-widgets-grid">
           
           {/* Widget Eventos */}
           <div className="widget-card">
@@ -359,7 +359,7 @@ const Home = () => {
                                         {new Date(evt.fecha_inicio).toLocaleDateString()} - {evt.hora_inicio ? evt.hora_inicio.substring(0, 5) : "-"}
                                     </div>
                                 </div>
-                                <span className="badge badge-info" style={{ textTransform: 'capitalize' }}>{evt.tipo}</span>
+                                <span className="badge badge-warning" style={{ textTransform: 'uppercase' }}>{evt.tipo}</span>
                             </div>
                         ))}
                     </div>

@@ -107,3 +107,33 @@
 .modal-content.glass-card .btn-submit > * {
   position: relative;
   z-index: 1;
+}
+
+/* Responsividad Global para Modales y Formularios */
+@media (max-width: 768px) {
+  .modal-content.glass-card {
+    width: 95% !important;
+    max-height: 95vh !important;
+    margin: 10px !important;
+  }
+
+  .form-row {
+    flex-direction: column !important;
+    gap: 0 !important;
+  }
+
+  .modal-footer {
+    flex-direction: column !important;
+    gap: 10px !important;
+  }
+
+  .modal-footer button {
+    width: 100% !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-page-content {
+    padding: 15px !important;
+  }
+}

@@ -67,3 +67,25 @@ export const eliminarResumen = async (req, res) => {
     });
   }
 };
+
+// Nueva: Chatear con documento
+export const preguntarDocumento = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { pregunta } = req.body;
+
+    if (!pregunta) {
+      return res.status(400).json({ mensaje: "La pregunta es obligatoria" });
+    }
+
+    const resultado = await IAService.preguntarDocumento(id, pregunta);
+
+    res.status(200).json(resultado);
+  } catch (error) {
+    console.error("Error en pregunta IA:", error);
+    res.status(500).json({
+      mensaje: "Error al procesar la pregunta",
+      error: error.message,
+    });
+  }
+};

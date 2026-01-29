@@ -11,12 +11,21 @@
 .table-wrapper-glass {
   background: var(--color-fondo-oscuro, #1a1f2b);
   border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  overflow-x: auto; /* Scroll horizontal si la tabla es más ancha que el móvil */
   border: 1px solid rgba(255, 255, 255, 0.05);
   border-left: 5px solid var(--color-acento, #d4af37);
   width: 100%;
   margin-top: 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Scrollbar personalizado para la tabla en mobile */
+.table-wrapper-glass::-webkit-scrollbar {
+  height: 6px;
+}
+.table-wrapper-glass::-webkit-scrollbar-thumb {
+  background: rgba(212, 175, 55, 0.3);
+  border-radius: 10px;
 }
 
 /* BOTÓN NUEVA CONSULTA / VENCIMIENTO (Estilo Premium) */
@@ -188,4 +197,30 @@
   text-transform: uppercase;
   color: white;
   box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  white-space: nowrap; /* Evita que "ABIERTO" se rompa en mobile */
+}
+
+.loading-cell {
+  padding: 80px 0 !important;
+  text-align: center;
+}
+
+.loading-container-glass {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  color: var(--color-acento, #d4af37);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.loading-container-glass .spinner-icon {
+  font-size: 40px;
+  filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.4));
+}
+
+.empty-cell-glass {
+  padding: 0 !important;
+  border-bottom: none !important;
 }

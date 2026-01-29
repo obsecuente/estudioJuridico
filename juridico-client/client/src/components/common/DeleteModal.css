@@ -174,3 +174,15 @@
     opacity: 1;
   }
 }
+
+@media (max-width: 480px) {
+  .delete-modal-card {
+    padding: 25px;
+  }
+  .delete-modal-actions {
+    flex-direction: column;
+  }
+  .btn-modal-confirm {
+    order: -1; /* Confirmar arriba en mobile es más común */
+  }
+}

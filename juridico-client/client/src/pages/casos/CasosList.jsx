@@ -192,15 +192,14 @@ const CasosList = () => {
 
       {error && <div className="error-message">{error}</div>}
 
-      <GlassTable columns={columnas} loading={loading}>
-        {casos.length === 0 ? (
-          <tr>
-            <td colSpan={columnas.length} className="empty-state">
-              No se encontraron casos
-            </td>
-          </tr>
-        ) : (
-          casos.map((caso) => {
+      <GlassTable 
+        columns={columnas} 
+        loading={loading}
+        isEmpty={casos.length === 0}
+        emptyTitle="No se encontraron casos"
+        emptyMessage="Parece que no hay casos registrados con estos filtros. ¡Agregá uno nuevo para empezar!"
+      >
+        {casos.map((caso) => {
             const badge = getEstadoBadge(caso.estado);
             return (
               <tr key={caso.id_caso}>
@@ -263,7 +262,7 @@ const CasosList = () => {
               </tr>
             );
           })
-        )}
+        }
       </GlassTable>
 
       {pagination.totalPages > 1 && (

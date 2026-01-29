@@ -4,6 +4,7 @@ import api from "../../services/api";
 import useDebounce from "../../hooks/useDebounce";
 import DocumentoUpload from "./DocumentoUpload";
 import Toast from "../../components/common/Toast";
+import EmptyState from "../../components/common/EmptyState";
 import "./DocumentosList.css";
 import {
   CasosIcon,
@@ -18,6 +19,7 @@ import {
   UploadIcon,
   wordIcon,
   zipIcon,
+  SpinnerIcon,
 } from "../../components/common/Icons";
 import DeleteModal from "../../components/common/DeleteModal";
 
@@ -234,8 +236,8 @@ const DocumentosList = () => {
 
       {/* Loading */}
       {loading ? (
-        <div className="loading-container">
-          <div className="spinner"></div>
+        <div className="loading-container-global">
+          <SpinnerIcon />
           <p>Cargando documentos...</p>
         </div>
       ) : (
@@ -243,16 +245,11 @@ const DocumentosList = () => {
           {/* Grid de documentos */}
           <div className="documentos-grid">
             {documentos.length === 0 ? (
-              <div className="empty-state">
-                <p>No se encontraron documentos</p>
-                {searchTerm && (
-                  <button
-                    onClick={() => setSearchTerm("")}
-                    className="btn-clear"
-                  >
-                    Limpiar búsqueda
-                  </button>
-                )}
+              <div className="empty-state-wrapper">
+                <EmptyState 
+                  title="No se encontraron documentos" 
+                  message={searchTerm ? "Probá con otro nombre de archivo." : "Todavía no subiste ningún archivo. ¡Subí el primero!"}
+                />
               </div>
             ) : (
               documentos.map((doc) => (

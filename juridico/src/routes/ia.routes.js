@@ -3,6 +3,7 @@ import {
   resumirDocumento,
   obtenerResumen,
   eliminarResumen,
+  preguntarDocumento, // Importar
 } from "../controllers/ia.controller.js";
 import authMiddleware from "../middleware/authMiddleware.js";
 
@@ -13,6 +14,9 @@ router.use(authMiddleware);
 
 // POST /api/ia/resumir/:id - Generar o recuperar resumen de documento
 router.post("/resumir/:id", resumirDocumento);
+
+// POST /api/ia/preguntar/:id - Chatear con un documento
+router.post("/preguntar/:id", preguntarDocumento);
 
 // GET /api/ia/resumen/:id - Obtener resumen de un documento
 router.get("/resumen/:id", obtenerResumen);

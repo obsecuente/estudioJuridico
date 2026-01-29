@@ -186,6 +186,9 @@ const VencimientosList = () => {
           "Acciones"
         ]}
         loading={loading}
+        isEmpty={vencimientos.length === 0}
+        emptyTitle="Sin vencimientos próximos"
+        emptyMessage="Todo al día por acá. No se encontraron vencimientos."
       >
         {vencimientos.map((venc) => (
           <tr key={venc.id_vencimiento}>

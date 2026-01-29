@@ -173,6 +173,9 @@ const EventosList = () => {
           "Acciones"
         ]}
         loading={loading}
+        isEmpty={eventos.length === 0}
+        emptyTitle="No hay eventos programados"
+        emptyMessage="Parece que no tenés eventos para este mes. ¡Agregá uno nuevo para organizar tu agenda!"
       >
         {eventos.map((evento) => (
           <tr key={evento.id_evento}>
@@ -255,10 +258,12 @@ const EventosList = () => {
       {showDeleteModal && (
         <DeleteModal
           isOpen={showDeleteModal}
-          onClose={() => setShowDeleteModal(false)}
+          onCancel={() => setShowDeleteModal(false)}
           onConfirm={confirmDelete}
           title="Eliminar Evento"
           message="¿Estás seguro de que deseas eliminar este evento? Esta acción no se puede deshacer."
+          confirmLabel="Eliminar Evento"
+          confirmVariant="danger"
         />
       )}
     </div>

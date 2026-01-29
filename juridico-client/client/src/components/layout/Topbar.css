@@ -3,7 +3,7 @@
   top: 0;
   width: 100%;
   height: 70px;
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
@@ -109,26 +109,38 @@
   }
 }
 
+/* Botón Toggle (Oculto por defecto, visible en media query) */
+.btn-menu-toggle {
+  display: none;
+}
+
 @media (max-width: 768px) {
-  .topbar {
-    left: 70px; /* Se ajusta al ancho del Sidebar colapsado */
+  .topbar-content {
+    padding: 0 15px;
+  }
+
+  .btn-menu-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    font-size: 24px;
+    color: #0f172a;
+    cursor: pointer;
+    margin-right: 15px;
   }
 
   .topbar-title {
-    font-size: 18px;
+    font-size: 16px;
+    letter-spacing: 1px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 140px;
   }
 
   .user-name {
-    display: none; /* En mobile solo queda el avatar y badge */
-  }
-}
-
-@media (max-width: 480px) {
-  .topbar {
-    left: 0; /* Si el sidebar desaparece en celulares chicos */
-  }
-
-  .topbar-title {
-    display: none; /* Para que no se encime con el avatar */
+    display: none;
   }
 }

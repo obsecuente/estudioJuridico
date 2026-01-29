@@ -1,9 +1,10 @@
 import { useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
+import { MenuIcon } from "../common/Icons";
 import "./Topbar.css";
 
-const Topbar = () => {
+const Topbar = ({ onToggleMenu }) => {
   const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
 
@@ -27,6 +28,9 @@ const Topbar = () => {
     <header className="topbar">
       <div className="topbar-content">
         <div className="topbar-left">
+          <button className="btn-menu-toggle" onClick={onToggleMenu}>
+            <MenuIcon />
+          </button>
           <h1 className="topbar-title">Panel de Control</h1>
         </div>
 

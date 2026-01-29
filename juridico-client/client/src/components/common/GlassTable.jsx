@@ -1,7 +1,16 @@
 import React from "react";
+import { SpinnerIcon } from "./Icons";
+import EmptyState from "./EmptyState";
 import "./GlassTable.css";
 
-const GlassTable = ({ columns, children, loading }) => {
+const GlassTable = ({ 
+  columns, 
+  children, 
+  loading, 
+  isEmpty, 
+  emptyTitle, 
+  emptyMessage 
+}) => {
   return (
     <div className="table-wrapper-glass">
       <table className="table-glass">
@@ -16,8 +25,16 @@ const GlassTable = ({ columns, children, loading }) => {
           {loading ? (
             <tr>
               <td colSpan={columns.length} className="loading-cell">
-                <div className="spinner-sutil"></div>
-                Cargando...
+                <div className="loading-container-glass">
+                  <SpinnerIcon />
+                  <span>Cargando datos...</span>
+                </div>
+              </td>
+            </tr>
+          ) : isEmpty ? (
+            <tr>
+              <td colSpan={columns.length} className="empty-cell-glass">
+                <EmptyState title={emptyTitle} message={emptyMessage} />
               </td>
             </tr>
           ) : (

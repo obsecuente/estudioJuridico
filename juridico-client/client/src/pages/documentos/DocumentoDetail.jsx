@@ -19,7 +19,7 @@ import {
   wordIcon,
   Xicon,
   zipIcon,
-} from "../../components/common/Icons";
+} from "../../components/common/Icons"
 import BackButton from "../../components/common/BackButton";
 import ResumenIA from "../../components/ia/ResumenIA";
 
