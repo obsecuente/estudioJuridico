@@ -135,6 +135,8 @@ export const obtenerTodos = async (opciones = {}) => {
     limit = 50,
     fecha_desde,
     fecha_hasta,
+    month,
+    year,
     tipo,
     estado,
     id_abogado,
@@ -145,8 +147,23 @@ export const obtenerTodos = async (opciones = {}) => {
   const offset = (page - 1) * limit;
   const where = {};
 
-  // filtro por rango de fechas
-  if (fecha_desde || fecha_hasta) {
+  // filtro por rango de fechas (prioriza month/year o year-only si vienen)
+  if (year) {
+    if (month) {
+      const primerDia = new Date(year, month - 1, 1);
+      const ultimoDia = new Date(year, month, 0, 23, 59, 59);
+      where.fecha_inicio = {
+        [Op.between]: [primerDia, ultimoDia],
+      };
+    } else {
+      // Si solo viene el año (Todos los meses)
+      const primerDia = new Date(year, 0, 1);
+      const ultimoDia = new Date(year, 11, 31, 23, 59, 59);
+      where.fecha_inicio = {
+        [Op.between]: [primerDia, ultimoDia],
+      };
+    }
+  } else if (fecha_desde || fecha_hasta) {
     where.fecha_inicio = {};
     if (fecha_desde) where.fecha_inicio[Op.gte] = fecha_desde;
     if (fecha_hasta) where.fecha_inicio[Op.lte] = fecha_hasta;

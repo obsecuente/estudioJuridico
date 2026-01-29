@@ -28,6 +28,8 @@ export const obtenerEventos = async (req, res) => {
       limit: req.query.limit,
       fecha_desde: req.query.fecha_desde,
       fecha_hasta: req.query.fecha_hasta,
+      month: req.query.month,
+      year: req.query.year,
       tipo: req.query.tipo,
       estado: req.query.estado,
       id_abogado: req.query.id_abogado,

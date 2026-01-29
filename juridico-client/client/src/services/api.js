@@ -37,6 +37,13 @@ api.interceptors.response.use(
     console.log("❌ Headers:", error.config?.headers);
     console.log("❌ Response data:", error.response?.data);
 
+    // Manejar específicamente el error 429 (Demasiadas solicitudes)
+    if (error.response?.status === 429) {
+      console.error("⚠️ Límite de solicitudes alcanzado (429). El servidor está bloqueando temporalmente las peticiones.");
+      // Podríamos mostrar un mensaje global aquí si tuviéramos un store de UI
+      return Promise.reject(new Error("Límite de solicitudes alcanzado. Por favor, espera unos minutos e intenta de nuevo."));
+    }
+
     // Si el token expiró, cerrar sesión
     if (error.response?.status === 401) {
       console.log(

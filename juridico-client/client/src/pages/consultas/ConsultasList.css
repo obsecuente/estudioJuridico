@@ -92,3 +92,13 @@
   border-color: #3b82f6;
   box-shadow: 0 4px 10px rgba(59, 130, 246, 0.2);
 }
+
+.filter-custom-select {
+  min-width: 220px;
+}
+
+.filter-select option {
+  background: #0f172a;
+  color: white;
+  padding: 10px;
+}

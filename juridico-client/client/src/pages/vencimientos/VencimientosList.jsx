@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import vencimientosService from "../../services/vencimientos.service";
 import DeleteModal from "../../components/common/DeleteModal";
 import Toast from "../../components/common/Toast";
+import GlassTable from "../../components/common/GlassTable";
 import {
   AddIcon,
   AlarmIcon,
@@ -12,7 +14,6 @@ import {
   YellowState,
   RedState,
   CheckIcon,
-  
 } from "../../components/common/Icons";
 import VencimientoForm from "./VencimientoForm";
 import "./VencimientosList.css";
@@ -148,7 +149,7 @@ const VencimientosList = () => {
           <AlarmIcon />
           <h2>Vencimientos</h2>
         </div>
-        <button className="btn-primary" onClick={handleCreate}>
+        <button className="btn-nuevo" onClick={handleCreate}>
           <AddIcon /> Nuevo Vencimiento
         </button>
       </div>
@@ -174,90 +175,83 @@ const VencimientosList = () => {
         </button>
       </div>
 
-      {loading ? (
-        <div className="loading-spinner">Cargando vencimientos...</div>
-      ) : vencimientos.length === 0 ? (
-        <div className="empty-state">
-          <p>No hay vencimientos con el filtro seleccionado.</p>
-        </div>
-      ) : (
-        <div className="table-container">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Fecha Venc.</th>
-                <th>Título</th>
-                <th>Tipo</th>
-                <th>Descripción del Caso</th>
-                <th>Cliente</th>
-                <th style={{ width: "80px", textAlign: "center" }}>Prioridad</th>
-                <th>Estado</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {vencimientos.map((venc) => (
-                <tr key={venc.id_vencimiento}>
-                  <td className={new Date(venc.fecha_limite) < new Date() && venc.estado !== 'CUMPLIDO' ? 'text-danger fw-bold' : ''}>
-                    {new Date(venc.fecha_limite).toLocaleDateString()}
-                    <br/>
-                    <small>{venc.fecha_limite ? new Date(venc.fecha_limite).toISOString().substring(11, 16) : ''}</small>
-                  </td>
-                  <td>{venc.titulo}</td>
-                  <td>{venc.tipo_vencimiento}</td>
-                  <td>{venc.caso ? venc.caso.descripcion : "-"}</td>
-                  <td>
-                    {venc.caso && venc.caso.cliente
-                      ? `${venc.caso.cliente.nombre} ${venc.caso.cliente.apellido}`
-                      : "-"}
-                  </td>
-                  <td style={{ textAlign: "center" }} title={`Prioridad: ${venc.prioridad}`}>
-                    {getPrioridadIcono(venc.prioridad)}
-                  </td>
-                  <td>
-                    <span
-                      className={`badge ${
-                        venc.estado === "CUMPLIDO"
-                          ? "badge-success"
-                          : "badge-warning"
-                      }`}
-                    >
-                      {venc.estado}
-                    </span>
-                  </td>
-                  <td className="actions-cell">
-                    {venc.estado !== "CUMPLIDO" && (
-                        <button 
-                            className="btn-icon text-success" 
-                            title="Marcar Cumplido"
-                            onClick={() => marcarComoCumplido(venc.id_vencimiento)}
-                        >
-                            <CheckIcon />
-                        </button>
-                    )}
-                     <button
-                      className="btn-icon"
-                      title="Editar"
-                      onClick={() => handleEdit(venc)}
-                    >
-                      <PencilIcon />
-                    </button>
-
-
-                    <button
-                      className="btn-icon delete"
-                      title="Eliminar"
-                      onClick={() => eliminarVencimiento(venc.id_vencimiento)}
-                    >
-                      <TrashICon />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      <GlassTable
+        columns={[
+          "Prioridad",
+          "Fecha Venc.",
+          "Título",
+          "Cliente",
+          "Tipo",
+          "Estado",
+          "Acciones"
+        ]}
+        loading={loading}
+      >
+        {vencimientos.map((venc) => (
+          <tr key={venc.id_vencimiento}>
+            <td className="text-center" title={`Prioridad: ${venc.prioridad}`}>
+              {getPrioridadIcono(venc.prioridad)}
+            </td>
+            <td className="text-center" style={{ fontWeight: 600 }}>
+              {new Date(venc.fecha_limite).toLocaleDateString()}
+              <br/>
+              <small>{venc.fecha_limite ? new Date(venc.fecha_limite).toISOString().substring(11, 16) : ''}</small>
+            </td>
+            <td title={venc.titulo}>
+              {venc.titulo}
+            </td>
+            <td>
+              {venc.caso && venc.caso.cliente ? (
+                <Link to={`/dashboard/clientes/${venc.caso.cliente.id_cliente}`}>
+                  {venc.caso.cliente.nombre} {venc.caso.cliente.apellido}
+                </Link>
+              ) : (
+                "-"
+              )}
+            </td>
+            <td>{venc.tipo_vencimiento}</td>
+            <td className="text-center">
+              <span
+                className={`badge ${
+                  venc.estado === "CUMPLIDO"
+                    ? "badge-success"
+                    : "badge-warning"
+                }`}
+              >
+                {venc.estado}
+              </span>
+            </td>
+            <td className="actions-cell">
+              <div className="actions-wrapper">
+                {venc.estado !== "CUMPLIDO" && (
+                  <button 
+                    className="btn-action btn-view" /* Reusing view color for check */
+                    style={{ backgroundColor: 'rgba(34, 197, 94, 0.2)', borderColor: '#22c55e' }}
+                    title="Marcar Cumplido"
+                    onClick={() => marcarComoCumplido(venc.id_vencimiento)}
+                  >
+                    <CheckIcon />
+                  </button>
+                )}
+                <button
+                  className="btn-action btn-edit"
+                  title="Editar"
+                  onClick={() => handleEdit(venc)}
+                >
+                  <PencilIcon />
+                </button>
+                <button
+                  className="btn-action btn-delete"
+                  title="Eliminar"
+                  onClick={() => eliminarVencimiento(venc.id_vencimiento)}
+                >
+                  <TrashICon />
+                </button>
+              </div>
+            </td>
+          </tr>
+        ))}
+      </GlassTable>
 
       {showModal && (
         <VencimientoForm 

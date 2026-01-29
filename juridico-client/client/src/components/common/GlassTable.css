@@ -14,9 +14,33 @@
   overflow: hidden;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
   border: 1px solid rgba(255, 255, 255, 0.05);
-  border-left: 5px solid var(--color-acento, #d4af37); /* Toque de diseño consistente */
+  border-left: 5px solid var(--color-acento, #d4af37);
   width: 100%;
   margin-top: 10px;
+}
+
+/* BOTÓN NUEVA CONSULTA / VENCIMIENTO (Estilo Premium) */
+.btn-nuevo {
+  height: 42px;
+  background: var(--color-primario, #0f172a) !important;
+  color: var(--color-acento, #d4af37) !important;
+  border: 1px solid var(--color-acento, #d4af37) !important;
+  padding: 0 20px;
+  border-radius: 10px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-decoration: none;
+}
+
+.btn-nuevo:hover {
+  background: var(--color-acento, #d4af37) !important;
+  color: var(--color-primario, #0f172a) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
 }
 
 .table-glass {
@@ -48,7 +72,31 @@
   color: var(--color-texto-principal, #f1f5f9);
   font-size: 14px;
   vertical-align: middle;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05); /* Líneas sutiles */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Centrado específico para columnas de prioridad, fecha y estado en Vencimientos (1, 2 y 6) */
+.table-glass th:nth-child(1),
+.table-glass th:nth-child(2),
+.table-glass th:nth-child(6),
+.table-glass td:nth-child(1),
+.table-glass td:nth-child(2),
+.table-glass td:nth-child(6) {
+  text-align: center !important;
+}
+
+.table-glass td a {
+  color: #f1f5f9;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-color: rgba(212, 175, 55, 0.4);
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.table-glass td a:hover {
+  color: var(--color-acento, #d4af37);
+  text-decoration-color: var(--color-acento, #d4af37);
 }
 
 .table-glass tbody tr {
@@ -64,9 +112,9 @@
   display: table-cell !important;
   vertical-align: middle !important;
   text-align: center !important;
-  padding: 0 10px !important;
+  padding: 0 20px !important;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
-  width: 140px;
+  width: 200px !important; /* Más ancho para que no choque */
 }
 
 .table-glass td:first-child {

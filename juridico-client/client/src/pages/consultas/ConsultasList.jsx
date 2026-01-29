@@ -8,6 +8,7 @@ import GlassTable from "../../components/common/GlassTable";
 import StatusBadge from "../../components/common/StatusBadge";
 import Toast from "../../components/common/Toast";
 import DeleteModal from "../../components/common/DeleteModal";
+import CustomSelect from "../../components/common/CustomSelect";
 import {
   AddIcon,
   EyeIcon,
@@ -173,7 +174,6 @@ const ConsultasList = () => {
 
         <div className="estado-filters">
           <div className="filter-group">
-            <span className="filter-label">Estado:</span>
             <button
                 className={`filter-btn ${estadoFiltro === "todas" ? "active" : ""}`}
                 onClick={() => handleEstadoFilter("todas")}
@@ -195,30 +195,21 @@ const ConsultasList = () => {
           </div>
 
           <div className="filter-group">
-            <span className="filter-label">Abogado:</span>
-            <select 
-              value={idAbogadoFiltro} 
-              onChange={(e) => {
-                setIdAbogadoFiltro(e.target.value);
+            <CustomSelect
+              options={[
+                { value: "", label: "Todos los abogados" },
+                ...abogados.map(a => ({
+                  value: a.id_abogado,
+                  label: `${a.nombre} ${a.apellido}`
+                }))
+              ]}
+              value={idAbogadoFiltro}
+              onChange={(val) => {
+                setIdAbogadoFiltro(val);
                 setPagination(prev => ({ ...prev, page: 1 }));
               }}
-              className="filter-select"
-              style={{
-                padding: '8px 12px',
-                borderRadius: '8px',
-                background: '#1a1f2b',
-                color: 'white',
-                border: '1px solid #d4af37',
-                marginRight: '10px'
-              }}
-            >
-              <option value="">Todos los abogados</option>
-              {abogados.map(a => (
-                <option key={a.id_abogado} value={a.id_abogado}>
-                  {a.nombre} {a.apellido}
-                </option>
-              ))}
-            </select>
+              className="filter-custom-select"
+            />
           </div>
         </div>
       </div>

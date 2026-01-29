@@ -11,34 +11,38 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 14px;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.03);
+  padding: 0 16px;
+  height: 45px; /* Unifying height with search input */
+  border-radius: 12px;
+  background: #0f172a; /* Azul Noche */
   color: #f8fafc;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid #d4af37; /* Dorado */
   cursor: pointer;
-  transition: box-shadow 0.12s ease, transform 0.08s ease;
+  transition: all 0.3s ease;
   text-align: left;
 }
 .custom-select__control:focus {
   outline: none;
 }
-.custom-select__control:focus-visible {
-  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.08),
-    0 0 0 4px rgba(212, 175, 55, 0.12);
-  border-color: rgba(99, 102, 241, 0.9);
+.custom-select__control:hover {
+  background: #1a1f2b;
+  border-color: #f1c40f;
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.2);
 }
 .custom-select__control.is-open {
+  border-color: #f1c40f;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
 }
 
 .custom-select__value {
-  font-size: 15px;
+  font-size: 14px;
+  font-weight: 500;
   color: #f8fafc;
 }
 .custom-select__arrow {
   margin-left: 12px;
-  color: rgba(248, 250, 252, 0.72);
+  color: #d4af37;
+  font-size: 12px;
 }
 
 .custom-select__menu {
@@ -47,36 +51,33 @@
   left: 0;
   right: 0;
   margin-top: 8px;
-  border-radius: 10px;
+  border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-  background: linear-gradient(
-    180deg,
-    rgba(15, 23, 42, 0.98),
-    rgba(8, 10, 12, 0.98)
-  );
-  border: 1px solid rgba(255, 255, 255, 0.04);
+  background: #0f172a; /* Azul Noche puro para el menú */
+  border: 1px solid #d4af37;
   max-height: 240px;
   overflow-y: auto;
 }
 
 .custom-select__option {
-  padding: 10px 14px;
+  padding: 12px 16px;
   cursor: pointer;
   color: rgba(248, 250, 252, 0.9);
   background: transparent;
-  transition: background 0.12s ease, color 0.12s ease;
+  transition: all 0.2s ease;
+  font-size: 14px;
 }
 
 .custom-select__option.is-focused,
 .custom-select__option:hover {
-  background: rgba(212, 175, 55, 0.08);
-  color: var(--color-acento);
+  background: rgba(212, 175, 55, 0.1);
+  color: #f1c40f;
 }
 
 .custom-select__option.is-selected {
-  background: var(--color-acento) !important;
-  color: var(--color-primario) !important;
+  background: #d4af37 !important;
+  color: #0f172a !important;
   font-weight: 700;
 }
 

@@ -40,22 +40,24 @@ app.use(
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: 1000, // Aumentado de 100 a 1000 para evitar desconexiones en el dashboard
   message: "Demasiadas solicitudes desde esta IP, intenta de nuevo más tarde",
   standardHeaders: true,
   legacyHeaders: false,
 });
 
-app.use("/api/", limiter);
-app.use("/api/ia", iaRoutes);
-// Middlewares de Express
+// Middlewares de Express (Configurar ANTES de las rutas)
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
-// Middleware de logging HTTP (NUEVO - agregar AQUÍ)
+// Middleware de logging HTTP
 app.use(httpLogger);
 
+// Aplicar Rate Limit después de los parsers básicos pero antes de las rutas de datos
+app.use("/api/", limiter);
+
 // Rutas
+app.use("/api/ia", iaRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/clientes", clientesRoutes);
 app.use("/api/consultas", consultasRoutes);
@@ -124,8 +126,6 @@ const startServer = async () => {
     process.exit(1);
   }
 };
-
-startServer();
 
 if (process.env.NODE_ENV !== "test") {
   startServer();

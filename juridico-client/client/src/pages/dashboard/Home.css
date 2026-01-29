@@ -155,17 +155,21 @@
 
 /* --- ACTIVIDAD RECIENTE --- */
 .recent-activity {
-  background: white;
+  background: #1a1f2b; /* Azul Noche Premium */
   border-radius: 12px;
   padding: 24px;
-  border: 1px solid #e2e8f0;
+  border: none;
+  border-left: 5px solid #f1c40f;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .recent-activity h2 {
   margin-bottom: 20px;
-  color: #1a1f2b;
+  color: #f1c40f; /* Título Dorado */
   font-size: 20px;
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 .activity-list {
@@ -178,22 +182,24 @@
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  padding: 12px;
-  background: #f8fafc;
-  border-radius: 8px;
-  border-left: 3px solid #e2e8f0;
-  transition: all 0.2s ease;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
+  border-left: 3px solid rgba(241, 196, 15, 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .activity-item:hover {
   border-left-color: #f1c40f;
-  background: #fff;
-  transform: translateX(4px);
+  background: rgba(241, 196, 15, 0.08);
+  transform: translateX(10px); /* Efecto hacia la derecha más pronunciado */
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
 .activity-icon {
   font-size: 1.25rem;
   flex-shrink: 0;
+  color: #f1c40f; /* Iconos dorados */
 }
 
 .activity-content {
@@ -204,14 +210,14 @@
 }
 
 .activity-description {
-  color: #1a1f2b;
+  color: #f1f5f9; /* Texto claro */
   font-size: 0.95rem;
   font-weight: 500;
   margin: 0;
 }
 
 .activity-time {
-  color: #64748b;
+  color: #94a3b8;
   font-size: 0.8rem;
 }
 

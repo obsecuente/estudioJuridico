@@ -3,12 +3,13 @@ import { Link } from "react-router-dom";
 import api from "../../services/api";
 import eventosService from "../../services/eventos.service";
 import Toast from "../../components/common/Toast";
+import GlassTable from "../../components/common/GlassTable";
+import CustomSelect from "../../components/common/CustomSelect";
 import {
   AddIcon,
   EventIcon,
   PencilIcon,
   TrashICon,
-  EyeIcon,
 } from "../../components/common/Icons";
 import DeleteModal from "../../components/common/DeleteModal";
 import EventoForm from "./EventoForm";
@@ -20,6 +21,7 @@ const EventosList = () => {
   const [toast, setToast] = useState(null);
   const [filtroMes, setFiltroMes] = useState(new Date().getMonth() + 1);
   const [filtroAño, setFiltroAño] = useState(new Date().getFullYear());
+  const [filtroTipo, setFiltroTipo] = useState("");
 
   const [showModal, setShowModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -28,15 +30,16 @@ const EventosList = () => {
 
   useEffect(() => {
     cargarEventos();
-  }, [filtroMes, filtroAño]);
+  }, [filtroMes, filtroAño, filtroTipo]);
 
   const cargarEventos = async () => {
     try {
       setLoading(true);
       // Por defecto traemos del mes seleccionado
       const data = await eventosService.getAll({
-        month: filtroMes,
+        month: filtroMes === 0 ? null : filtroMes,
         year: filtroAño,
+        tipo: filtroTipo || null,
       });
       // Ajustar según lo que devuelva el backend, asumo data.data o data array
       setEventos(Array.isArray(data) ? data : data.data || []);
@@ -101,6 +104,7 @@ const EventosList = () => {
   }
 
   const meses = [
+    { value: 0, label: "Todos los meses" },
     { value: 1, label: "Enero" },
     { value: 2, label: "Febrero" },
     { value: 3, label: "Marzo" },
@@ -129,104 +133,108 @@ const EventosList = () => {
 
       <div className="filters-bar">
         <div className="filter-group">
-          <select
+          <CustomSelect
+            options={meses}
             value={filtroMes}
-            onChange={(e) => setFiltroMes(parseInt(e.target.value))}
-            className="form-select"
-          >
-            {meses.map((mes) => (
-              <option key={mes.value} value={mes.value}>
-                {mes.label}
-              </option>
-            ))}
-          </select>
-          <select
+            onChange={setFiltroMes}
+            className="filter-date-select"
+          />
+          <CustomSelect
+            options={[2024, 2025, 2026, 2027].map(a => ({ value: a, label: String(a) }))}
             value={filtroAño}
-            onChange={(e) => setFiltroAño(parseInt(e.target.value))}
-            className="form-select"
-          >
-            {[2024, 2025, 2026].map((año) => (
-              <option key={año} value={año}>
-                {año}
-              </option>
-            ))}
-          </select>
+            onChange={setFiltroAño}
+            className="filter-year-select"
+          />
+          <CustomSelect
+            options={[
+              { value: "", label: "Todos los tipos" },
+              { value: "audiencia", label: "Audiencia" },
+              { value: "reunion", label: "Reunión" },
+              { value: "tarea", label: "Tarea" },
+              { value: "vencimiento", label: "Vencimiento" },
+              { value: "otro", label: "Otro" }
+            ]}
+            value={filtroTipo}
+            onChange={setFiltroTipo}
+            className="filter-type-select"
+          />
         </div>
       </div>
 
-      {loading ? (
-        <div className="loading-spinner">Cargando eventos...</div>
-      ) : eventos.length === 0 ? (
-        <div className="empty-state">
-          <p>No hay eventos registrados para este período.</p>
-        </div>
-      ) : (
-        <div className="table-container">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Fecha</th>
-                <th>Hora</th>
-                <th>Título</th>
-                <th>Caso</th>
-                <th>Cliente</th>
-                <th>Tipo</th>
-                <th>Estado</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {eventos.map((evento) => (
-                <tr key={evento.id_evento}>
-                  <td>{new Date(evento.fecha_inicio).toLocaleDateString()}</td>
-                  <td>
-                    {evento.hora_inicio ? evento.hora_inicio.substring(0, 5) : "-"}
-                  </td>
-                  <td>{evento.titulo}</td>
-                  <td>
-                    {evento.caso ? evento.caso.descripcion : "-"}
-                  </td>
-                  <td>
-                    {evento.cliente
-                      ? `${evento.cliente.nombre} ${evento.cliente.apellido}`
-                      : "-"}
-                  </td>
-                  <td>
-                    <span className="badge badge-info">{evento.tipo}</span>
-                  </td>
-                  <td>
-                    <span
-                      className={`badge ${
-                        evento.estado === "REALIZADO"
-                          ? "badge-success"
-                          : "badge-warning"
-                      }`}
-                    >
-                      {evento.estado}
-                    </span>
-                  </td>
-                  <td className="actions-cell">
-                    <button
-                      className="btn-icon"
-                      title="Editar"
-                      onClick={() => handleEdit(evento)}
-                    >
-                      <PencilIcon />
-                    </button>
-                    <button
-                      className="btn-icon delete"
-                      title="Eliminar"
-                      onClick={() => eliminarEvento(evento.id_evento)}
-                    >
-                      <TrashICon />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      <GlassTable
+        columns={[
+          "Fecha",
+          "Hora",
+          "Título",
+          "Caso",
+          "Cliente",
+          "Tipo",
+          "Estado",
+          "Acciones"
+        ]}
+        loading={loading}
+      >
+        {eventos.map((evento) => (
+          <tr key={evento.id_evento}>
+            <td className="text-center" style={{ fontWeight: 600 }}>{new Date(evento.fecha_inicio).toLocaleDateString()}</td>
+            <td>
+              {evento.hora_inicio ? evento.hora_inicio.substring(0, 5) : "-"}
+            </td>
+            <td title={evento.titulo}>
+              {evento.titulo?.length > 30 ? `${evento.titulo.substring(0, 30)}...` : evento.titulo}
+            </td>
+            <td title={evento.caso ? evento.caso.descripcion : ""}>
+              {evento.caso 
+                ? (() => {
+                    const desc = evento.caso.descripcion?.replace(/\n/g, " ") || "";
+                    return desc.length > 40 ? `${desc.substring(0, 40)}...` : desc;
+                  })()
+                : "-"}
+            </td>
+            <td>
+              {evento.cliente ? (
+                <Link to={`/dashboard/clientes/${evento.cliente.id_cliente}`}>
+                  {evento.cliente.nombre} {evento.cliente.apellido}
+                </Link>
+              ) : (
+                "-"
+              )}
+            </td>
+            <td>
+              <span className="badge badge-info">{evento.tipo}</span>
+            </td>
+            <td>
+              <span
+                className={`badge ${
+                  evento.estado === "REALIZADO"
+                    ? "badge-success"
+                    : "badge-warning"
+                }`}
+              >
+                {evento.estado}
+              </span>
+            </td>
+            <td className="actions-cell">
+              <div className="actions-wrapper">
+                <button
+                  className="btn-action btn-edit"
+                  title="Editar"
+                  onClick={() => handleEdit(evento)}
+                >
+                  <PencilIcon />
+                </button>
+                <button
+                  className="btn-action btn-delete"
+                  title="Eliminar"
+                  onClick={() => eliminarEvento(evento.id_evento)}
+                >
+                  <TrashICon />
+                </button>
+              </div>
+            </td>
+          </tr>
+        ))}
+      </GlassTable>
 
       {showModal && (
         <EventoForm 

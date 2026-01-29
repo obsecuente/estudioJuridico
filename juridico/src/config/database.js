@@ -24,9 +24,10 @@ const sequelize = new Sequelize(
     // Pool de conexiones: gestiona múltiples conexiones simultáneas
     pool: {
       max: 10,
-      min: 0,
+      min: 2, // Mantener al menos 2 conexiones abiertas
       acquire: 30000,
-      idle: 10000
+      idle: 10000,
+      evict: 1000, // Revisar conexiones inactivas cada segundo
     },
 
     // Logging: útil para desarrollo, desactívalo en producción
