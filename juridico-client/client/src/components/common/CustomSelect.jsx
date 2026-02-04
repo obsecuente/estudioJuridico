@@ -6,7 +6,7 @@ const CustomSelect = memo(
   ({
     options = [],
     value = "",
-    onChange = () => {},
+    onChange = () => { },
     placeholder = "",
     disabled = false,
     name,
@@ -47,9 +47,8 @@ const CustomSelect = memo(
 
     return (
       <div
-        className={`custom-select ${className} ${
-          disabled ? "is-disabled" : ""
-        }`}
+        className={`custom-select ${className} ${disabled ? "is-disabled" : ""
+          }`}
         ref={ref}
       >
         {name && <input type="hidden" name={name} value={value} />}
@@ -63,7 +62,7 @@ const CustomSelect = memo(
           <span className="custom-select__value">
             {selectedOption ? selectedOption.label : placeholder}
           </span>
-          <span className="custom-select__arrow">▾</span>
+          <span className="custom-select__arrow"></span>
         </button>
 
         {open && (
@@ -71,9 +70,8 @@ const CustomSelect = memo(
             {options.map((opt, idx) => (
               <li
                 key={opt.value}
-                className={`custom-select__option ${
-                  String(opt.value) === String(value) ? "is-selected" : ""
-                }`}
+                className={`custom-select__option ${String(opt.value) === String(value) ? "is-selected" : ""
+                  }`}
                 onClick={() => handleOptionSelect(opt)}
               >
                 {opt.label}

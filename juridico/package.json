@@ -35,10 +35,9 @@
     "pdfjs-dist": "^5.4.530",
     "react-router-dom": "^7.10.1",
     "sequelize": "^6.37.7",
+    "sqlite3": "^5.1.7",
     "winston": "^3.19.0",
     "winston-daily-rotate-file": "^5.0.0"
-    ,
-    "sqlite3": "^5.1.6"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",

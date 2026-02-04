@@ -23,7 +23,7 @@ const VencimientosList = () => {
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState(null);
   const [filtroEstado, setFiltroEstado] = useState("PENDIENTE");
-  
+
   const [showModal, setShowModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [idToDelete, setIdToDelete] = useState(null);
@@ -79,13 +79,13 @@ const VencimientosList = () => {
 
   const marcarComoCumplido = async (id) => {
     try {
-        // Podríamos abrir un modal para notas, por ahora simple
-        await vencimientosService.marcarCumplido(id, "Marcado desde listado");
-        setToast({ message: "Vencimiento cumplido", type: "success" });
-        cargarVencimientos();
+      // Podríamos abrir un modal para notas, por ahora simple
+      await vencimientosService.marcarCumplido(id, "Marcado desde listado");
+      setToast({ message: "Vencimiento cumplido", type: "success" });
+      cargarVencimientos();
     } catch (error) {
-        console.error("Error al marcar cumplido:", error);
-        setToast({ message: "Error al actualizar estado", type: "error" });
+      console.error("Error al marcar cumplido:", error);
+      setToast({ message: "Error al actualizar estado", type: "error" });
     }
   }
 
@@ -106,7 +106,7 @@ const VencimientosList = () => {
     setShowModal(false);
     setSelectedVencimiento(null);
     if (reload) {
-        cargarVencimientos();
+      cargarVencimientos();
     }
   };
 
@@ -117,7 +117,7 @@ const VencimientosList = () => {
   // Lógica de semáforo simple
   const getSemaforo = (fechaLimite, estado) => {
     if (estado === "CUMPLIDO") return <GreenState />;
-    
+
     const hoy = new Date();
     const venc = new Date(fechaLimite);
     const diffTime = venc - hoy;
@@ -155,34 +155,35 @@ const VencimientosList = () => {
       </div>
 
       <div className="filters-bar">
-        <button 
-            className={`filter-btn ${filtroEstado === "PENDIENTE" ? "active" : ""}`}
-            onClick={() => setFiltroEstado("PENDIENTE")}
+        <button
+          className={`filter-btn ${filtroEstado === "PENDIENTE" ? "active" : ""}`}
+          onClick={() => setFiltroEstado("PENDIENTE")}
         >
-            Pendientes
+          Pendientes
         </button>
-        <button 
-            className={`filter-btn ${filtroEstado === "CUMPLIDO" ? "active" : ""}`}
-            onClick={() => setFiltroEstado("CUMPLIDO")}
+        <button
+          className={`filter-btn ${filtroEstado === "CUMPLIDO" ? "active" : ""}`}
+          onClick={() => setFiltroEstado("CUMPLIDO")}
         >
-            Cumplidos
+          Cumplidos
         </button>
-        <button 
-            className={`filter-btn ${filtroEstado === "TODOS" ? "active" : ""}`}
-            onClick={() => setFiltroEstado("TODOS")}
+        <button
+          className={`filter-btn ${filtroEstado === "TODOS" ? "active" : ""}`}
+          onClick={() => setFiltroEstado("TODOS")}
         >
-            Todos
+          Todos
         </button>
       </div>
 
       <GlassTable
         columns={[
+          "Estado",
           "Prioridad",
+          "Semáforo",
           "Fecha Venc.",
           "Título",
           "Cliente",
           "Tipo",
-          "Estado",
           "Acciones"
         ]}
         loading={loading}
@@ -192,19 +193,38 @@ const VencimientosList = () => {
       >
         {vencimientos.map((venc) => (
           <tr key={venc.id_vencimiento}>
+            <td className="text-center">
+              <span
+                className={`badge ${venc.estado === "cumplido"
+                  ? "badge-success"
+                  : venc.estado === "vencido"
+                    ? "badge-danger"
+                    : "badge-warning"
+                  }`}
+              >
+                {venc.estado === "cumplido" ? "Cumplido" : venc.estado === "vencido" ? "Vencido" : "Pendiente"}
+              </span>
+            </td>
             <td className="text-center" title={`Prioridad: ${venc.prioridad}`}>
               {getPrioridadIcono(venc.prioridad)}
             </td>
+            <td className="text-center" title="Tiempo restante">
+              {getSemaforo(venc.fecha_limite, venc.estado.toUpperCase())}
+            </td>
             <td className="text-center" style={{ fontWeight: 600 }}>
               {new Date(venc.fecha_limite).toLocaleDateString()}
-              <br/>
+              <br />
               <small>{venc.fecha_limite ? new Date(venc.fecha_limite).toISOString().substring(11, 16) : ''}</small>
             </td>
             <td title={venc.titulo}>
               {venc.titulo}
             </td>
             <td>
-              {venc.caso && venc.caso.cliente ? (
+              {venc.id_cliente ? (
+                <Link to={`/dashboard/clientes/${venc.id_cliente}`}>
+                  {venc.cliente_nombre || (venc.caso?.cliente ? `${venc.caso.cliente.nombre} ${venc.caso.cliente.apellido}` : "Cliente")}
+                </Link>
+              ) : venc.caso && venc.caso.cliente ? (
                 <Link to={`/dashboard/clientes/${venc.caso.cliente.id_cliente}`}>
                   {venc.caso.cliente.nombre} {venc.caso.cliente.apellido}
                 </Link>
@@ -212,24 +232,26 @@ const VencimientosList = () => {
                 "-"
               )}
             </td>
-            <td>{venc.tipo_vencimiento}</td>
-            <td className="text-center">
-              <span
-                className={`badge ${
-                  venc.estado === "CUMPLIDO"
-                    ? "badge-success"
-                    : "badge-warning"
-                }`}
-              >
-                {venc.estado}
-              </span>
+            <td>
+              {venc.tipo_vencimiento ? ({
+                contestacion_demanda: "Contestación de Demanda",
+                apelacion: "Apelación",
+                recurso: "Recurso",
+                traslado: "Traslado",
+                ofrecimiento_prueba: "Ofrecimiento de Prueba",
+                alegato: "Alegato",
+                expresion_agravios: "Expresión de Agravios",
+                prescripcion: "Prescripción",
+                caducidad: "Caducidad",
+                otro: "Otro"
+              }[venc.tipo_vencimiento] || venc.tipo_vencimiento) : "-"}
             </td>
             <td className="actions-cell">
               <div className="actions-wrapper">
-                {venc.estado !== "CUMPLIDO" && (
-                  <button 
-                    className="btn-action btn-view" /* Reusing view color for check */
-                    style={{ backgroundColor: 'rgba(34, 197, 94, 0.2)', borderColor: '#22c55e' }}
+                {venc.estado !== "cumplido" && (
+                  <button
+                    className="btn-action btn-edit"
+                    style={{ backgroundColor: 'rgba(34, 197, 94, 0.2)', color: '#22c55e', border: 'none' }}
                     title="Marcar Cumplido"
                     onClick={() => marcarComoCumplido(venc.id_vencimiento)}
                   >
@@ -257,10 +279,10 @@ const VencimientosList = () => {
       </GlassTable>
 
       {showModal && (
-        <VencimientoForm 
-            vencimiento={selectedVencimiento}
-            onClose={handleCloseModal}
-            showToast={showToast}
+        <VencimientoForm
+          vencimiento={selectedVencimiento}
+          onClose={handleCloseModal}
+          showToast={showToast}
         />
       )}
 

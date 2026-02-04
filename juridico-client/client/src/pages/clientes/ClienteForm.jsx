@@ -101,7 +101,7 @@ const ClienteForm = ({ cliente, onClose, showToast }) => {
         };
 
         // Estamos editando
-        await api.put(`/clientes/${cliente.id_cliente}`, formData);
+        await api.put(`/clientes/${cliente.id_cliente}`, datosAEnviar);
         showToast("Cliente actualizado exitosamente", "success");
       } else {
         // Estamos creando

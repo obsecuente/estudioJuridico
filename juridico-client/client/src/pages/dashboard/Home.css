@@ -7,7 +7,8 @@
 
 .welcome-section h1 {
   font-size: 32px;
-  color: #1a1f2b; /* Azul Noche */
+  color: #1a1f2b;
+  /* Azul Noche */
   font-weight: 800;
   margin-bottom: 8px;
 }
@@ -20,87 +21,65 @@
   margin-bottom: 40px;
 }
 
-/* Card con borde fino a la izquierda */
+/* Colores por DEFECTO (Cartel Blanco -> Letras Negras) */
 .stat-card {
-  background: #1a1f2b; /* Fondo oscuro como el de tu imagen */
+  background: #ffffff !important;
+  color: #1a1f2b !important;
   padding: 24px;
   border-radius: 12px;
   display: flex;
   gap: 20px;
   align-items: center;
   text-decoration: none;
-  color: white;
-
-  /* ESTO ES LO IMPORTANTE */
-  border: none; /* Quitamos bordes generales */
-  border-left: 5px solid #f1c40f; /* Forzamos la línea dorada a la izquierda */
-
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  border-left: 5px solid #f1c40f;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
-  position: relative;
   margin-top: 15px;
 }
 
-/* HOVER UNIFICADO: Card y Borde se vuelven dorados */
-.stat-card:hover {
-  transform: translateY(-5px);
-  border-left-color: #f1c40f; /* El Dorado que buscamos */
-  box-shadow: 0 12px 20px rgba(26, 31, 43, 0.1);
-  background-color: #1a1f2b; /* Fondo azul noche al hover opcional, o mantener blanco */
+.stat-card .stat-value {
+  color: #1a1f2b !important;
+  margin: 5px 0;
+  font-size: 28px;
+  font-weight: 800;
 }
 
-/* Cambiar texto a blanco/dorado cuando la card está en hover */
-.stat-card:hover .stat-info h3,
-.stat-card:hover .stat-value {
-  color: #ffffff;
-}
-
-.stat-icon {
-  width: 56px;
-  height: 56px;
-  background: #f1f5f9;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #1a1f2b;
-  transition: all 0.3s ease;
-}
-
-.stat-card:hover .stat-icon {
-  background: rgba(241, 196, 15, 0.1);
-  color: #f1c40f;
-}
-
-.stat-info h3 {
+.stat-card .stat-info h3 {
+  color: #64748b !important;
   margin: 0;
   font-size: 13px;
-  color: #64748b;
   text-transform: uppercase;
   letter-spacing: 1px;
 }
 
-.stat-value {
-  margin: 5px 0;
-  font-size: 28px;
-  font-weight: 800;
-  color: #1a1f2b;
-}
-
-/* Botón "Ver Todos" dentro de la card */
-.stat-link {
+.stat-card .stat-link {
+  color: #1a1f2b !important;
   display: flex;
   align-items: center;
   gap: 8px;
   font-size: 11px;
   font-weight: 700;
-  color: #1a1f2b;
   text-transform: uppercase;
-  transition: all 0.3s ease;
 }
 
-/* El botón reacciona al hover de la card madre */
+/* Colores en HOVER (Cartel Negro -> Letras Blancas/Dorado) */
+.stat-card:hover {
+  background-color: #1a1f2b !important;
+  transform: translateY(-5px);
+  box-shadow: 0 12px 20px rgba(26, 31, 43, 0.2);
+}
+
+.stat-card:hover .stat-value,
+.stat-card:hover .stat-info h3 {
+  color: #ffffff !important;
+}
+
 .stat-card:hover .stat-link {
+  color: #f1c40f !important;
+}
+
+.stat-card:hover .stat-icon {
+  background: rgba(241, 196, 15, 0.1);
   color: #f1c40f;
 }
 
@@ -155,7 +134,8 @@
 
 /* --- ACTIVIDAD RECIENTE --- */
 .recent-activity {
-  background: #1a1f2b; /* Azul Noche Premium */
+  background: #1a1f2b;
+  /* Azul Noche Premium */
   border-radius: 12px;
   padding: 24px;
   border: none;
@@ -165,7 +145,8 @@
 
 .recent-activity h2 {
   margin-bottom: 20px;
-  color: #f1c40f; /* Título Dorado */
+  color: #f1c40f;
+  /* Título Dorado */
   font-size: 20px;
   font-weight: 600;
   text-transform: uppercase;
@@ -192,14 +173,16 @@
 .activity-item:hover {
   border-left-color: #f1c40f;
   background: rgba(241, 196, 15, 0.08);
-  transform: translateX(10px); /* Efecto hacia la derecha más pronunciado */
+  transform: translateX(10px);
+  /* Efecto hacia la derecha más pronunciado */
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
 .activity-icon {
   font-size: 1.25rem;
   flex-shrink: 0;
-  color: #f1c40f; /* Iconos dorados */
+  color: #f1c40f;
+  /* Iconos dorados */
 }
 
 .activity-content {
@@ -210,7 +193,8 @@
 }
 
 .activity-description {
-  color: #f1f5f9; /* Texto claro */
+  color: #f1f5f9;
+  /* Texto claro */
   font-size: 0.95rem;
   font-weight: 500;
   margin: 0;
@@ -239,6 +223,7 @@
   0% {
     background-position: 200% 0;
   }
+
   100% {
     background-position: -200% 0;
   }
@@ -260,7 +245,8 @@
 
 @media (max-width: 1024px) {
   .actions-grid {
-    grid-template-columns: repeat(2, 1fr); /* 2 columnas en lugar de 4 */
+    grid-template-columns: repeat(2, 1fr);
+    /* 2 columnas en lugar de 4 */
   }
 
   .home-container {
@@ -271,19 +257,28 @@
 /* Celulares Grandes (Menos de 768px) */
 @media (max-width: 768px) {
   .stats-grid {
-    display: flex; /* Cambiamos de grid a flex para el scroll lineal */
-    overflow-x: auto; /* Permite el scroll horizontal */
-    scroll-snap-type: x mandatory; /* Hace que las cards "encajen" al deslizar */
+    display: flex;
+    /* Cambiamos de grid a flex para el scroll lineal */
+    overflow-x: auto;
+    /* Permite el scroll horizontal */
+    scroll-snap-type: x mandatory;
+    /* Hace que las cards "encajen" al deslizar */
     gap: 16px;
-    padding-bottom: 15px; /* Espacio para que no se corte la sombra al hacer scroll */
-    padding-right: 20px; /* Espacio al final para que la última card no pegue al borde */
-    -webkit-overflow-scrolling: touch; /* Scroll suave en iOS */
+    padding-bottom: 15px;
+    /* Espacio para que no se corte la sombra al hacer scroll */
+    padding-right: 20px;
+    /* Espacio al final para que la última card no pegue al borde */
+    -webkit-overflow-scrolling: touch;
+    /* Scroll suave en iOS */
   }
 
   .stat-card {
-    min-width: 280px; /* Forzamos un ancho mínimo para que no se achiquen */
-    flex-shrink: 0; /* Evita que las cards se compriman */
-    scroll-snap-align: center; /* La card se centra automáticamente al soltar el dedo */
+    min-width: 280px;
+    /* Forzamos un ancho mínimo para que no se achiquen */
+    flex-shrink: 0;
+    /* Evita que las cards se compriman */
+    scroll-snap-align: center;
+    /* La card se centra automáticamente al soltar el dedo */
   }
 
   /* Ocultar la barra de scroll para que se vea más limpio (opcional) */
@@ -299,7 +294,8 @@
   }
 
   .activity-item {
-    flex-direction: column; /* Icono arriba, texto abajo si el espacio es crítico */
+    flex-direction: column;
+    /* Icono arriba, texto abajo si el espacio es crítico */
     align-items: flex-start;
     gap: 8px;
   }
@@ -320,16 +316,19 @@
 
 @media (max-width: 1024px) {
   .dashboard-widgets-grid {
-    grid-template-columns: 1fr; /* Una columna en tablets y móviles para que no se vea apretado */
+    grid-template-columns: 1fr;
+    /* Una columna en tablets y móviles para que no se vea apretado */
   }
 }
 
 .widget-card {
-  background: #1a1f2b; /* Azul Noche Premium */
+  background: #1a1f2b;
+  /* Azul Noche Premium */
   border-radius: 12px;
   color: white;
   border: none;
-  border-left: 5px solid #f1c40f; /* Borde dorado consistente */
+  border-left: 5px solid #f1c40f;
+  /* Borde dorado consistente */
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   transition: all 0.3s ease;
   height: 100%;
@@ -345,7 +344,8 @@
 
 .widget-header {
   padding: 15px 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* Separador sutil */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  /* Separador sutil */
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -354,7 +354,8 @@
 .widget-header h3 {
   margin: 0;
   font-size: 16px;
-  color: #f1c40f; /* Título dorado */
+  color: #f1c40f;
+  /* Título dorado */
   display: flex;
   align-items: center;
   gap: 10px;
@@ -380,13 +381,16 @@
 }
 
 /* Items de lista dentro del widget */
-.event-item, .vencimiento-item {
+.event-item,
+.vencimiento-item {
   padding-bottom: 12px;
   margin-bottom: 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05); /* Separador muy sutil */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  /* Separador muy sutil */
 }
 
-.event-item:last-child, .vencimiento-item:last-child {
+.event-item:last-child,
+.vencimiento-item:last-child {
   border-bottom: none;
   margin-bottom: 0;
   padding-bottom: 0;
@@ -394,13 +398,15 @@
 
 .event-item div:first-child,
 .vencimiento-item div:first-child div:first-child {
-  color: #fff; /* Título blanco */
+  color: #fff;
+  /* Título blanco */
   font-weight: 600;
 }
 
 .event-item div:last-child,
 .vencimiento-item div:first-child div:last-child {
-  color: #94a3b8; /* Subtítulo gris claro */
+  color: #94a3b8;
+  /* Subtítulo gris claro */
   font-size: 0.85em;
   margin-top: 4px;
 }
@@ -412,12 +418,14 @@
   font-size: 10px;
   font-weight: bold;
   text-transform: uppercase;
-  color: #1a1f2b; /* Texto oscuro para contraste */
+  color: #1a1f2b;
+  /* Texto oscuro para contraste */
 }
 
 .widget-card .badge-warning {
   background-color: #f1c40f;
-  color: #1a1f2b !important; /* Texto oscuro sobre amarillo para contraste */
+  color: #1a1f2b !important;
+  /* Texto oscuro sobre amarillo para contraste */
 }
 
 .widget-card .text-muted {

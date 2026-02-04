@@ -1,0 +1,287 @@
+.calculadora-container.glass-card {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 40px;
+  background: #0f172a !important;
+  /* Azul sólido como la imagen */
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* El detalle dorado L-shape de la imagen */
+.calculadora-container.glass-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  /* Línea horizontal superior */
+  background: #d4af37;
+  z-index: 10;
+}
+
+.calculadora-container.glass-card::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  /* Línea vertical izquierda */
+  height: 100%;
+  background: #d4af37;
+  z-index: 10;
+}
+
+.calculadora-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.calculadora-header h1 {
+  font-size: 32px;
+  color: #fff;
+  margin: 0 0 10px 0;
+  letter-spacing: 0.5px;
+}
+
+.calculadora-header p {
+  color: rgba(255, 255, 255, 0.9);
+  /* Más blanco */
+  font-size: 16px;
+  /* Un poquito más grande */
+}
+
+.paso-card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  transition: all 0.3s ease;
+}
+
+.paso-card:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(212, 175, 55, 0.2);
+}
+
+.paso-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.paso-badge {
+  background: rgba(212, 175, 55, 0.15);
+  color: #d4af37;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+}
+
+.paso-header h3 {
+  font-size: 18px;
+  color: #f1f5f9;
+  margin: 0;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 10px;
+  color: #fff;
+  /* Blanco puro */
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.premium-input {
+  width: 100%;
+  padding: 12px 16px;
+  background: rgba(0, 0, 0, 0.2) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 8px !important;
+  color: #fff !important;
+  font-size: 15px !important;
+  transition: all 0.2s ease;
+}
+
+.premium-input:focus {
+  outline: none;
+  border-color: #d4af37 !important;
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+}
+
+.radio-group-premium {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.radio-item {
+  flex: 1;
+  min-width: 120px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.radio-item input {
+  position: absolute;
+  opacity: 0;
+}
+
+.radio-item span {
+  color: #fff;
+  /* Blanco puro */
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+.radio-item.active {
+  background: rgba(212, 175, 55, 0.1);
+  border-color: #d4af37;
+}
+
+.radio-item.active span {
+  color: #d4af37;
+  /* Dorado cuando está activo para que resalte más */
+  font-weight: 700;
+  opacity: 1;
+}
+
+.plazo-legal-info {
+  margin-top: 15px;
+  padding: 12px 16px;
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  border-left: 3px solid #d4af37;
+  color: #fff;
+  /* Aseguramos que el texto sea blanco */
+}
+
+.gold-text {
+  color: #d4af37;
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.legal-citation {
+  color: rgba(255, 255, 255, 0.7);
+  /* Mucho más legible que 0.4 */
+  font-style: italic;
+  font-weight: 500;
+}
+
+.checkbox-premium {
+  margin-top: 15px;
+  display: inline-block;
+  /* Ya no es una franja completa */
+}
+
+.checkbox-premium-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+  background: rgba(212, 175, 55, 0.05);
+  /* Sutil fondo dorado */
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  transition: all 0.2s;
+}
+
+.checkbox-premium-label:hover {
+  background: rgba(212, 175, 55, 0.1);
+  border-color: #d4af37;
+}
+
+.premium-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid #d4af37;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.premium-checkbox:checked {
+  background: #d4af37;
+  border-color: #d4af37;
+}
+
+.premium-checkbox:checked::after {
+  content: "✓";
+  position: absolute;
+  color: #0f172a;
+  font-size: 14px;
+  font-weight: 900;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.label-text {
+  color: #f1f5f9 !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+}
+
+.checkbox-premium-label:hover .premium-checkbox {
+  border-color: #d4af37;
+  box-shadow: 0 0 8px rgba(212, 175, 55, 0.2);
+}
+
+.error-alert {
+  padding: 14px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 8px;
+  color: #f87171;
+  font-size: 14px;
+  margin-top: 10px;
+}
+
+.form-actions-premium {
+  margin-top: 32px;
+}
+
+/* Chrome/Safari Dark Date Picker override */
+::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  cursor: pointer;
+}
+
+@media (max-width: 600px) {
+  .calculadora-container.glass-card {
+    padding: 20px;
+    margin: 10px;
+  }
+
+  .radio-item {
+    min-width: 45%;
+  }
+}

@@ -10,6 +10,7 @@ import httpLogger from "./src/middleware/loggerMiddleware.js"; // NUEVO
 import iaRoutes from "./src/routes/ia.routes.js";
 import eventosRoutes from "./src/routes/eventos.routes.js";
 import vencimientosRoutes from "./src/routes/vencimientos.routes.js";
+import calculadoraRoutes from "./src/routes/calculadora.routes.js";
 // Importar modelos para establecer relaciones
 import "./src/models/index.js";
 
@@ -67,6 +68,7 @@ app.use("/api/abogados", abogadosRoutes);
 app.use("/api/auditoria", auditoriaRoutes);
 app.use("/api/eventos", eventosRoutes);
 app.use("/api/vencimientos", vencimientosRoutes);
+app.use("/api/calculadora", calculadoraRoutes);
 
 // Ruta de health check
 app.get("/health", (req, res) => {

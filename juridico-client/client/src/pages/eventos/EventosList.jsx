@@ -74,8 +74,8 @@ const EventosList = () => {
         type: "error",
       });
     } finally {
-        setShowDeleteModal(false);
-        setIdToDelete(null);
+      setShowDeleteModal(false);
+      setIdToDelete(null);
     }
   };
 
@@ -95,12 +95,12 @@ const EventosList = () => {
     setShowModal(false);
     setSelectedEvento(null);
     if (reload) {
-        cargarEventos();
+      cargarEventos();
     }
   };
 
   const showToast = (message, type = 'success') => {
-      setToast({ message, type });
+    setToast({ message, type });
   }
 
   const meses = [
@@ -126,7 +126,7 @@ const EventosList = () => {
           <EventIcon />
           <h2>Eventos y Agenda</h2>
         </div>
-        <button className="btn-primary" onClick={handleCreate}>
+        <button className="btn-nuevo" onClick={handleCreate}>
           <AddIcon /> Nuevo Evento
         </button>
       </div>
@@ -187,11 +187,11 @@ const EventosList = () => {
               {evento.titulo?.length > 30 ? `${evento.titulo.substring(0, 30)}...` : evento.titulo}
             </td>
             <td title={evento.caso ? evento.caso.descripcion : ""}>
-              {evento.caso 
+              {evento.caso
                 ? (() => {
-                    const desc = evento.caso.descripcion?.replace(/\n/g, " ") || "";
-                    return desc.length > 40 ? `${desc.substring(0, 40)}...` : desc;
-                  })()
+                  const desc = evento.caso.descripcion?.replace(/\n/g, " ") || "";
+                  return desc.length > 40 ? `${desc.substring(0, 40)}...` : desc;
+                })()
                 : "-"}
             </td>
             <td>
@@ -204,17 +204,26 @@ const EventosList = () => {
               )}
             </td>
             <td>
-              <span className="badge badge-info">{evento.tipo}</span>
+              <span className="badge badge-info">
+                {evento.tipo ? {
+                  audiencia: "Audiencia",
+                  reunion: "Reunión",
+                  tarea: "Tarea",
+                  vencimiento: "Vencimiento",
+                  otro: "Otro"
+                }[evento.tipo] || evento.tipo : "-"}
+              </span>
             </td>
             <td>
               <span
-                className={`badge ${
-                  evento.estado === "REALIZADO"
-                    ? "badge-success"
+                className={`badge ${evento.estado === "completado"
+                  ? "badge-success"
+                  : evento.estado === "cancelado"
+                    ? "badge-danger"
                     : "badge-warning"
-                }`}
+                  }`}
               >
-                {evento.estado}
+                {evento.estado === "completado" ? "Completado" : evento.estado === "cancelado" ? "Cancelado" : "Pendiente"}
               </span>
             </td>
             <td className="actions-cell">
@@ -240,10 +249,10 @@ const EventosList = () => {
       </GlassTable>
 
       {showModal && (
-        <EventoForm 
-            evento={selectedEvento} 
-            onClose={handleCloseModal} 
-            showToast={showToast} 
+        <EventoForm
+          evento={selectedEvento}
+          onClose={handleCloseModal}
+          showToast={showToast}
         />
       )}
 

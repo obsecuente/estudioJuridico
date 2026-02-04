@@ -2,7 +2,9 @@ import { useState, useEffect, useContext } from "react";
 import api from "../../services/api";
 import eventosService from "../../services/eventos.service";
 import ModalFrame from "../../components/common/ModalFrame";
+import CustomSelect from "../../components/common/CustomSelect";
 import { AuthContext } from "../../context/AuthContext";
+import InfoDiasHabiles from "../../components/calculadora/InfoDiasHabiles";
 import "./EventoForm.css";
 
 const EventoForm = ({ evento, onClose, showToast }) => {
@@ -16,7 +18,8 @@ const EventoForm = ({ evento, onClose, showToast }) => {
     id_caso: "",
     id_cliente: "",
     ubicacion: "",
-    recordatorio_dias: 0
+    recordatorio_dias: 0,
+    jurisdiccion: "nacional"
   });
 
   const [casos, setCasos] = useState([]);
@@ -46,8 +49,8 @@ const EventoForm = ({ evento, onClose, showToast }) => {
 
       // Si tenemos hora explícita en el objeto (hora_inicio), usamos esa preferentemente
       if (evento.hora_inicio) {
-          // Asumiendo formato "HH:MM:SS" o similar
-          horaStr = evento.hora_inicio.substring(0, 5);
+        // Asumiendo formato "HH:MM:SS" o similar
+        horaStr = evento.hora_inicio.substring(0, 5);
       }
 
       setFormData({
@@ -60,21 +63,22 @@ const EventoForm = ({ evento, onClose, showToast }) => {
         id_cliente: evento.id_cliente || "",
         ubicacion: evento.ubicacion || "",
         recordatorio_dias: evento.recordatorio_dias || 0,
+        jurisdiccion: evento.jurisdiccion || "nacional"
       });
     }
   }, [evento]);
 
   const cargarSelects = async () => {
-      try {
-          const [casosRes, clientesRes] = await Promise.all([
-              api.get('/casos?limit=100'), // limit alto para select
-              api.get('/clientes?limit=100')
-          ]);
-          setCasos(casosRes.data.data || []);
-          setClientes(clientesRes.data.data || []);
-      } catch (error) {
-          console.error("Error cargando selects", error);
-      }
+    try {
+      const [casosRes, clientesRes] = await Promise.all([
+        api.get('/casos?limit=100'), // limit alto para select
+        api.get('/clientes?limit=100')
+      ]);
+      setCasos(casosRes.data.data || []);
+      setClientes(clientesRes.data.data || []);
+    } catch (error) {
+      console.error("Error cargando selects", error);
+    }
   }
 
   const handleChange = (e) => {
@@ -93,7 +97,7 @@ const EventoForm = ({ evento, onClose, showToast }) => {
     if (!formData.titulo.trim()) newErrors.titulo = "El título es obligatorio";
     if (!formData.fecha_inicio) newErrors.fecha_inicio = "La fecha es obligatoria";
     if (!formData.hora) newErrors.hora = "La hora es obligatoria";
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -105,14 +109,13 @@ const EventoForm = ({ evento, onClose, showToast }) => {
     setLoading(true);
     try {
       const payload = {
-          ...formData,
-          fecha_inicio: formData.fecha_inicio, // Enviar YYYY-MM-DD directo
-          hora_inicio: formData.hora,          // Mapear hora -> hora_inicio
-          hora_fin: null,                      // Opcional, por ahora null
-          // Limpiar strings vacíos y asegurar enteros
-          id_caso: formData.id_caso ? parseInt(formData.id_caso) : null,
-          id_cliente: formData.id_cliente ? parseInt(formData.id_cliente) : null,
-          id_abogado: user?.id_abogado || null, // Asegurar envío de ID abogado
+        ...formData,
+        fecha_inicio: formData.fecha_inicio,
+        hora_inicio: formData.hora,
+        recordatorio: (parseInt(formData.recordatorio_dias) || 0) * 1440, // De días a minutos para el backend
+        id_caso: formData.id_caso ? parseInt(formData.id_caso) : null,
+        id_cliente: formData.id_cliente ? parseInt(formData.id_cliente) : null,
+        id_abogado: user?.id_abogado || null,
       };
 
       if (evento) {
@@ -154,58 +157,92 @@ const EventoForm = ({ evento, onClose, showToast }) => {
 
           <div className="form-row">
             <div className="form-group">
-                <label>Fecha <span className="required">*</span></label>
-                <input
+              <label>Fecha <span className="required">*</span></label>
+              <input
                 type="date"
                 name="fecha_inicio"
                 value={formData.fecha_inicio}
                 onChange={handleChange}
                 className={errors.fecha_inicio ? "input-error" : ""}
+              />
+              {errors.fecha_inicio && <span className="error-text">{errors.fecha_inicio}</span>}
+
+              {/* Selector de Jurisdicción */}
+              <div className="form-group" style={{ marginTop: '10px' }}>
+                <label style={{ fontSize: '0.85em', color: '#94a3b8' }}>Jurisdicción para cálculo</label>
+                <CustomSelect
+                  name="jurisdiccion"
+                  value={formData.jurisdiccion || 'nacional'}
+                  options={[
+                    { value: "nacional", label: "Fuero Nacional / Federal" },
+                    { value: "neuquen", label: "Neuquén" },
+                    { value: "rio_negro", label: "Río Negro" }
+                  ]}
+                  onChange={(val) => handleChange({ target: { name: 'jurisdiccion', value: val } })}
                 />
-                 {errors.fecha_inicio && <span className="error-text">{errors.fecha_inicio}</span>}
+              </div>
+
+              {/* Componente de calculadora de días hábiles */}
+              <InfoDiasHabiles
+                fechaSeleccionada={formData.fecha_inicio}
+                jurisdiccion={formData.jurisdiccion || 'nacional'}
+              />
             </div>
             <div className="form-group">
-                <label>Hora <span className="required">*</span></label>
-                <input
+              <label>Hora <span className="required">*</span></label>
+              <input
                 type="time"
                 name="hora"
                 value={formData.hora}
                 onChange={handleChange}
                 className={errors.hora ? "input-error" : ""}
-                />
-                 {errors.hora && <span className="error-text">{errors.hora}</span>}
+              />
+              {errors.hora && <span className="error-text">{errors.hora}</span>}
             </div>
           </div>
 
           <div className="form-group">
             <label>Tipo</label>
-            <select name="tipo" value={formData.tipo} onChange={handleChange}>
-                <option value="audiencia">Audiencia</option>
-                <option value="reunion">Reunión / Cita</option>
-                <option value="tarea">Tarea</option>
-                <option value="otro">Otro</option>
-            </select>
+            <CustomSelect
+              name="tipo"
+              value={formData.tipo}
+              options={[
+                { value: "audiencia", label: "Audiencia" },
+                { value: "reunion", label: "Reunión / Cita" },
+                { value: "tarea", label: "Tarea" },
+                { value: "otro", label: "Otro" }
+              ]}
+              onChange={(val) => handleChange({ target: { name: 'tipo', value: val } })}
+            />
           </div>
 
           <div className="form-row">
-             <div className="form-group">
-                <label>Caso (Opcional)</label>
-                <select name="id_caso" value={formData.id_caso} onChange={handleChange}>
-                    <option value="">-- Seleccionar Caso --</option>
-                    {casos.map(c => (
-                        <option key={c.id_caso} value={c.id_caso}>{c.descripcion} {c.numero_expediente ? `(${c.numero_expediente})` : ''}</option>
-                    ))}
-                </select>
-             </div>
-             <div className="form-group">
-                <label>Cliente (Opcional)</label>
-                <select name="id_cliente" value={formData.id_cliente} onChange={handleChange}>
-                    <option value="">-- Seleccionar Cliente --</option>
-                    {clientes.map(c => (
-                        <option key={c.id_cliente} value={c.id_cliente}>{c.nombre} {c.apellido}</option>
-                    ))}
-                </select>
-             </div>
+            <div className="form-group">
+              <label>Caso (Opcional)</label>
+              <CustomSelect
+                name="id_caso"
+                value={formData.id_caso}
+                placeholder="-- Seleccionar Caso --"
+                options={casos.map(c => ({
+                  value: c.id_caso,
+                  label: `${c.descripcion} ${c.numero_expediente ? `(${c.numero_expediente})` : ''}`
+                }))}
+                onChange={(val) => handleChange({ target: { name: 'id_caso', value: val } })}
+              />
+            </div>
+            <div className="form-group">
+              <label>Cliente (Opcional)</label>
+              <CustomSelect
+                name="id_cliente"
+                value={formData.id_cliente}
+                placeholder="-- Seleccionar Cliente --"
+                options={clientes.map(c => ({
+                  value: c.id_cliente,
+                  label: `${c.nombre} ${c.apellido}`
+                }))}
+                onChange={(val) => handleChange({ target: { name: 'id_cliente', value: val } })}
+              />
+            </div>
           </div>
 
           <div className="form-group">
@@ -219,7 +256,7 @@ const EventoForm = ({ evento, onClose, showToast }) => {
             />
           </div>
 
-           <div className="form-group">
+          <div className="form-group">
             <label>Recordatorio (Días antes)</label>
             <input
               type="number"

@@ -42,7 +42,7 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [actividadReciente, setActividadReciente] = useState([]);
   const [loadingActividad, setLoadingActividad] = useState(true);
-  
+
   const [proximosEventos, setProximosEventos] = useState([]);
   const [proximosVencimientos, setProximosVencimientos] = useState([]);
   const [loadingWidgets, setLoadingWidgets] = useState(true);
@@ -58,7 +58,6 @@ const Home = () => {
   const [showVencimientoModal, setShowVencimientoModal] = useState(false);
 
   useEffect(() => {
-    cargarEstadisticas();
     cargarEstadisticas();
     cargarActividadReciente();
     cargarWidgets();
@@ -108,16 +107,16 @@ const Home = () => {
   const cargarWidgets = async () => {
     setLoadingWidgets(true);
     try {
-        const [eventosRes, vencimientosRes] = await Promise.all([
-            eventosService.getProximos(7),
-            vencimientosService.getProximos(7)
-        ]);
-        setProximosEventos(eventosRes.data || []);
-        setProximosVencimientos(vencimientosRes.data || []);
+      const [eventosRes, vencimientosRes] = await Promise.all([
+        eventosService.getProximos(7),
+        vencimientosService.getProximos(7)
+      ]);
+      setProximosEventos(eventosRes.data || []);
+      setProximosVencimientos(vencimientosRes.data || []);
     } catch (error) {
-        console.error("Error al cargar widgets:", error);
+      console.error("Error al cargar widgets:", error);
     } finally {
-        setLoadingWidgets(false);
+      setLoadingWidgets(false);
     }
   };
 
@@ -157,14 +156,14 @@ const Home = () => {
   const handleCloseEvento = (reload) => {
     setShowEventoModal(false);
     if (reload) {
-        cargarWidgets();
+      cargarWidgets();
     }
   };
 
   const handleCloseVencimiento = (reload) => {
     setShowVencimientoModal(false);
     if (reload) {
-        cargarWidgets();
+      cargarWidgets();
     }
   };
 
@@ -264,35 +263,35 @@ const Home = () => {
       <div className="stats-grid">
         {loading
           ? [...Array(4)].map((_, i) => (
-              <div key={i} className="stat-card skeleton">
-                <div className="skeleton-icon"></div>
-                <div className="skeleton-text"></div>
-              </div>
-            ))
+            <div key={i} className="stat-card skeleton">
+              <div className="skeleton-icon"></div>
+              <div className="skeleton-text"></div>
+            </div>
+          ))
           : statsData.map((stat, index) => (
-              <Link to={stat.link} key={index} className="stat-card">
-                <div className="stat-icon">{stat.icon}</div>
-                <div className="stat-info">
-                  <h3>{stat.title}</h3>
-                  <p className="stat-value">{stat.value}</p>
-                  <span className="stat-link">
-                    VER TODOS <NextIcon />
-                  </span>
-                </div>
-              </Link>
-            ))}
+            <Link to={stat.link} key={index} className="stat-card">
+              <div className="stat-icon">{stat.icon}</div>
+              <div className="stat-info">
+                <h3>{stat.title}</h3>
+                <p className="stat-value">{stat.value}</p>
+                <span className="stat-link">
+                  VER TODOS <NextIcon />
+                </span>
+              </div>
+            </Link>
+          ))}
       </div>
 
       <div className="quick-actions">
         <h2>Acciones Rápidas</h2>
         <div className="actions-grid">
-         <button onClick={() => setShowEventoModal(true)} className="action-btn">
+          <button onClick={() => setShowEventoModal(true)} className="action-btn">
             <span className="action-icon">
               <CalendarIcon />
             </span>
             <span>Nuevo Evento</span>
           </button>
-           <button onClick={() => setShowVencimientoModal(true)} className="action-btn">
+          <button onClick={() => setShowVencimientoModal(true)} className="action-btn">
             <span className="action-icon">
               <AlarmIcon />
             </span>
@@ -335,73 +334,94 @@ const Home = () => {
       </div>
 
       <div className="dashboard-widgets-grid">
-          
-          {/* Widget Eventos */}
-          <div className="widget-card">
-            <div className="widget-header">
-                <h3>
-                    <CalendarIcon /> Agenda (7 días)
-                </h3>
-                <Link to="/dashboard/eventos">Ver todo</Link>
-            </div>
-            <div className="widget-body">
-                {loadingWidgets ? (
-                    <p className="text-muted">Cargando...</p>
-                ) : proximosEventos.length === 0 ? (
-                    <p className="text-muted">No hay eventos próximos.</p>
-                ) : (
-                    <div className="events-list">
-                        {proximosEventos.map(evt => (
-                            <div key={evt.id_evento} className="event-item" style={{display:'flex', justifyContent:'space-between', alignItems:'center', gap: '10px'}}>
-                                <div style={{flex: 1}}>
-                                    <div>{evt.titulo}</div>
-                                    <div style={{fontSize: '0.85em', color: '#94a3b8'}}>
-                                        {new Date(evt.fecha_inicio).toLocaleDateString()} - {evt.hora_inicio ? evt.hora_inicio.substring(0, 5) : "-"}
-                                    </div>
-                                </div>
-                                <span className="badge badge-warning" style={{ textTransform: 'uppercase' }}>{evt.tipo}</span>
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </div>
-          </div>
 
-          {/* Widget Vencimientos */}
-           <div className="widget-card">
-            <div className="widget-header">
-                <h3>
-                    <AlarmIcon /> Vencimientos (7 días)
-                </h3>
-                <Link to="/dashboard/vencimientos">Ver todo</Link>
-            </div>
-             <div className="widget-body">
-                {loadingWidgets ? (
-                    <p className="text-muted">Cargando...</p>
-                ) : proximosVencimientos.length === 0 ? (
-                    <p className="text-muted">No hay vencimientos próximos.</p>
-                ) : (
-                    <div className="vencimientos-list">
-                         {proximosVencimientos.map(venc => (
-                            <div key={venc.id_vencimiento} className="vencimiento-item" style={{display:'flex', justifyContent:'space-between', alignItems:'center', gap: '10px'}}>
-                                <div style={{flex: 1}}>
-                                    <div>{venc.titulo}</div>
-                                    <div style={{fontSize: '0.85em', color: '#94a3b8'}}>
-                                        Vence: {new Date(venc.fecha_limite).toLocaleDateString()} {venc.fecha_limite ? new Date(venc.fecha_limite).toISOString().substring(11, 16) : ''}
-                                    </div>
-                                </div>
-                                <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
-                                    <span title={`Prioridad: ${venc.prioridad}`}>
-                                      {venc.prioridad === 'alta' ? <RedState /> : venc.prioridad === 'baja' ? <GreenState /> : <YellowState />}
-                                    </span>
-                                    <span className="badge badge-warning" style={{ textTransform: 'uppercase' }}>{venc.tipo_vencimiento}</span>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </div>
+        {/* Widget Eventos */}
+        <div className="widget-card">
+          <div className="widget-header">
+            <h3>
+              <CalendarIcon /> Agenda (7 días)
+            </h3>
+            <Link to="/dashboard/eventos">Ver todo</Link>
           </div>
+          <div className="widget-body">
+            {loadingWidgets ? (
+              <p className="text-muted">Cargando...</p>
+            ) : proximosEventos.length === 0 ? (
+              <p className="text-muted">No hay eventos próximos.</p>
+            ) : (
+              <div className="events-list">
+                {proximosEventos.map(evt => (
+                  <div key={evt.id_evento} className="event-item" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ flex: 1 }}>
+                      <div>{evt.titulo}</div>
+                      <div style={{ fontSize: '0.85em', color: '#94a3b8' }}>
+                        {new Date(evt.fecha_inicio).toLocaleDateString()} - {evt.hora_inicio ? evt.hora_inicio.substring(0, 5) : "-"}
+                      </div>
+                    </div>
+                    <span className="badge badge-warning" style={{ textTransform: 'uppercase' }}>
+                      {evt.tipo ? {
+                        audiencia: "Audiencia",
+                        reunion: "Reunión",
+                        tarea: "Tarea",
+                        vencimiento: "Vencimiento",
+                        otro: "Otro"
+                      }[evt.tipo] || evt.tipo : "-"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Widget Vencimientos */}
+        <div className="widget-card">
+          <div className="widget-header">
+            <h3>
+              <AlarmIcon /> Vencimientos (7 días)
+            </h3>
+            <Link to="/dashboard/vencimientos">Ver todo</Link>
+          </div>
+          <div className="widget-body">
+            {loadingWidgets ? (
+              <p className="text-muted">Cargando...</p>
+            ) : proximosVencimientos.length === 0 ? (
+              <p className="text-muted">No hay vencimientos próximos.</p>
+            ) : (
+              <div className="vencimientos-list">
+                {proximosVencimientos.map(venc => (
+                  <div key={venc.id_vencimiento} className="vencimiento-item" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ flex: 1 }}>
+                      <div>{venc.titulo}</div>
+                      <div style={{ fontSize: '0.85em', color: '#94a3b8' }}>
+                        Vence: {new Date(venc.fecha_limite).toLocaleDateString()} {venc.fecha_limite ? new Date(venc.fecha_limite).toISOString().substring(11, 16) : ''}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span title={`Prioridad: ${venc.prioridad}`}>
+                        {venc.prioridad === 'alta' ? <RedState /> : venc.prioridad === 'baja' ? <GreenState /> : <YellowState />}
+                      </span>
+                      <span className="badge badge-warning" style={{ textTransform: 'uppercase' }}>
+                        {venc.tipo_vencimiento ? {
+                          contestacion_demanda: "Contestación de Demanda",
+                          apelacion: "Apelación",
+                          recurso: "Recurso",
+                          traslado: "Traslado",
+                          ofrecimiento_prueba: "Ofrecimiento de Prueba",
+                          alegato: "Alegato",
+                          expresion_agravios: "Expresión de Agravios",
+                          prescripcion: "Prescripción",
+                          caducidad: "Caducidad",
+                          otro: "Otro"
+                        }[venc.tipo_vencimiento] || venc.tipo_vencimiento : "-"}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
 
       </div>
 

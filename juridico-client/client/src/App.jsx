@@ -21,6 +21,7 @@ import DocumentoDetail from "./pages/documentos/DocumentoDetail";
 
 import EventosList from "./pages/eventos/EventosList";
 import VencimientosList from "./pages/vencimientos/VencimientosList";
+import CalculadoraPage from "./pages/calculadora/CalculadoraPage";
 import "./App.css";
 
 function App() {
@@ -67,16 +68,19 @@ function App() {
             <Route path="documentos" element={<DocumentosList />} />
             <Route path="documentos/:id" element={<DocumentoDetail />} />
 
-             {/* Módulo de eventos */}
-             <Route path="eventos" element={<EventosList />} />
+            {/* Módulo de eventos */}
+            <Route path="eventos" element={<EventosList />} />
 
-             {/* Módulo de vencimientos */}
-             <Route path="vencimientos" element={<VencimientosList />} />
+            {/* Módulo de vencimientos */}
+            <Route path="vencimientos" element={<VencimientosList />} />
 
             {/* Módulo de abogados */}
             {/* Módulo de abogados */}
             <Route path="abogados" element={<AbogadosList />} />
             <Route path="abogados/:id" element={<AbogadoDetail />} />
+
+            {/* Módulo de calculadora */}
+            <Route path="calculadora" element={<CalculadoraPage />} />
           </Route>
 
           {/* Ruta 404 */}

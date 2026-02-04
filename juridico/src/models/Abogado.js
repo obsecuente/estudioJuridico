@@ -103,6 +103,11 @@ const Abogado = sequelize.define(
           include: ["password"],
         },
       },
+      withRefreshToken: {
+        attributes: {
+          include: ["refresh_token", "refresh_token_expires"],
+        },
+      },
     },
   }
 );

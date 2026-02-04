@@ -8,20 +8,21 @@ import {
   obtenerAbogados,
 } from "../controllers/abogados_controller.js";
 import authMiddleware from "../middleware/authMiddleware.js";
-import roleMiddleware from "../middleware/roleMiddleware.js";
+import roleMiddleware, { verificarRol } from "../middleware/roleMiddleware.js";
 
 const router = express.Router();
 
-// Todas las rutas requieren autenticación Y rol admin
+// Todas las rutas requieren autenticación
 router.use(authMiddleware);
-router.use(roleMiddleware(["admin"]));
 
-// Todas estas rutas son solo para ADMIN
-router.post("/", crearAbogado);
-router.get("/", obtenerAbogados);
-router.get("/search", buscarAbogados);
-router.get("/:id", obtenerAbogadoPorId);
-router.put("/:id", actualizarAbogado);
-router.delete("/:id", eliminarAbogado);
+// Rutas de consulta (Permitidas para admin, abogado y asistente)
+router.get("/", verificarRol(["admin", "abogado", "asistente"]), obtenerAbogados);
+router.get("/search", verificarRol(["admin", "abogado", "asistente"]), buscarAbogados);
+router.get("/:id", verificarRol(["admin", "abogado", "asistente"]), obtenerAbogadoPorId);
+
+// Rutas de administración (Solo ADMIN)
+router.post("/", verificarRol(["admin"]), crearAbogado);
+router.put("/:id", verificarRol(["admin"]), actualizarAbogado);
+router.delete("/:id", verificarRol(["admin"]), eliminarAbogado);
 
 export default router;
