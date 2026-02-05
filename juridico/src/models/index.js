@@ -1,5 +1,5 @@
 import sequelize from "../config/database.js";
-import Cliente from "./cliente.js";
+import Cliente from "./Cliente.js";
 import Abogado from "./Abogado.js";
 import Consulta from "./Consulta.js";
 import Caso from "./Caso.js";

@@ -4,12 +4,13 @@ import { Abogado } from "./src/models/index.js";
 
 // Configurá acá el usuario que querés crear
 const nuevoUsuario = {
-  nombre: "Carlos",
-  apellido: "Rodríguez",
-  email: "carlos@estudio.com",
+  nombre: "Abogado",
+  apellido: "Premium",
+  email: "abogado@premium.com",
   password: "abogado123",
   especialidad: "Derecho Laboral",
-  rol: "abogado", // Opciones: 'admin', 'abogado', 'asistente'
+  dni:43371643,
+  rol: "admin", // Opciones: 'admin', 'abogado', 'asistente'
 };
 
 async function crearUsuario() {
@@ -40,6 +41,7 @@ async function crearUsuario() {
       apellido: nuevoUsuario.apellido,
       email: nuevoUsuario.email,
       password: passwordHash,
+      dni: nuevoUsuario.dni,
       especialidad: nuevoUsuario.especialidad,
       rol: nuevoUsuario.rol,
     });
