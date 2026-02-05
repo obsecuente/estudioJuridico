@@ -8,6 +8,9 @@ import Auditoria from "./Auditoria.js";
 import ResumenIA from "./ResumenIA.js";
 import Evento from "./Evento.js";
 import Vencimiento from "./Vencimiento.js";
+import Feriado from "./Feriado.js";
+import FeriaJudicial from "./FeriaJudicial.js";
+import TipoPlazo from "./TipoPlazo.js";
 
 // relaciones de cliente
 Cliente.hasMany(Consulta, {
@@ -141,6 +144,8 @@ Abogado.hasMany(Vencimiento, {
   as: "vencimientos",
 });
 
+// los modelos de calculadora no tienen relaciones por ahora
+
 export {
   sequelize,
   Cliente,
@@ -152,6 +157,9 @@ export {
   ResumenIA,
   Evento,
   Vencimiento,
+  Feriado,
+  FeriaJudicial,
+  TipoPlazo,
 };
 
 export default {
@@ -165,4 +173,7 @@ export default {
   ResumenIA,
   Evento,
   Vencimiento,
+  Feriado,
+  FeriaJudicial,
+  TipoPlazo,
 };

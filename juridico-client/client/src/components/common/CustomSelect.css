@@ -12,23 +12,29 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 16px;
-  height: 45px; /* Unifying height with search input */
+  height: 45px;
+  /* Unifying height with search input */
   border-radius: 12px;
-  background: #0f172a; /* Azul Noche */
+  background: #0f172a;
+  /* Azul Noche */
   color: #f8fafc;
-  border: 1px solid #d4af37; /* Dorado */
+  border: 1px solid #d4af37;
+  /* Dorado */
   cursor: pointer;
   transition: all 0.3s ease;
   text-align: left;
 }
+
 .custom-select__control:focus {
   outline: none;
 }
+
 .custom-select__control:hover {
   background: #1a1f2b;
   border-color: #f1c40f;
   box-shadow: 0 0 10px rgba(212, 175, 55, 0.2);
 }
+
 .custom-select__control.is-open {
   border-color: #f1c40f;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
@@ -39,10 +45,20 @@
   font-weight: 500;
   color: #f8fafc;
 }
+
 .custom-select__arrow {
   margin-left: 12px;
-  color: #d4af37;
-  font-size: 12px;
+  width: 18px;
+  height: 18px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23d4af37' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  transition: transform 0.3s ease;
+}
+
+.custom-select__control.is-open .custom-select__arrow {
+  transform: rotate(180deg);
 }
 
 .custom-select__menu {
@@ -54,7 +70,8 @@
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-  background: #0f172a; /* Azul Noche puro para el menú */
+  background: #0f172a;
+  /* Azul Noche puro para el menú */
   border: 1px solid #d4af37;
   max-height: 240px;
   overflow-y: auto;
@@ -95,10 +112,12 @@
 .custom-select__menu::-webkit-scrollbar {
   width: 10px;
 }
+
 .custom-select__menu::-webkit-scrollbar-track {
   background: rgba(255, 255, 255, 0.02);
   border-radius: 8px;
 }
+
 .custom-select__menu::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.06);
   border-radius: 8px;

@@ -1,15 +1,16 @@
 import bcrypt from "bcrypt";
-import sequelize from "./src/config/database.js";
-import { Abogado } from "./src/models/index.js";
+import sequelize from "../src/config/database.js";
+import { Abogado } from "../src/models/index.js";
 
 // Configurá acá el usuario que querés crear
 const nuevoUsuario = {
-  nombre: "Abogado",
-  apellido: "Premium",
-  email: "abogado@premium.com",
-  password: "abogado123",
-  especialidad: "Derecho Laboral",
-  dni:43371643,
+  nombre: "Admin",
+  apellido: "Sistema",
+  email: "[EMAIL_ADDRESS]",
+  password: "[PASSWORD]",
+  especialidad: "General",
+  dni: "99887766",
+  telefono: "+541122334455",
   rol: "admin", // Opciones: 'admin', 'abogado', 'asistente'
 };
 
@@ -41,8 +42,9 @@ async function crearUsuario() {
       apellido: nuevoUsuario.apellido,
       email: nuevoUsuario.email,
       password: passwordHash,
-      dni: nuevoUsuario.dni,
       especialidad: nuevoUsuario.especialidad,
+      dni: nuevoUsuario.dni,
+      telefono: nuevoUsuario.telefono,
       rol: nuevoUsuario.rol,
     });
 
@@ -52,6 +54,7 @@ async function crearUsuario() {
     console.log("👤 Nombre:", usuario.nombre, usuario.apellido);
     console.log("🎭 Rol:", usuario.rol);
     console.log("💼 Especialidad:", usuario.especialidad);
+    console.log("📞 Teléfono:", usuario.telefono);
 
     process.exit(0);
   } catch (error) {

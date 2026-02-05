@@ -32,32 +32,6 @@
   font-size: 14px;
 }
 
-/* BOTÓN NUEVO: Restaurado con tus estilos originales */
-.clientes-header .btn-nuevo {
-  background: var(--color-primario);
-  color: var(--color-acento);
-  border: 1px solid rgba(212, 175, 55, 0.12);
-  padding: 10px 18px;
-  border-radius: 6px;
-  font-weight: 600;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  transition: transform 0.12s ease, box-shadow 0.12s ease;
-  font-size: 14px;
-  letter-spacing: 0.4px;
-  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
-}
-
-.clientes-header .btn-nuevo:hover {
-  background: rgba(212, 175, 55, 0.98);
-  color: var(--color-primario);
-  border-color: rgba(15, 23, 42, 0.06);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
-}
-
 /* TABLA Y FILAS: Recuperamos el hover delicado */
 .clientes-table {
   width: 100%;
@@ -84,7 +58,8 @@
 }
 
 .clientes-table tbody tr:hover {
-  background: var(--hover-row); /* Tu azul delicado */
+  background: var(--hover-row);
+  /* Tu azul delicado */
 }
 
 .clientes-table td {
@@ -105,7 +80,8 @@
   justify-content: center !important;
   align-items: center !important;
   gap: 10px;
-  padding: 8px !important; /* Eliminamos los 28px de padding-top que rompían todo */
+  padding: 8px !important;
+  /* Eliminamos los 28px de padding-top que rompían todo */
 }
 
 .btn-action {
@@ -124,9 +100,11 @@
 .btn-view {
   background: #8b5cf6;
 }
+
 .btn-edit {
   background: #3b82f6;
 }
+
 .btn-delete {
   background: #ef4444;
 }
@@ -143,6 +121,7 @@
 }
 
 @media (max-width: 768px) {
+
   /* Mantenemos solo Nombre, Fecha y Acciones para que el scroll sea corto */
   .clientes-table th:nth-child(1),
   .clientes-table td:nth-child(1),
@@ -154,7 +133,8 @@
   }
 
   .clientes-table {
-    min-width: 450px; /* Suficiente para que Nombre + Fecha + Botones no se pisen */
+    min-width: 450px;
+    /* Suficiente para que Nombre + Fecha + Botones no se pisen */
     width: 100%;
   }
 
@@ -166,7 +146,8 @@
   .clientes-table td {
     padding: 15px 10px;
     font-size: 14px;
-    white-space: nowrap; /* Evita que el nombre se parta en dos líneas */
+    white-space: nowrap;
+    /* Evita que el nombre se parta en dos líneas */
   }
 
   /* Ajuste de botones para que no se vean pegados al borde */

@@ -1,23 +1,84 @@
 import { useState, useEffect, useContext } from "react";
 import api from "../../services/api";
 import vencimientosService from "../../services/vencimientos.service";
+import calculadoraService from "../../services/calculadora.service";
 import ModalFrame from "../../components/common/ModalFrame";
+import CustomSelect from "../../components/common/CustomSelect";
 import { AuthContext } from "../../context/AuthContext";
+import { AlarmIcon, CalculatorIcon } from "../../components/common/Icons";
 import "./VencimientoForm.css";
+
+const tiposPlazo = {
+  civil: [
+    { codigo: "contestacion_demanda_civil", nombre: "Contestación de Demanda", backend_slug: "contestacion_demanda", dias: 15, legal: "Art. 338 CPCCN" },
+    { codigo: "apelacion_civil", nombre: "Apelación (sentencia definitiva)", backend_slug: "apelacion", dias: 5, legal: "Art. 244 CPCCN" },
+    { codigo: "expresion_agravios_civil", nombre: "Expresión de Agravios", backend_slug: "expresion_agravios", dias: 10, legal: "Art. 259 CPCCN" },
+    { codigo: "replica_agravios_civil", nombre: "Réplica Expresión de Agravios", backend_slug: "traslado", dias: 10, legal: "Art. 259 CPCCN" },
+    { codigo: "alegatos_civil", nombre: "Alegatos", backend_slug: "alegato", dias: 6, legal: "Art. 482 CPCCN" },
+    { codigo: "traslado_generico_civil", nombre: "Traslado Genérico", backend_slug: "traslado", dias: 5, legal: "Art. 138 CPCCN" },
+    { codigo: "recurso_extraordinario", nombre: "Recurso Extraordinario Federal", backend_slug: "recurso", dias: 10, legal: "Ley 48" },
+    { codigo: "revocatoria", nombre: "Recurso de Revocatoria", backend_slug: "recurso", dias: 3, legal: "Art. 238 CPCCN" },
+    { codigo: "reposicion", nombre: "Recurso de Reposición", backend_slug: "recurso", dias: 3, legal: "Art. 239 CPCCN" },
+    { codigo: "nulidad", nombre: "Recurso de Nulidad", backend_slug: "recurso", dias: 5, legal: "Art. 253 CPCCN" },
+    { codigo: "aclaratoria", nombre: "Aclaratoria de Sentencia", backend_slug: "ofrecimiento_prueba", dias: 3, legal: "Art. 166 CPCCN" }, // Mapeado a prueba o recurso segun criterio
+    { codigo: "ofrecimiento_prueba", nombre: "Ofrecimiento de Prueba", backend_slug: "ofrecimiento_prueba", dias: 10, legal: "Art. 367 CPCCN" },
+    { codigo: "oposicion_prueba", nombre: "Oposición a la Prueba", backend_slug: "traslado", dias: 5, legal: "Art. 373 CPCCN" },
+    { codigo: "oposicion_embargo", nombre: "Oposición al Embargo", backend_slug: "recurso", dias: 5, legal: "Art. 198 CPCCN" },
+    { codigo: "levantamiento_embargo", nombre: "Levantamiento de Embargo", backend_slug: "otro", dias: 5, legal: "Art. 206 CPCCN" },
+    { codigo: "excepciones_previas", nombre: "Excepciones Previas", backend_slug: "contestacion_demanda", dias: 10, legal: "Art. 346 CPCCN" },
+    { codigo: "contestacion_excepciones", nombre: "Contestación Excepciones", backend_slug: "contestacion_demanda", dias: 5, legal: "Art. 350 CPCCN" },
+    { codigo: "oposicion_ejecucion", nombre: "Oposición de Excepciones (Ejecutivo)", backend_slug: "contestacion_demanda", dias: 5, legal: "Art. 544 CPCCN" },
+    { codigo: "demanda_sumario", nombre: "Contestación Demanda (Juicio Sumario)", backend_slug: "contestacion_demanda", dias: 5, legal: "Art. 498 CPCCN" },
+    { codigo: "demanda_sumarisimo", nombre: "Contestación Demanda (Sumarísimo)", backend_slug: "contestacion_demanda", dias: 3, legal: "Art. 498 CPCCN" },
+  ],
+  laboral: [
+    { codigo: "contestacion_demanda_laboral", nombre: "Contestación de Demanda", backend_slug: "contestacion_demanda", dias: 10, legal: "Ley 18.345" },
+    { codigo: "apelacion_laboral", nombre: "Apelación", backend_slug: "apelacion", dias: 5, legal: "Ley 18.345" },
+    { codigo: "expresion_agravios_laboral", nombre: "Expresión de Agravios", backend_slug: "expresion_agravios", dias: 10, legal: "Ley 18.345" },
+    { codigo: "prueba_laboral", nombre: "Ofrecimiento de Prueba", backend_slug: "ofrecimiento_prueba", dias: 10, legal: "Ley 18.345" },
+    { codigo: "alegatos_laboral", nombre: "Alegatos", backend_slug: "alegato", dias: 5, legal: "Ley 18.345" },
+  ],
+  familia: [
+    { codigo: "contestacion_familia", nombre: "Contestación de Demanda", backend_slug: "contestacion_demanda", dias: 15, legal: "Según jurisdicción" },
+    { codigo: "apelacion_familia", nombre: "Apelación", backend_slug: "apelacion", dias: 5, legal: "Según jurisdicción" },
+  ],
+  penal: [
+    { codigo: "apelacion_penal", nombre: "Apelación", backend_slug: "apelacion", dias: 3, legal: "CPPN" },
+    { codigo: "casacion", nombre: "Recurso de Casación", backend_slug: "recurso", label: "Art. 459 CPPN", legal: "Art. 459 CPPN" },
+  ],
+};
 
 const VencimientoForm = ({ vencimiento, onClose, showToast }) => {
   const { user } = useContext(AuthContext);
+
+  // Estado principal del formulario
   const [formData, setFormData] = useState({
     titulo: "",
     descripcion: "",
     fecha_vencimiento: "",
-    hora: "09:00", // Hora default
+    hora: "09:00",
     tipo_vencimiento: "traslado",
     prioridad: "media",
     id_caso: "",
-    id_cliente: ""
+    id_cliente: "",
+    jurisdiccion: "nacional",
+    recordatorio_dias: 3
   });
 
+  // Estado del método de ingreso
+  const [metodoIngreso, setMetodoIngreso] = useState(vencimiento ? "manual" : "calculadora");
+
+  // Estado para la calculadora interna
+  const [calcData, setCalcData] = useState({
+    fecha_notificacion: "",
+    fuero: "civil",
+    tipo_plazo: "contestacion_demanda_civil",
+    jurisdiccion: "nacional",
+    incluir_plazo_gracia: false
+  });
+
+  const [calcResult, setCalcResult] = useState(null);
+  const [calcLoading, setCalcLoading] = useState(false);
   const [casos, setCasos] = useState([]);
   const [clientes, setClientes] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -26,31 +87,25 @@ const VencimientoForm = ({ vencimiento, onClose, showToast }) => {
   useEffect(() => {
     cargarSelects();
     if (vencimiento) {
-        // Usar fecha_limite (backend) o fecha_vencimiento (legacy/frontend state)
-        const fechaRaw = vencimiento.fecha_limite || vencimiento.fecha_vencimiento;
-        
-        let fechaStr = "";
-        let horaStr = "09:00";
+      const fechaRaw = vencimiento.fecha_limite || vencimiento.fecha_vencimiento;
+      let fechaStr = "";
+      let horaStr = "09:00";
 
-        if (fechaRaw) {
-              // Asumimos que viene en ISO string Z (UTC)
-              // Usamos split directamente para tomar los valores "visuales" que guardamos
-              // fechaRaw ejemplo: "2026-01-30T09:00:00.000Z"
-              try {
-                const parts = fechaRaw.split('T');
-                fechaStr = parts[0]; // 2026-01-30
-                if (parts[1]) {
-                    horaStr = parts[1].substring(0, 5); // 09:00, ignoramos segundos/milis
-                }
-              } catch (e) {
-                  // Fallback por si no es ISO
-                  const fecha = new Date(fechaRaw);
-                  if (!isNaN(fecha)) {
-                      fechaStr = fecha.toISOString().split('T')[0];
-                      horaStr = fecha.toTimeString().substring(0, 5);
-                  }
-              }
+      if (fechaRaw) {
+        try {
+          const parts = fechaRaw.split('T');
+          fechaStr = parts[0];
+          if (parts[1]) {
+            horaStr = parts[1].substring(0, 5);
+          }
+        } catch (e) {
+          const fecha = new Date(fechaRaw);
+          if (!isNaN(fecha)) {
+            fechaStr = fecha.toISOString().split('T')[0];
+            horaStr = fecha.toTimeString().substring(0, 5);
+          }
         }
+      }
 
       setFormData({
         titulo: vencimiento.titulo || "",
@@ -60,32 +115,80 @@ const VencimientoForm = ({ vencimiento, onClose, showToast }) => {
         tipo_vencimiento: vencimiento.tipo_vencimiento || "traslado",
         prioridad: vencimiento.prioridad || "media",
         id_caso: vencimiento.id_caso || "",
-        id_cliente: vencimiento.id_cliente || ""
+        id_cliente: vencimiento.id_cliente || "",
+        jurisdiccion: vencimiento.jurisdiccion || "nacional",
+        recordatorio_dias: vencimiento.recordatorio_dias || 3
       });
     }
   }, [vencimiento]);
 
+  // Efecto para autocalcular cuando cambian los datos de la calculadora
+  useEffect(() => {
+    if (metodoIngreso === "calculadora" && calcData.fecha_notificacion) {
+      ejecutarCalculoInterno();
+    }
+  }, [calcData, metodoIngreso]);
+
   const cargarSelects = async () => {
-      try {
-          const [casosRes, clientesRes] = await Promise.all([
-              api.get('/casos?limit=100'),
-              api.get('/clientes?limit=100')
-          ]);
-          setCasos(casosRes.data.data || []);
-          setClientes(clientesRes.data.data || []);
-      } catch (error) {
-          console.error("Error cargando selects", error);
-      }
-  }
+    try {
+      const [casosRes, clientesRes] = await Promise.all([
+        api.get('/casos?limit=100'),
+        api.get('/clientes?limit=100')
+      ]);
+      setCasos(casosRes.data.data || []);
+      setClientes(clientesRes.data.data || []);
+    } catch (error) {
+      console.error("Error cargando selects", error);
+    }
+  };
+
+  const ejecutarCalculoInterno = async () => {
+    const tipoActual = tiposPlazo[calcData.fuero].find(t => t.codigo === calcData.tipo_plazo);
+    if (!tipoActual) return;
+
+    setCalcLoading(true);
+    try {
+      const data = await calculadoraService.calcularPlazo({
+        fecha_notificacion: calcData.fecha_notificacion,
+        dias_plazo: tipoActual.dias,
+        jurisdiccion: calcData.jurisdiccion,
+        incluir_plazo_gracia: calcData.incluir_plazo_gracia,
+      });
+
+      setCalcResult(data);
+      setFormData(prev => ({
+        ...prev,
+        fecha_vencimiento: data.fecha_vencimiento,
+        tipo_vencimiento: tipoActual.backend_slug
+      }));
+    } catch (err) {
+      console.error("Error en calculo interno:", err);
+    } finally {
+      setCalcLoading(false);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: "" }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
+  };
+
+  const handleCalcChange = (e) => {
+    const { name, value, type, checked } = e.target;
+
+    if (name === "fuero") {
+      const primerTipo = tiposPlazo[value][0];
+      setCalcData(prev => ({
+        ...prev,
+        fuero: value,
+        tipo_plazo: primerTipo.codigo
+      }));
+    } else {
+      setCalcData(prev => ({
+        ...prev,
+        [name]: type === "checkbox" ? checked : value
+      }));
     }
   };
 
@@ -94,7 +197,7 @@ const VencimientoForm = ({ vencimiento, onClose, showToast }) => {
     if (!formData.titulo.trim()) newErrors.titulo = "El título es obligatorio";
     if (!formData.fecha_vencimiento) newErrors.fecha_vencimiento = "La fecha es obligatoria";
     if (!formData.id_caso) newErrors.id_caso = "Debe seleccionar un caso";
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -105,17 +208,15 @@ const VencimientoForm = ({ vencimiento, onClose, showToast }) => {
 
     setLoading(true);
     try {
-      // "UTC as Local" strategy: Construimos la fecha nosotros mismos como si fuera UTC
-      // para que "09:00" en el form se guarde como "...T09:00:00.000Z" en la DB
-      // y al leerlo de vuelta (UTC) obtengamos "09:00".
       const fechaLimiteISO = `${formData.fecha_vencimiento}T${formData.hora || "00:00"}:00.000Z`;
 
       const payload = {
-          ...formData,
-          fecha_limite: fechaLimiteISO,
-          id_caso: formData.id_caso || null,
-          id_cliente: formData.id_cliente || null,
-          id_abogado: user?.id_abogado, // Agregar id_abogado del usuario logueado
+        ...formData,
+        fecha_limite: fechaLimiteISO,
+        dias_alerta: parseInt(formData.recordatorio_dias) || 3,
+        id_caso: formData.id_caso || null,
+        id_cliente: formData.id_cliente || null,
+        id_abogado: user?.id_abogado,
       };
 
       if (vencimiento) {
@@ -135,130 +236,239 @@ const VencimientoForm = ({ vencimiento, onClose, showToast }) => {
     }
   };
 
-  const tiposVencimiento = [
-    { value: "contestacion_demanda", label: "Contestación de Demanda" },
-    { value: "apelacion", label: "Apelación" },
-    { value: "recurso", label: "Recurso" },
-    { value: "traslado", label: "Traslado" },
-    { value: "ofrecimiento_prueba", label: "Ofrecimiento de Prueba " },
-    { value: "alegato", label: "Alegato " },
-    { value: "expresion_agravios", label: "Expresión de Agravios " },
-    { value: "prescripcion", label: "Prescripción / Caducidad " },
-    { value: "otro", label: "Otro" }
-  ];
-
   return (
     <ModalFrame
       title={vencimiento ? "Editar Vencimiento" : "Nuevo Vencimiento"}
       onClose={() => onClose(false)}
     >
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} className="vencimiento-form-premium">
         <div className="form-body">
-          <div className="form-group">
-            <label>Título <span className="required">*</span></label>
+          {/* Título Principal */}
+          <div className="form-group section-divider">
+            <label className="premium-label">Título del Vencimiento <span className="required">*</span></label>
             <input
               type="text"
               name="titulo"
               value={formData.titulo}
               onChange={handleChange}
-              className={errors.titulo ? "input-error" : ""}
-              placeholder="Ej: Vencimiento Contestación"
+              className={`premium-input ${errors.titulo ? "input-error" : ""}`}
+              placeholder="Ej: Contestar demanda Pérez"
             />
             {errors.titulo && <span className="error-text">{errors.titulo}</span>}
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
-                <label>Fecha Vencimiento <span className="required">*</span></label>
+          <div className="metodo-seleccion-premium">
+            <label className="premium-label">¿Cómo querés ingresar la fecha?</label>
+            <div className="radio-group-horizontal">
+              <label className={`radio-pill ${metodoIngreso === 'calculadora' ? 'active' : ''}`}>
                 <input
-                type="date"
-                name="fecha_vencimiento"
-                value={formData.fecha_vencimiento}
-                onChange={handleChange}
-                className={errors.fecha_vencimiento ? "input-error" : ""}
+                  type="radio"
+                  name="metodoIngreso"
+                  value="calculadora"
+                  checked={metodoIngreso === 'calculadora'}
+                  onChange={() => setMetodoIngreso('calculadora')}
                 />
-                 {errors.fecha_vencimiento && <span className="error-text">{errors.fecha_vencimiento}</span>}
-            </div>
-            <div className="form-group">
-                <label>Hora Vencimiento</label>
+                <span className="dot"></span>
+                <span>Calcular desde notificación</span>
+              </label>
+              <label className={`radio-pill ${metodoIngreso === 'manual' ? 'active' : ''}`}>
                 <input
-                type="time"
-                name="hora"
-                value={formData.hora}
-                onChange={handleChange}
+                  type="radio"
+                  name="metodoIngreso"
+                  value="manual"
+                  checked={metodoIngreso === 'manual'}
+                  onChange={() => setMetodoIngreso('manual')}
                 />
+                <span className="dot"></span>
+                <span>Ya sé la fecha / Manual</span>
+              </label>
             </div>
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
-                <label>Tipo Procesal</label>
-                <select name="tipo_vencimiento" value={formData.tipo_vencimiento} onChange={handleChange}>
-                    {tiposVencimiento.map(t => (
-                        <option key={t.value} value={t.value}>{t.label}</option>
-                    ))}
-                </select>
-            </div>
-            <div className="form-group">
-                <label>Prioridad</label>
-                <select name="prioridad" value={formData.prioridad} onChange={handleChange}>
-                    <option value="alta">Alta</option>
-                    <option value="media">Media</option>
-                    <option value="baja">Baja</option>
-                </select>
-            </div>
-          </div>
+          {/* Sección CALCULADORA INLINE */}
+          {metodoIngreso === 'calculadora' && (
+            <div className="calculadora-inline-card glass-card">
+              <div className="calc-inline-grid">
+                <div className="form-group">
+                  <label>Fecha de notificación</label>
+                  <input
+                    type="date"
+                    name="fecha_notificacion"
+                    value={calcData.fecha_notificacion}
+                    onChange={handleCalcChange}
+                    className="premium-input-small"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Fuero</label>
+                  <CustomSelect
+                    options={[
+                      { value: 'civil', label: 'Civil' },
+                      { value: 'laboral', label: 'Laboral' },
+                      { value: 'familia', label: 'Familia' },
+                      { value: 'penal', label: 'Penal' },
+                    ]}
+                    value={calcData.fuero}
+                    onChange={(val) => handleCalcChange({ target: { name: 'fuero', value: val } })}
+                  />
+                </div>
+              </div>
 
+              <div className="form-group">
+                <label>Tipo de Plazo</label>
+                <CustomSelect
+                  options={tiposPlazo[calcData.fuero].map(t => ({ value: t.codigo, label: t.nombre }))}
+                  value={calcData.tipo_plazo}
+                  onChange={(val) => handleCalcChange({ target: { name: 'tipo_plazo', value: val } })}
+                />
+              </div>
+
+              <div className="calc-inline-grid">
+                <div className="form-group">
+                  <label>Jurisdicción</label>
+                  <CustomSelect
+                    options={[
+                      { value: 'nacional', label: 'Nacional' },
+                      { value: 'neuquen', label: 'Neuquén' },
+                      { value: 'rio_negro', label: 'Río Negro' },
+                    ]}
+                    value={calcData.jurisdiccion}
+                    onChange={(val) => handleCalcChange({ target: { name: 'jurisdiccion', value: val } })}
+                  />
+                </div>
+                {calcResult && (
+                  <div className="calc-inline-result">
+                    <div className="result-main">
+                      <span className="check-v">✅</span>
+                      <div className="result-texts">
+                        <span className="vence-label">VENCE EL:</span>
+                        <span className="vence-date">{new Date(calcResult.fecha_vencimiento + "T00:00:00").toLocaleDateString('es-AR')}</span>
+                      </div>
+                    </div>
+                    <div className="result-badge">
+                      {calcResult.dias_plazo_solicitado} días hábiles
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Sección MANUAL */}
+          {metodoIngreso === 'manual' && (
+            <div className="manual-date-card">
+              <div className="form-row">
+                <div className="form-group">
+                  <label className="premium-label">Fecha Límite <span className="required">*</span></label>
+                  <input
+                    type="date"
+                    name="fecha_vencimiento"
+                    value={formData.fecha_vencimiento}
+                    onChange={handleChange}
+                    className={`premium-input ${errors.fecha_vencimiento ? "input-error" : ""}`}
+                  />
+                  {errors.fecha_vencimiento && <span className="error-text">{errors.fecha_vencimiento}</span>}
+                </div>
+                <div className="form-group">
+                  <label className="premium-label">Hora</label>
+                  <input
+                    type="time"
+                    name="hora"
+                    value={formData.hora}
+                    onChange={handleChange}
+                    className="premium-input"
+                  />
+                </div>
+              </div>
+              <div className="form-group">
+                <label className="premium-label">Tipo de Vencimiento</label>
+                <CustomSelect
+                  name="tipo_vencimiento"
+                  value={formData.tipo_vencimiento}
+                  options={[
+                    { value: "traslado", label: "Traslado" },
+                    { value: "contestacion_demanda", label: "Contestación de Demanda" },
+                    { value: "apelacion", label: "Apelación" },
+                    { value: "recurso", label: "Recurso" },
+                    { value: "ofrecimiento_prueba", label: "Ofrecimiento de Prueba" },
+                    { value: "alegato", label: "Alegato" },
+                    { value: "expresion_agravios", label: "Expresión de Agravios" },
+                    { value: "prescripcion", label: "Prescripción" },
+                    { value: "caducidad", label: "Caducidad" },
+                    { value: "otro", label: "Otro" }
+                  ]}
+                  onChange={(val) => handleChange({ target: { name: 'tipo_vencimiento', value: val } })}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Otros campos */}
           <div className="form-row">
-             <div className="form-group">
-                <label>Caso <span className="required">*</span></label>
-                <select 
-                  name="id_caso" 
-                  value={formData.id_caso} 
-                  onChange={handleChange}
-                  className={errors.id_caso ? "input-error" : ""}
-                >
-                    <option value="">-- Seleccionar Caso --</option>
-                    {casos.map(c => (
-                        <option key={c.id_caso} value={c.id_caso}>{c.descripcion}</option>
-                    ))}
-                </select>
-                {errors.id_caso && <span className="error-text">{errors.id_caso}</span>}
-             </div>
-             <div className="form-group">
-                <label>Cliente</label>
-                <select name="id_cliente" value={formData.id_cliente} onChange={handleChange}>
-                    <option value="">-- Seleccionar Cliente --</option>
-                    {clientes.map(c => (
-                        <option key={c.id_cliente} value={c.id_cliente}>{c.nombre} {c.apellido}</option>
-                    ))}
-                </select>
-             </div>
+            <div className="form-group">
+              <label>Caso <span className="required">*</span></label>
+              <CustomSelect
+                name="id_caso"
+                value={formData.id_caso}
+                placeholder="-- Seleccionar Caso --"
+                options={casos.map(c => ({ value: c.id_caso, label: c.descripcion }))}
+                onChange={(val) => handleChange({ target: { name: 'id_caso', value: val } })}
+              />
+              {errors.id_caso && <span className="error-text">{errors.id_caso}</span>}
+            </div>
+            <div className="form-group">
+              <label>Prioridad</label>
+              <CustomSelect
+                name="prioridad"
+                value={formData.prioridad}
+                options={[
+                  { value: "alta", label: "Alta" },
+                  { value: "media", label: "Media" },
+                  { value: "baja", label: "Baja" }
+                ]}
+                onChange={(val) => handleChange({ target: { name: 'prioridad', value: val } })}
+              />
+            </div>
+            <div className="form-group">
+              <label>Recordatorio</label>
+              <CustomSelect
+                name="recordatorio_dias"
+                value={formData.recordatorio_dias}
+                options={[
+                  { value: 1, label: "1 día antes" },
+                  { value: 2, label: "2 días antes" },
+                  { value: 3, label: "3 días antes" },
+                  { value: 5, label: "5 días antes" },
+                  { value: 10, label: "10 días antes" }
+                ]}
+                onChange={(val) => handleChange({ target: { name: 'recordatorio_dias', value: val } })}
+              />
+            </div>
           </div>
 
           <div className="form-group">
-            <label>Notas Adicionales</label>
+            <label>Notas / Recordatorios</label>
             <textarea
               name="descripcion"
               value={formData.descripcion}
               onChange={handleChange}
-              placeholder="Detalles sobre el plazo procesal..."
+              placeholder="Detalles sobre el vencimiento..."
+              rows={3}
             />
           </div>
-
         </div>
 
-        <div className="modal-footer">
+        <div className="modal-footer-premium">
           <button
             type="button"
-            className="btn-cancel"
+            className="btn-cancel-premium"
             onClick={() => onClose(false)}
             disabled={loading}
           >
             Cancelar
           </button>
-          <button type="submit" className="btn-submit" disabled={loading}>
-            {loading ? "Guardando..." : "Guardar"}
+          <button type="submit" className="btn-save-premium" disabled={loading}>
+            {loading ? "GUARDANDO..." : "GUARDAR VENCIMIENTO"}
           </button>
         </div>
       </form>
