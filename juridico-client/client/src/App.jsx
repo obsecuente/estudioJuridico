@@ -25,7 +25,7 @@ import EventosList from "./pages/eventos/EventosList";
 import VencimientosList from "./pages/vencimientos/VencimientosList";
 import CalculadoraPage from "./pages/calculadora/CalculadoraPage";
 import ConfiguracionJUS from "./pages/configuracion/ConfiguracionJUS";
-import Finanzas from "./pages/finanzas/Finanzas";
+import FinanzasDashboard from "./pages/finanzas/FinanzasDashboard";
 import "./App.css";
 
 
@@ -94,7 +94,7 @@ function App() {
             <Route path="configuracion" element={<ConfiguracionJUS />} />
 
             {/* Módulo de finanzas */}
-            <Route path="finanzas" element={<Finanzas />} />
+            <Route path="finanzas" element={<FinanzasDashboard />} />
           </Route>
 
 

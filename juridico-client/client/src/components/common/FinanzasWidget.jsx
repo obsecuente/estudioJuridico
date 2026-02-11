@@ -36,17 +36,22 @@ const FinanzasWidget = () => {
         }).format(value || 0);
     };
 
-    const getCobrabilidadClass = (ratio) => {
-        if (ratio >= 70) return "high";
-        if (ratio >= 40) return "medium";
-        return "low";
+    const getRingClass = (ratio) => {
+        if (ratio >= 70) return "ring-high";
+        if (ratio >= 40) return "ring-mid";
+        return "ring-low";
     };
+
+    const ratio = dashboard?.indicadores?.ratio_cobrabilidad || 0;
+    const R = 28;
+    const C = 2 * Math.PI * R;
+    const offset = C - (ratio / 100) * C;
 
     if (loading) {
         return (
-            <div className="finanzas-widget">
-                <div className="finanzas-widget-header">
-                    <h3>💰 Salud del Estudio</h3>
+            <div className="finanzas-widget finw-terminal">
+                <div className="finw-header">
+                    <h3>Terminal Financiera</h3>
                 </div>
                 <div className="finanzas-loading">
                     <SpinnerIcon />
@@ -58,13 +63,13 @@ const FinanzasWidget = () => {
 
     if (error) {
         return (
-            <div className="finanzas-widget">
-                <div className="finanzas-widget-header">
-                    <h3>💰 Salud del Estudio</h3>
+            <div className="finanzas-widget finw-terminal">
+                <div className="finw-header">
+                    <h3>Terminal Financiera</h3>
                 </div>
                 <div className="finanzas-loading">
                     <span>{error}</span>
-                    <Link to="/dashboard/configuracion" style={{ color: "#f1c40f" }}>
+                    <Link to="/dashboard/configuracion" style={{ color: "#818cf8" }}>
                         Configurar JUS →
                     </Link>
                 </div>
@@ -73,55 +78,57 @@ const FinanzasWidget = () => {
     }
 
     return (
-        <div className="finanzas-widget">
-            <div className="finanzas-widget-header">
-                <h3>💰 Salud del Estudio</h3>
-                <Link to="/dashboard/configuracion">Configurar JUS</Link>
+        <div className="finanzas-widget finw-terminal">
+            <div className="finw-header">
+                <h3>Terminal Financiera</h3>
+                <Link to="/dashboard/finanzas" className="finw-link">
+                    Abrir →
+                </Link>
             </div>
 
-            <div className="finanzas-widget-body">
-                {/* Métricas principales */}
-                <div className="finanzas-metrics">
-                    <div className="finanzas-metric">
-                        <div className="finanzas-metric-label">Caja Actual</div>
-                        <div className={`finanzas-metric-value ${dashboard?.caja?.neto >= 0 ? "positive" : "danger"}`}>
+            <div className="finw-body">
+                {/* Mini KPIs */}
+                <div className="finw-kpis">
+                    <div className="finw-kpi">
+                        <span className="finw-kpi-label">Caja Neta</span>
+                        <span className={`finw-kpi-value ${(dashboard?.caja?.neto || 0) >= 0 ? 'pos' : 'neg'}`}>
                             {formatCurrency(dashboard?.caja?.neto)}
-                        </div>
-                    </div>
-
-                    <div className="finanzas-metric">
-                        <div className="finanzas-metric-label">Cartera Protegida</div>
-                        <div className="finanzas-metric-value warning">
-                            {formatCurrency(dashboard?.cartera?.total_pendiente_actualizado)}
-                        </div>
-                    </div>
-                </div>
-
-                {/* Ratio de Cobrabilidad */}
-                <div className="cobrabilidad-section">
-                    <div className="cobrabilidad-header">
-                        <span className="cobrabilidad-label">Ratio de Cobrabilidad</span>
-                        <span className="cobrabilidad-value">
-                            {dashboard?.indicadores?.ratio_cobrabilidad || 0}%
                         </span>
                     </div>
-                    <div className="cobrabilidad-bar">
-                        <div
-                            className={`cobrabilidad-fill ${getCobrabilidadClass(dashboard?.indicadores?.ratio_cobrabilidad)}`}
-                            style={{ width: `${Math.min(dashboard?.indicadores?.ratio_cobrabilidad || 0, 100)}%` }}
-                        />
+                    <div className="finw-kpi">
+                        <span className="finw-kpi-label">Cartera</span>
+                        <span className="finw-kpi-value warn">
+                            {formatCurrency(dashboard?.cartera?.total_pendiente_actualizado)}
+                        </span>
                     </div>
                 </div>
 
-                {/* Info JUS */}
-                <div className="jus-info">
-                    <span>
-                        Valor JUS ({dashboard?.indicadores?.provincia}):
-                        <span className="jus-value"> {formatCurrency(dashboard?.indicadores?.valor_jus_actual)}</span>
-                    </span>
-                    <span>
-                        {dashboard?.cartera?.pendiente_jus || 0} JUS pendientes
-                    </span>
+                {/* Mini Ring + Ratio */}
+                <div className="finw-ring-row">
+                    <div className="finw-mini-ring">
+                        <svg viewBox="0 0 64 64" width="48" height="48">
+                            <circle cx="32" cy="32" r={R} fill="none" stroke="rgba(51,65,85,0.6)" strokeWidth="5" />
+                            <circle
+                                cx="32" cy="32" r={R}
+                                fill="none"
+                                strokeWidth="5"
+                                strokeLinecap="round"
+                                className={getRingClass(ratio)}
+                                strokeDasharray={C}
+                                strokeDashoffset={offset}
+                                style={{ transform: 'rotate(-90deg)', transformOrigin: '50% 50%', transition: 'stroke-dashoffset 0.8s ease' }}
+                            />
+                        </svg>
+                        <span className="finw-ring-percent">{ratio.toFixed(0)}%</span>
+                    </div>
+                    <div className="finw-ring-info">
+                        <span className="finw-ring-title">Eficiencia de Cobro</span>
+                        <span className="finw-ring-sub">
+                            {dashboard?.cartera?.pendiente_jus || 0} JUS pendientes
+                            <br />
+                            JUS: <span className="finw-mono">{formatCurrency(dashboard?.indicadores?.valor_jus_actual)}</span>
+                        </span>
+                    </div>
                 </div>
             </div>
         </div>

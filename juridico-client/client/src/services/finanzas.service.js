@@ -54,6 +54,19 @@ const finanzasService = {
         const response = await api.put("/configuracion/jus", { provincia, valor });
         return response.data;
     },
+
+    /**
+     * Obtiene movimientos con filtros y paginación
+     * @param {Object} params - { page, limit, tipo, estado, id_caso, categoria }
+     */
+    getMovimientos: async (params = {}) => {
+        const query = new URLSearchParams();
+        Object.entries(params).forEach(([key, val]) => {
+            if (val !== undefined && val !== null) query.append(key, val);
+        });
+        const response = await api.get(`/finanzas?${query.toString()}`);
+        return response.data;
+    },
 };
 
 export default finanzasService;

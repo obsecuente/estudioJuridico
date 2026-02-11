@@ -214,7 +214,8 @@ const CasoForm = ({ caso, clienteId, onClose, showToast }) => {
             {!caso && (
               <div className="apertura-section">
                 <div className="apertura-header">
-                  <h4>💰 Gestión de Honorarios Iniciales</h4>
+                  <h4>⚖️ Honorarios de Apertura</h4>
+                  <span className="apertura-ref">Ref: Ley 1594 Neuquén</span>
                 </div>
 
                 <div className="apertura-toggle">
@@ -228,7 +229,7 @@ const CasoForm = ({ caso, clienteId, onClose, showToast }) => {
                     <span className="toggle-slider"></span>
                   </label>
                   <span className="toggle-label">
-                    ¿Registrar gastos de apertura de carpeta?
+                    ¿Registrar honorarios de apertura de carpeta?
                   </span>
                 </div>
 
@@ -263,11 +264,20 @@ const CasoForm = ({ caso, clienteId, onClose, showToast }) => {
                           disabled={loading}
                           placeholder="3"
                         />
-                        <div className="jus-feedback">
-                          <span>Valor JUS actual: <strong>{formatCurrency(valorJusActual)}</strong></span>
-                          <span className="total-sugerido">
-                            Total sugerido: <strong>{formatCurrency(totalCalculado)}</strong>
-                          </span>
+                        {/* ═══ DISPLAY DUAL JUS / PESOS ═══ */}
+                        <div className="apertura-dual-display">
+                          <div className="apertura-jus-big">
+                            <span className="apertura-jus-number">{cantidadJus || 0}</span>
+                            <span className="apertura-jus-unit">JUS</span>
+                          </div>
+                          <div className="apertura-equals">=</div>
+                          <div className="apertura-pesos-big">
+                            <span className="apertura-pesos-value">{formatCurrency(totalCalculado)}</span>
+                            <span className="apertura-pesos-label">al valor de hoy</span>
+                          </div>
+                        </div>
+                        <div className="apertura-jus-info">
+                          Valor JUS actual: <strong>{formatCurrency(valorJusActual)}</strong>
                         </div>
                       </div>
                     ) : (
@@ -281,6 +291,14 @@ const CasoForm = ({ caso, clienteId, onClose, showToast }) => {
                           disabled={loading}
                           placeholder="Ej: 45000"
                         />
+                        {montoFijo && (
+                          <div className="apertura-dual-display apertura-dual-pesos">
+                            <div className="apertura-pesos-big">
+                              <span className="apertura-pesos-value">{formatCurrency(parseFloat(montoFijo) || 0)}</span>
+                              <span className="apertura-pesos-label">monto fijo en pesos</span>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
 
