@@ -11,6 +11,8 @@ import EventoForm from "../eventos/EventoForm";
 import VencimientoForm from "../vencimientos/VencimientoForm";
 import eventosService from "../../services/eventos.service";
 import vencimientosService from "../../services/vencimientos.service";
+import finanzasService from "../../services/finanzas.service";
+import DeleteModal from "../../components/common/DeleteModal";
 import MiDia from "../../components/common/MiDia";
 import "./Home.css";
 import {
@@ -48,9 +50,12 @@ const Home = () => {
   const [showClienteModal, setShowClienteModal] = useState(false);
   const [showConsultaModal, setShowConsultaModal] = useState(false);
   const [showCasoModal, setShowCasoModal] = useState(false);
-  const [showDocumentoModal, setShowDocumentoModal] = useState(false);
+  const [showDocModal, setShowDocModal] = useState(false);
   const [showEventoModal, setShowEventoModal] = useState(false);
   const [showVencimientoModal, setShowVencimientoModal] = useState(false);
+
+  // Gasto fijo pay confirmation
+  const [gastoPayConfirm, setGastoPayConfirm] = useState({ open: false, id: null, nombre: "", monto: 0 });
 
   useEffect(() => {
     cargarActividadReciente();
@@ -196,8 +201,26 @@ const Home = () => {
     expresion_agravios: "Expresión de Agravios",
     prescripcion: "Prescripción",
     caducidad: "Caducidad",
+    gasto_fijo: "💸 Gasto Fijo",
     otro: "Otro",
   };
+
+  const handlePayGastoFijo = async () => {
+    if (!gastoPayConfirm.id) return;
+    try {
+      await finanzasService.marcarPagado(gastoPayConfirm.id);
+      setGastoPayConfirm({ open: false, id: null, nombre: "", monto: 0 });
+      showToast("Gasto marcado como pagado", "success");
+      // Refresh
+      const vencRes = await vencimientosService.getProximos(10);
+      setProximosVencimientos(vencRes.data || []);
+    } catch (err) {
+      console.error("Error al marcar gasto pagado:", err);
+      showToast("Error al marcar como pagado", "error");
+    }
+  };
+
+  const formatCurrency = (val) => new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", minimumFractionDigits: 0 }).format(val || 0);
 
   // Actividad reciente visible (colapsable)
   const actividadVisible = actividadExpandida
@@ -268,9 +291,11 @@ const Home = () => {
               <div className="midia-empty">⏰ No hay vencimientos próximos</div>
             ) : (
               proximosVencimientos.map((venc) => (
-                <div key={venc.id_vencimiento} className="midia-tarea">
+                <div key={venc.id_vencimiento} className={`midia-tarea ${venc.es_gasto_fijo ? 'midia-gasto-fijo' : ''}`}>
                   <div className="midia-prioridad-indicator">
-                    {venc.prioridad === "alta" ? (
+                    {venc.es_gasto_fijo ? (
+                      <span style={{ fontSize: '1.1rem' }}>💸</span>
+                    ) : venc.prioridad === "alta" ? (
                       <RedState />
                     ) : venc.prioridad === "baja" ? (
                       <GreenState />
@@ -282,11 +307,32 @@ const Home = () => {
                     <div className="midia-tarea-texto">{venc.titulo}</div>
                     <div className="midia-tarea-meta">
                       <span>📅 Vence: {new Date(venc.fecha_limite).toLocaleDateString("es-AR")}</span>
+                      {venc.es_gasto_fijo && venc.monto_ars && (
+                        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 600 }}>
+                          {formatCurrency(venc.monto_ars)}
+                        </span>
+                      )}
                     </div>
                   </div>
-                  <span className="midia-badge">
-                    {tipoVencimientoLabel[venc.tipo_vencimiento] || venc.tipo_vencimiento}
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span className="midia-badge">
+                      {tipoVencimientoLabel[venc.tipo_vencimiento] || venc.tipo_vencimiento}
+                    </span>
+                    {venc.es_gasto_fijo && (
+                      <button
+                        className="midia-pay-btn"
+                        onClick={() => setGastoPayConfirm({
+                          open: true,
+                          id: venc.id_movimiento,
+                          nombre: venc.titulo,
+                          monto: venc.monto_ars,
+                        })}
+                        title="Marcar como pagado"
+                      >
+                        ✓ Pagado
+                      </button>
+                    )}
+                  </div>
                 </div>
               ))
             )}
@@ -383,7 +429,7 @@ const Home = () => {
       {showCasoModal && (
         <CasoForm onClose={handleCloseCaso} showToast={showToast} />
       )}
-      {showDocumentoModal && (
+      {showDocModal && (
         <DocumentoUpload onClose={handleCloseDocumento} showToast={showToast} />
       )}
       {showEventoModal && (
@@ -392,6 +438,16 @@ const Home = () => {
       {showVencimientoModal && (
         <VencimientoForm onClose={handleCloseVencimiento} showToast={showToast} />
       )}
+
+      <DeleteModal
+        isOpen={gastoPayConfirm.open}
+        onConfirm={handlePayGastoFijo}
+        onCancel={() => setGastoPayConfirm({ open: false, id: null, nombre: "", monto: 0 })}
+        title="Confirmar pago"
+        message={`¿Marcás como pagado "${gastoPayConfirm.nombre}" por ${formatCurrency(gastoPayConfirm.monto)}?`}
+        confirmLabel="Confirmar pago"
+        confirmVariant="success"
+      />
 
       {/* Toast */}
       {toast && (

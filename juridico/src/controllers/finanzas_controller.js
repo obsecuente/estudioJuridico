@@ -116,6 +116,7 @@ export const obtenerMovimientos = async (req, res) => {
             id_cliente: req.query.id_cliente,
             id_caso: req.query.id_caso,
             categoria: req.query.categoria,
+            id_abogado: req.user.id_abogado,
         });
 
         return res.json({
@@ -132,10 +133,33 @@ export const obtenerMovimientos = async (req, res) => {
     }
 };
 
+/**
+ * Elimina un movimiento financiero
+ * DELETE /api/finanzas/:id
+ */
+export const eliminarMovimiento = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const result = await finanzasService.eliminarMovimiento(id);
+
+        return res.json({
+            success: true,
+            message: result.message,
+        });
+    } catch (error) {
+        console.error("Error al eliminar movimiento:", error);
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            error: error.message,
+        });
+    }
+};
+
 export default {
     crearMovimiento,
     obtenerDashboard,
     marcarCuotaPagada,
     obtenerMovimientosPorCaso,
     obtenerMovimientos,
+    eliminarMovimiento,
 };

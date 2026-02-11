@@ -71,6 +71,22 @@ const MovimientoFinanciero = sequelize.define(
             },
             comment: "Abogado dueño del movimiento (para aislamiento de datos)",
         },
+        // Vinculación con gastos recurrentes
+        id_gasto_recurrente: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+            references: {
+                model: "gastos_recurrentes",
+                key: "id_gasto_recurrente",
+            },
+            comment: "Si fue generado automáticamente por un gasto recurrente",
+        },
+        es_recurrente: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: false,
+            comment: "Indica si este movimiento corresponde a un gasto fijo mensual",
+        },
     },
 
     {

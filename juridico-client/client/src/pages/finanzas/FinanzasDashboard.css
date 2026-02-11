@@ -857,3 +857,322 @@
         font-size: 1.5rem;
     }
 }
+
+/* ═══ GASTOS FIJOS DEL MES ═══ */
+.fin-gastos-fijos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.fin-gasto-fijo-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 18px;
+    background: var(--color-fondo-oscuro, #1a1f2b);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-left: 5px solid var(--fin-amber);
+    border-radius: 12px;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+}
+
+.fin-gasto-fijo-card.paid {
+    border-left-color: var(--fin-esmeralda);
+    opacity: 0.7;
+}
+
+.fin-gasto-fijo-card.pending:hover {
+    background: rgba(245, 158, 11, 0.05);
+}
+
+.fin-gf-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.fin-gf-name {
+    font-weight: 600;
+    font-size: 0.88rem;
+    color: var(--color-texto-principal, #f1f5f9);
+    margin-bottom: 4px;
+}
+
+.fin-gf-meta {
+    font-size: 0.72rem;
+    color: var(--color-texto-secundario, #94a3b8);
+}
+
+.fin-gf-meta .mono {
+    font-family: var(--fin-mono);
+    font-weight: 600;
+    color: var(--color-texto-principal, #f1f5f9);
+}
+
+.fin-gf-actions {
+    margin-left: 12px;
+    flex-shrink: 0;
+}
+
+.fin-gf-paid-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    background: rgba(16, 185, 129, 0.2);
+    color: var(--fin-esmeralda);
+}
+
+/* ═══ UNDO BAR ═══ */
+.fin-undo-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    border-radius: 10px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    animation: slideDown 0.3s ease;
+    font-size: 0.82rem;
+    color: var(--fin-esmeralda);
+    font-weight: 500;
+}
+
+.fin-undo-bar button {
+    font-weight: 600;
+}
+
+/* ═══ GASTOS CONFIGURADOS LIST ═══ */
+.fin-gastos-config {
+    margin-top: 16px;
+    padding: 14px 16px;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.fin-gastos-config-title {
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--color-acento, #d4af37);
+    margin-bottom: 10px;
+}
+
+.fin-gasto-config-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 8px 0;
+    font-size: 0.82rem;
+    color: var(--color-texto-secundario, #94a3b8);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.fin-gasto-config-item:last-child {
+    border-bottom: none;
+}
+
+.fin-gasto-config-item .mono {
+    font-family: var(--fin-mono);
+    font-weight: 600;
+    color: var(--color-texto-principal, #f1f5f9);
+}
+
+.fin-btn-icon {
+    background: none;
+    border: none;
+    color: var(--color-texto-secundario, #94a3b8);
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 4px 6px;
+    border-radius: 4px;
+    transition: all 0.2s;
+    margin-left: auto;
+}
+
+.fin-btn-icon:hover {
+    color: #dc2626;
+    background: rgba(220, 38, 38, 0.15);
+}
+
+/* ═══ BREAKEVEN EMPTY ═══ */
+.fin-breakeven-empty {
+    text-align: center;
+    padding: 20px;
+    color: var(--color-texto-secundario, #94a3b8);
+    font-size: 0.82rem;
+    line-height: 1.5;
+}
+
+/* ═══ PIN AS MONTHLY (inline in table) ═══ */
+.fin-pin-inline {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.fin-pin-input {
+    width: 50px;
+    padding: 4px 6px;
+    font-size: 0.75rem;
+    font-family: var(--fin-mono);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 4px;
+    color: var(--color-texto-principal, #f1f5f9);
+    text-align: center;
+}
+
+.fin-pin-input:focus {
+    border-color: var(--color-acento, #d4af37);
+    outline: none;
+}
+
+/* Small and extra small buttons */
+.fin-btn-sm {
+    padding: 5px 12px;
+    font-size: 0.72rem;
+}
+
+.fin-btn-xs {
+    padding: 4px 8px;
+    font-size: 0.68rem;
+    border-radius: 6px;
+}
+
+.fin-recurrente-tag {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 2px 6px;
+    font-size: 10px;
+    font-weight: 600;
+    background: rgba(212, 175, 55, 0.15);
+    color: var(--color-acento, #d4af37);
+    border-radius: 4px;
+    vertical-align: middle;
+}
+
+/* ═══ RESPONSIVE GASTOS FIJOS ═══ */
+@media (max-width: 768px) {
+    .fin-gastos-fijos-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .fin-gasto-config-item {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .fin-undo-bar {
+        flex-direction: column;
+        gap: 8px;
+        text-align: center;
+    }
+}
+
+/* ═══ CATEGORY CHIPS ═══ */
+.fin-cat-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+}
+
+.fin-cat-chip {
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--color-texto-secundario, #94a3b8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.fin-cat-chip:hover {
+    background: rgba(212, 175, 55, 0.15);
+    color: #d4af37;
+    border-color: rgba(212, 175, 55, 0.3);
+}
+
+.fin-cat-chip.active {
+    background: rgba(212, 175, 55, 0.2);
+    color: #d4af37;
+    border-color: #d4af37;
+}
+
+.fin-cat-add {
+    border-style: dashed;
+    color: #d4af37;
+    border-color: rgba(212, 175, 55, 0.4);
+}
+
+.fin-cat-inline-add {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.fin-cat-inline-add input {
+    width: 120px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid rgba(212, 175, 55, 0.5);
+    background: rgba(0, 0, 0, 0.3);
+    color: #f1f5f9;
+    font-size: 0.78rem;
+    font-family: inherit;
+    outline: none;
+}
+
+.fin-cat-inline-add input:focus {
+    border-color: #d4af37;
+    box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.15);
+}
+
+/* ═══ CUSTOM CHECKBOX ═══ */
+.fin-custom-checkbox {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+    background-color: rgba(255, 255, 255, 0.05);
+    /* Fondo oscuro transparente */
+    cursor: pointer;
+    display: grid;
+    place-content: center;
+    margin: 0;
+    transition: all 0.2s ease;
+}
+
+.fin-custom-checkbox::before {
+    content: "";
+    width: 10px;
+    height: 10px;
+    transform: scale(0);
+    transition: 0.1s transform ease-in-out;
+    background-color: #1a1f2b;
+    /* Color del tick (oscuro) */
+    transform-origin: center;
+    clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+}
+
+.fin-custom-checkbox:checked {
+    background-color: #d4af37;
+    border-color: #d4af37;
+}
+
+.fin-custom-checkbox:checked::before {
+    transform: scale(1);
+}

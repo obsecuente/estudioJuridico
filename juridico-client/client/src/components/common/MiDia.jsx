@@ -4,7 +4,8 @@ import { useNavigate } from "react-router-dom";
 import tareasService from "../../services/tareas.service";
 import eventosService from "../../services/eventos.service";
 import vencimientosService from "../../services/vencimientos.service";
-import { SpinnerIcon, TrashICon, AddIcon, CalendarIcon, AlarmIcon } from "./Icons";
+import finanzasService from "../../services/finanzas.service";
+import { SpinnerIcon, TrashICon, AddIcon, CalendarIcon, AlarmIcon, CasosIcon, AbogadosIcon, LocacionIcon } from "./Icons";
 import "./MiDia.css";
 
 // Helper para obtener fecha local como string YYYY-MM-DD (evita problemas de timezone)
@@ -15,10 +16,10 @@ const getHoyLocal = () => {
 
 // Categorías sugeridas (el usuario puede escribir las propias)
 const CATEGORIAS_SUGERIDAS = [
-    { label: "Procuración", value: "procuracion", emoji: "🏛️" },
-    { label: "Escrito", value: "escrito", emoji: "📝" },
-    { label: "Comunicación", value: "comunicacion", emoji: "📞" },
-    { label: "Gestión", value: "gestion", emoji: "📋" },
+    { label: "Procuración", value: "procuracion" },
+    { label: "Escrito", value: "escrito" },
+    { label: "Comunicación", value: "comunicacion" },
+    { label: "Gestión", value: "gestion" },
 ];
 
 const MiDia = () => {
@@ -77,17 +78,45 @@ const MiDia = () => {
 
     const cargarVencimientosHoy = async () => {
         try {
-            const hoy = getHoyLocal();
-            const response = await vencimientosService.getAll({
-                estado: "pendiente",
-            });
-            const todos = response?.data || [];
+            const hoy = getHoyLocal(); // YYYY-MM-DD
+            const [vencRes, gastosRes] = await Promise.all([
+                vencimientosService.getAll({ estado: "pendiente" }),
+                finanzasService.getPendientesMes()
+            ]);
+
+            const todos = vencRes?.data || [];
             const deHoy = todos.filter((v) => {
                 if (!v.fecha_limite) return false;
-                // Comparar como string para evitar problemas de timezone
                 return String(v.fecha_limite).split("T")[0] === hoy;
             });
-            setVencimientosHoy(deHoy);
+
+            // Gastos recurrentes que vencen hoy (coincide día del mes)
+            const hoyDia = new Date().getDate();
+            const listaGastos = gastosRes?.data || [];
+            console.log("MiDia - Gastos check:", { hoyDia, gastosCount: listaGastos.length });
+
+            const gastosHoy = listaGastos.filter(g => {
+                if (!g.gasto_recurrente) return false;
+                // Mostrar solo pendientes
+                if (g.estado !== "pendiente") return false;
+
+                // Vence hoy si el día de vencimiento es igual al día actual (usar == para evitar problemas de tipos)
+                const diaVenc = g.gasto_recurrente.dia_vencimiento;
+                const match = diaVenc == hoyDia;
+                if (match) console.log("MiDia - Gasto matches today:", g.descripcion);
+                return match;
+            }).map(g => ({
+                id_vencimiento: `gasto-${g.id_movimiento}`,
+                titulo: `💸 ${g.descripcion || g.category}`,
+                tipo_vencimiento: "Gasto Fijo",
+                // Usar fecha real de este mes/año para que el sort funcione
+                fecha_limite: new Date(new Date().getFullYear(), new Date().getMonth(), hoyDia).toISOString(),
+                caso: null,
+                es_gasto: true,
+                monto: g.monto_ars
+            }));
+
+            setVencimientosHoy([...deHoy, ...gastosHoy]);
         } catch (err) {
             console.error("Error al cargar vencimientos:", err);
         }
@@ -159,9 +188,27 @@ const MiDia = () => {
     };
 
     const completarVencimiento = async (venc) => {
+        if (!venc) return;
         try {
-            await vencimientosService.marcarCumplido(venc.id_vencimiento);
-            cargarVencimientosHoy();
+            // Manejo de Gasto Fijo
+            if (String(venc.id_vencimiento).startsWith("gasto-")) {
+                const idMov = venc.id_vencimiento.replace("gasto-", "");
+                await finanzasService.marcarPagado(idMov);
+            } else {
+                await vencimientosService.marcarCumplido(venc.id_vencimiento);
+            }
+            // Recargar
+            await cargarVencimientosHoy();
+            // Agregar a completadas para animación
+            const id = venc.id_vencimiento;
+            setRecienCompletadas(prev => new Set(prev).add(id));
+            setTimeout(() => {
+                setRecienCompletadas(prev => {
+                    const next = new Set(prev);
+                    next.delete(id);
+                    return next;
+                });
+            }, 1000);
         } catch (err) {
             console.error("Error al completar vencimiento:", err);
         }
@@ -215,11 +262,11 @@ const MiDia = () => {
     };
 
     const tipoEventoLabel = {
-        audiencia: "🏛️ Audiencia",
-        reunion: "🤝 Reunión",
-        tarea: "📋 Tarea",
-        vencimiento: "⏰ Vencimiento",
-        otro: "📌 Evento",
+        audiencia: "Audiencia",
+        reunion: "Reunión",
+        tarea: "Tarea",
+        vencimiento: "Vencimiento",
+        otro: "Evento",
     };
 
     // ═══ RENDER DE TAREA INDIVIDUAL ═══
@@ -252,14 +299,14 @@ const MiDia = () => {
                                 onClick={() => navigate(`/casos/${tarea.caso.id_caso}`)}
                                 title={`Ir al caso: ${tarea.caso.descripcion}`}
                             >
-                                📁 {tarea.caso.descripcion?.substring(0, 30)}
+                                <CasosIcon /> {tarea.caso.descripcion?.substring(0, 30)}
                             </span>
                         )}
                         {fechaInfo && (
-                            <span className={fechaInfo.class}>📅 {fechaInfo.text}</span>
+                            <span className={fechaInfo.class}><CalendarIcon /> {fechaInfo.text}</span>
                         )}
                         {tarea.hora_limite && (
-                            <span className="hora-limite">⏰ {tarea.hora_limite.substring(0, 5)}</span>
+                            <span className="hora-limite"><AlarmIcon /> {tarea.hora_limite.substring(0, 5)}</span>
                         )}
                     </div>
                 </div>
@@ -271,7 +318,7 @@ const MiDia = () => {
                             onClick={() => pasarAPlazoDeGracia(tarea)}
                             title="Pasar al Plazo de Gracia (Art. 124 CPCC) → Mañana 09:30"
                         >
-                            ⚖️
+                            <AbogadosIcon />
                         </button>
                     )}
                     <button
@@ -298,10 +345,10 @@ const MiDia = () => {
         <div className="midia-widget">
             {/* Header con fecha y stats */}
             <div className="midia-header">
-                <h3>✅ Mi Día — <span className="midia-fecha">{getFechaHeader()}</span></h3>
+                <h3>Mi Día — <span className="midia-fecha">{getFechaHeader()}</span></h3>
                 <div className="midia-stats">
                     {stats.vencidas > 0 && (
-                        <span className="midia-stat atrasadas">🔴 {stats.vencidas} atrasadas</span>
+                        <span className="midia-stat atrasadas"> {stats.vencidas} atrasadas</span>
                     )}
                     <span className="midia-stat pendientes">{stats.pendientes} pendientes</span>
                     <span className="midia-stat completadas">{stats.completadas} hechas</span>
@@ -383,7 +430,7 @@ const MiDia = () => {
                                 />
                             </div>
                             <div className="midia-field">
-                                <label>📁 Caso (ID)</label>
+                                <label><CasosIcon /> Caso (ID)</label>
                                 <input
                                     type="number"
                                     placeholder="ID del caso"
@@ -419,7 +466,7 @@ const MiDia = () => {
                         {vencenHoy.length > 0 && (
                             <div className="midia-section">
                                 <div className="midia-section-header midia-section-vence-hoy">
-                                    🟠 VENCE HOY
+                                    VENCE HOY
                                 </div>
                                 {vencenHoy.map((t) => renderTarea(t, "vencen_hoy"))}
                             </div>
@@ -448,10 +495,10 @@ const MiDia = () => {
                                                     {tipoEventoLabel[evento.tipo] || evento.tipo}
                                                 </span>
                                                 {evento.hora_inicio && (
-                                                    <span>⏰ {evento.hora_inicio.substring(0, 5)}</span>
+                                                    <span><AlarmIcon /> {evento.hora_inicio.substring(0, 5)}</span>
                                                 )}
                                                 {evento.ubicacion && (
-                                                    <span>📍 {evento.ubicacion}</span>
+                                                    <span><LocacionIcon /> {evento.ubicacion}</span>
                                                 )}
                                                 {evento.caso && (
                                                     <span
@@ -459,7 +506,7 @@ const MiDia = () => {
                                                         onClick={() => navigate(`/casos/${evento.caso.id_caso}`)}
                                                         title={`Ir al caso: ${evento.caso.descripcion}`}
                                                     >
-                                                        📁 {evento.caso.descripcion?.substring(0, 30)}
+                                                        <CasosIcon /> {evento.caso.descripcion?.substring(0, 30)}
                                                     </span>
                                                 )}
                                             </div>
@@ -475,35 +522,40 @@ const MiDia = () => {
                                 <div className="midia-section-header midia-section-vencimiento">
                                     <AlarmIcon /> Vencimientos de Hoy
                                 </div>
-                                {vencimientosHoy.map((venc) => (
-                                    <div
-                                        key={`venc-${venc.id_vencimiento}`}
-                                        className="midia-tarea midia-vencimiento"
-                                    >
+                                {vencimientosHoy.map((venc) => {
+                                    const isCompletando = recienCompletadas.has(venc.id_vencimiento);
+                                    return (
                                         <div
-                                            className="midia-checkbox"
-                                            onClick={() => completarVencimiento(venc)}
-                                            title="Marcar como cumplido"
-                                        />
-                                        <div className="midia-tarea-content">
-                                            <div className="midia-tarea-texto">{venc.titulo}</div>
-                                            <div className="midia-tarea-meta">
-                                                <span className="vencimiento-tipo">
-                                                    ⏰ {venc.tipo_vencimiento || "Vencimiento"}
-                                                </span>
-                                                {venc.caso && (
-                                                    <span
-                                                        className="caso caso-link"
-                                                        onClick={() => navigate(`/casos/${venc.caso.id_caso}`)}
-                                                        title={`Ir al caso: ${venc.caso.descripcion}`}
-                                                    >
-                                                        📁 {venc.caso.descripcion?.substring(0, 30)}
+                                            key={`venc-${venc.id_vencimiento}`}
+                                            className={`midia-tarea midia-vencimiento ${isCompletando ? "completando" : ""}`}
+                                        >
+                                            <div
+                                                className={`midia-checkbox ${isCompletando ? "checked" : ""}`}
+                                                onClick={() => completarVencimiento(venc)}
+                                                title="Marcar como cumplido"
+                                            />
+                                            <div className="midia-tarea-content">
+                                                <div className={`midia-tarea-texto ${isCompletando ? "tachado" : ""}`}>
+                                                    {venc.titulo}
+                                                </div>
+                                                <div className="midia-tarea-meta">
+                                                    <span className="vencimiento-tipo">
+                                                        {venc.tipo_vencimiento || "Vencimiento"}
                                                     </span>
-                                                )}
+                                                    {venc.caso && (
+                                                        <span
+                                                            className="caso caso-link"
+                                                            onClick={() => navigate(`/casos/${venc.caso.id_caso}`)}
+                                                            title={`Ir al caso: ${venc.caso.descripcion}`}
+                                                        >
+                                                            <CasosIcon /> {venc.caso.descripcion?.substring(0, 30)}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         )}
 
@@ -511,7 +563,7 @@ const MiDia = () => {
                         {pendientes.length > 0 && (
                             <div className="midia-section">
                                 <div className="midia-section-header midia-section-pendientes">
-                                    🔵 PENDIENTES
+                                    PENDIENTES
                                 </div>
                                 {pendientes.map((t) => renderTarea(t, "pendientes"))}
                             </div>
@@ -521,7 +573,7 @@ const MiDia = () => {
                         {atrasadas.length > 0 && (
                             <div className="midia-section">
                                 <div className="midia-section-header midia-section-atrasadas">
-                                    🔴 ATRASADAS — Pendientes de días anteriores
+                                    ATRASADAS — Pendientes de días anteriores
                                 </div>
                                 {atrasadas.map((t) => renderTarea(t, "atrasadas"))}
                             </div>
@@ -530,7 +582,7 @@ const MiDia = () => {
                         {/* Estado vacío */}
                         {urgentes.length === 0 && vencenHoy.length === 0 && eventosHoy.length === 0 && vencimientosHoy.length === 0 && pendientes.length === 0 && atrasadas.length === 0 && (
                             <div className="midia-empty">
-                                🎉 ¡Sin tareas pendientes! Tu día está libre.
+                                Sin tareas pendientes.
                             </div>
                         )}
                     </>
@@ -541,3 +593,5 @@ const MiDia = () => {
 };
 
 export default MiDia;
+
+

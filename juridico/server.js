@@ -25,6 +25,8 @@ import auditoriaRoutes from "./src/routes/auditoria.routes.js";
 import finanzasRoutes from "./src/routes/finanzas.routes.js";
 import configuracionRoutes from "./src/routes/configuracion.routes.js";
 import tareasRoutes from "./src/routes/tareas.routes.js";
+import gastosRecurrentesRoutes from "./src/routes/gastos_recurrentes.routes.js";
+import gastosRecurrentesService from "./src/services/gastos_recurrentes_service.js";
 
 // Inicializar Express
 const app = express();
@@ -75,6 +77,7 @@ app.use("/api/calculadora", calculadoraRoutes);
 app.use("/api/finanzas", finanzasRoutes);
 app.use("/api/configuracion", configuracionRoutes);
 app.use("/api/tareas", tareasRoutes);
+app.use("/api/finanzas/gastos-recurrentes", gastosRecurrentesRoutes);
 
 // Ruta de health check
 app.get("/health", (req, res) => {
@@ -119,6 +122,14 @@ const startServer = async () => {
 
     logger.info("Sincronizando modelos..."); // NUEVO
     await syncDatabase();
+
+    // Generar movimientos mensuales de gastos recurrentes (antes de listen)
+    try {
+      const resultado = await gastosRecurrentesService.generarMovimientosMensuales();
+      logger.info(`Gastos recurrentes: ${resultado.message}`);
+    } catch (err) {
+      logger.error("Error al generar gastos recurrentes:", { error: err.message });
+    }
 
     app.listen(PORT, () => {
       logger.info(`Servidor corriendo en http://localhost:${PORT}`); // NUEVO

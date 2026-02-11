@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import vencimientosService from "../../services/vencimientos.service";
+import finanzasService from "../../services/finanzas.service";
 import DeleteModal from "../../components/common/DeleteModal";
 import Toast from "../../components/common/Toast";
 import GlassTable from "../../components/common/GlassTable";
@@ -29,8 +30,13 @@ const VencimientosList = () => {
   const [idToDelete, setIdToDelete] = useState(null);
   const [selectedVencimiento, setSelectedVencimiento] = useState(null);
 
+  // Gastos fijos state
+  const [gastosFijos, setGastosFijos] = useState([]);
+  const [gastoPayConfirm, setGastoPayConfirm] = useState({ open: false, id: null, nombre: "", monto: 0 });
+
   useEffect(() => {
     cargarVencimientos();
+    cargarGastosFijos();
   }, [filtroEstado]);
 
   const cargarVencimientos = async () => {
@@ -51,6 +57,30 @@ const VencimientosList = () => {
       setLoading(false);
     }
   };
+
+  const cargarGastosFijos = async () => {
+    try {
+      const res = await finanzasService.getPendientesMes();
+      setGastosFijos(res.data || []);
+    } catch (err) {
+      console.error("Error al cargar gastos fijos:", err);
+    }
+  };
+
+  const handlePayGastoFijo = async () => {
+    if (!gastoPayConfirm.id) return;
+    try {
+      await finanzasService.marcarPagado(gastoPayConfirm.id);
+      setGastoPayConfirm({ open: false, id: null, nombre: "", monto: 0 });
+      showToast("Gasto marcado como pagado", "success");
+      cargarGastosFijos();
+    } catch (err) {
+      console.error("Error al marcar gasto pagado:", err);
+      showToast("Error al marcar como pagado", "error");
+    }
+  };
+
+  const formatCurrency = (val) => new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", minimumFractionDigits: 0 }).format(val || 0);
 
   const eliminarVencimiento = (id) => {
     setIdToDelete(id);
@@ -241,6 +271,7 @@ const VencimientosList = () => {
                 expresion_agravios: "Expresión de Agravios",
                 prescripcion: "Prescripción",
                 caducidad: "Caducidad",
+                gasto_fijo: "💸 Gasto Fijo",
                 otro: "Otro"
               }[venc.tipo_vencimiento] || venc.tipo_vencimiento) : "-"}
             </td>
@@ -274,6 +305,64 @@ const VencimientosList = () => {
             </td>
           </tr>
         ))}
+
+        {/* Gastos fijos como filas virtuales (solo si filtro es PENDIENTE o TODOS) */}
+        {(filtroEstado === "PENDIENTE" || filtroEstado === "TODOS") && gastosFijos.filter(m => filtroEstado === "TODOS" || m.estado === "pendiente").map((mov) => {
+          const gasto = mov.gasto_recurrente;
+          const isPaid = mov.estado === "pagado";
+          const hoy = new Date();
+          const fechaVenc = gasto ? new Date(hoy.getFullYear(), hoy.getMonth(), gasto.dia_vencimiento) : null;
+
+          return (
+            <tr key={`gasto-${mov.id_movimiento}`} style={{ borderLeft: '3px solid #f59e0b' }}>
+              <td className="text-center" style={{ fontWeight: 600 }}>
+                {fechaVenc ? fechaVenc.toLocaleDateString() : "—"}
+                <br />
+                <small style={{ color: '#f59e0b' }}>Gasto Fijo</small>
+              </td>
+              <td className="text-center">
+                <span className={`badge ${isPaid ? 'badge-success' : 'badge-warning'}`}>
+                  {isPaid ? "Pagado" : "Pendiente"}
+                </span>
+              </td>
+              <td className="text-center">
+                <span style={{ fontSize: '1.1rem' }}>💸</span>
+              </td>
+              <td>
+                {gasto?.descripcion || gasto?.categoria || "Gasto Recurrente"}
+                <br />
+                <small style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 600, color: '#dc2626' }}>
+                  {formatCurrency(mov.monto_ars)}
+                </small>
+              </td>
+              <td>—</td>
+              <td>
+                <span className="badge badge-warning" style={{ background: 'rgba(245, 158, 11, 0.2)', color: '#f59e0b' }}>
+                  💸 Gasto Fijo
+                </span>
+              </td>
+              <td className="actions-cell">
+                <div className="actions-wrapper">
+                  {!isPaid && (
+                    <button
+                      className="btn-action btn-edit"
+                      style={{ backgroundColor: 'rgba(34, 197, 94, 0.2)', color: '#22c55e', border: 'none' }}
+                      title="Marcar pagado"
+                      onClick={() => setGastoPayConfirm({
+                        open: true,
+                        id: mov.id_movimiento,
+                        nombre: gasto?.descripcion || gasto?.categoria || "Gasto",
+                        monto: mov.monto_ars,
+                      })}
+                    >
+                      <CheckIcon />
+                    </button>
+                  )}
+                </div>
+              </td>
+            </tr>
+          );
+        })}
       </GlassTable>
 
       {showModal && (
@@ -301,6 +390,16 @@ const VencimientosList = () => {
           message="¿Estás seguro de que deseas eliminar este vencimiento? Esta acción no se puede deshacer."
         />
       )}
+
+      <DeleteModal
+        isOpen={gastoPayConfirm.open}
+        onConfirm={handlePayGastoFijo}
+        onCancel={() => setGastoPayConfirm({ open: false, id: null, nombre: "", monto: 0 })}
+        title="Confirmar pago"
+        message={`¿Marcás como pagado "${gastoPayConfirm.nombre}" por ${formatCurrency(gastoPayConfirm.monto)}?`}
+        confirmLabel="Confirmar pago"
+        confirmVariant="success"
+      />
     </div>
   );
 };

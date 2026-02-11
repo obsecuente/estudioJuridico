@@ -18,6 +18,8 @@ const FinanzasWidget = () => {
         try {
             setLoading(true);
             const response = await finanzasService.getDashboard("NQN");
+            console.log("📊 FinanzasWidget raw response:", response);
+            console.log("📊 FinanzasWidget .data:", response.data);
             setDashboard(response.data);
         } catch (err) {
             console.error("Error al cargar dashboard financiero:", err);

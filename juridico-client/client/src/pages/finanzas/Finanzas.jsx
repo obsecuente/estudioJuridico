@@ -1,4 +1,6 @@
 // src/pages/finanzas/Finanzas.jsx
+// LEGACY — Redirige a FinanzasDashboard
+// Este archivo se mantiene por compatibilidad, pero App.jsx ya apunta a FinanzasDashboard
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import finanzasService from "../../services/finanzas.service";
@@ -19,6 +21,8 @@ const Finanzas = () => {
         try {
             setLoading(true);
             const response = await finanzasService.getDashboard();
+            // response = { success, data: { caja, cartera, indicadores } }
+            console.log("📊 Finanzas.jsx — response:", response);
             setDatos(response.data);
         } catch (err) {
             console.error("Error al cargar finanzas:", err);
@@ -36,11 +40,8 @@ const Finanzas = () => {
         }).format(value || 0);
     };
 
-    const ratioCobrabilidad = datos
-        ? (datos.cartera_protegida > 0
-            ? ((datos.caja_actual / datos.cartera_protegida) * 100).toFixed(1)
-            : 100)
-        : 0;
+    // Correct mapping: datos = { caja: { percibido, egresos, neto }, cartera: { total_pendiente_actualizado, pendiente_jus }, indicadores: { ratio_cobrabilidad, valor_jus_actual } }
+    const ratioCobrabilidad = datos?.indicadores?.ratio_cobrabilidad || 0;
 
     if (loading) {
         return (
@@ -78,7 +79,7 @@ const Finanzas = () => {
                     <div className="finanzas-card-icon">💵</div>
                     <div className="finanzas-card-content">
                         <span className="finanzas-card-label">Caja Actual</span>
-                        <span className="finanzas-card-value">{formatCurrency(datos?.caja_actual || 0)}</span>
+                        <span className="finanzas-card-value">{formatCurrency(datos?.caja?.neto)}</span>
                         <span className="finanzas-card-hint">Ingresos pagados - Egresos</span>
                     </div>
                 </div>
@@ -87,7 +88,7 @@ const Finanzas = () => {
                     <div className="finanzas-card-icon">🛡️</div>
                     <div className="finanzas-card-content">
                         <span className="finanzas-card-label">Cartera Protegida</span>
-                        <span className="finanzas-card-value">{formatCurrency(datos?.cartera_protegida || 0)}</span>
+                        <span className="finanzas-card-value">{formatCurrency(datos?.cartera?.total_pendiente_actualizado)}</span>
                         <span className="finanzas-card-hint">Deuda actualizada al JUS de hoy</span>
                     </div>
                 </div>
@@ -96,8 +97,8 @@ const Finanzas = () => {
                     <div className="finanzas-card-icon">⚖️</div>
                     <div className="finanzas-card-content">
                         <span className="finanzas-card-label">JUS Pendientes</span>
-                        <span className="finanzas-card-value">{datos?.jus_pendientes || 0} JUS</span>
-                        <span className="finanzas-card-hint">Valor actual: {formatCurrency(datos?.valor_jus_actual)}</span>
+                        <span className="finanzas-card-value">{datos?.cartera?.pendiente_jus || 0} JUS</span>
+                        <span className="finanzas-card-hint">Valor actual: {formatCurrency(datos?.indicadores?.valor_jus_actual)}</span>
                     </div>
                 </div>
 

@@ -263,48 +263,48 @@ export const obtenerResumen = async (id_abogado = null) => {
   // Fechas helper
   const en7dias = new Date();
   en7dias.setDate(hoy.getDate() + 7);
-  
+
   const [vencidos, vencenHoy, proximos7dias, totalPendientes, altaPrioridad] = await Promise.all([
     // vencidos
     Vencimiento.count({
-        where: {
+      where: {
         ...baseWhere,
         fecha_limite: { [Op.lt]: hoyStr },
         estado: "pendiente",
-        },
+      },
     }),
     // vencen hoy
     Vencimiento.count({
-        where: {
+      where: {
         ...baseWhere,
         fecha_limite: hoyStr,
         estado: "pendiente",
-        },
+      },
     }),
     // próximos 7 días
     Vencimiento.count({
-        where: {
+      where: {
         ...baseWhere,
         fecha_limite: {
-            [Op.between]: [hoyStr, en7dias.toISOString().split("T")[0]],
+          [Op.between]: [hoyStr, en7dias.toISOString().split("T")[0]],
         },
         estado: "pendiente",
-        },
+      },
     }),
     // total pendientes
     Vencimiento.count({
-        where: {
+      where: {
         ...baseWhere,
         estado: "pendiente",
-        },
+      },
     }),
     // alta prioridad
     Vencimiento.count({
-        where: {
+      where: {
         ...baseWhere,
         estado: "pendiente",
         prioridad: "alta",
-        },
+      },
     })
   ]);
 
@@ -354,11 +354,60 @@ export const obtenerProximosPorAbogado = async (id_abogado, dias = 7) => {
     ],
   });
 
-  return vencimientos.map((v) => {
+  const resultados = vencimientos.map((v) => {
     const vJSON = v.toJSON();
     vJSON.dias_restantes = calcularDiasRestantes(v.fecha_limite);
     return vJSON;
   });
+
+  // Inyectar gastos recurrentes pendientes como items virtuales
+  try {
+    const { GastoRecurrente, MovimientoFinanciero } = await import("../models/index.js");
+    const year = hoy.getFullYear();
+    const month = hoy.getMonth();
+    const inicioMes = new Date(year, month, 1);
+    const finMes = new Date(year, month + 1, 0, 23, 59, 59);
+
+    const pendientes = await MovimientoFinanciero.findAll({
+      where: {
+        id_abogado,
+        es_recurrente: true,
+        estado: "pendiente",
+      },
+      include: [{ model: GastoRecurrente, as: "gasto_recurrente" }],
+    });
+
+    for (const mov of pendientes) {
+      const gasto = mov.gasto_recurrente;
+      if (!gasto) continue;
+
+      // Calcular fecha de vencimiento de este mes
+      const fechaVenc = new Date(year, month, gasto.dia_vencimiento);
+      // Solo incluir si la fecha de vencimiento es anterior o igual al límite (incluye vencidos)
+      if (fechaVenc <= fechaLimite) {
+        resultados.push({
+          id_vencimiento: `gasto-${mov.id_movimiento}`,
+          titulo: `💸 ${gasto.descripcion || gasto.categoria}`,
+          tipo_vencimiento: "gasto_fijo",
+          fecha_limite: fechaVenc.toISOString(),
+          prioridad: "media",
+          estado: "pendiente",
+          dias_restantes: calcularDiasRestantes(fechaVenc),
+          es_gasto_fijo: true,
+          id_movimiento: mov.id_movimiento,
+          monto_ars: mov.monto_ars,
+          categoria: gasto.categoria,
+        });
+      }
+    }
+
+    // Re-ordenar por fecha
+    resultados.sort((a, b) => new Date(a.fecha_limite) - new Date(b.fecha_limite));
+  } catch (err) {
+    console.error("Error al inyectar gastos recurrentes en vencimientos:", err);
+  }
+
+  return resultados;
 };
 
 // actualizar vencimiento

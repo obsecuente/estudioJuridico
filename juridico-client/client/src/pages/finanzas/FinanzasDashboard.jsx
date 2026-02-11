@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import finanzasService from "../../services/finanzas.service";
 import BackButton from "../../components/common/BackButton";
+import DeleteModal from "../../components/common/DeleteModal";
 import { SpinnerIcon } from "../../components/common/Icons";
 import "./FinanzasDashboard.css";
 
@@ -18,8 +19,19 @@ const CATEGORIAS_EGRESO = [
     { value: "otros", label: "Otros" },
 ];
 
-// Gastos fijos mensuales típicos (categorías que se consideran estructura)
-const CATEGORIAS_FIJAS = ["alquiler", "matricula", "internet", "aportes"];
+const loadCustomCats = () => {
+    try {
+        return JSON.parse(localStorage.getItem("custom_categorias_egreso") || "[]");
+    } catch { return []; }
+};
+const saveCustomCats = (cats) => localStorage.setItem("custom_categorias_egreso", JSON.stringify(cats));
+
+const getCatLabel = (val) => {
+    const found = CATEGORIAS_EGRESO.find(c => c.value === val);
+    if (found) return found.label;
+    const custom = loadCustomCats().find(c => c.value === val);
+    return custom?.label || val;
+};
 
 const FinanzasDashboard = () => {
     const [dashboard, setDashboard] = useState(null);
@@ -35,16 +47,29 @@ const FinanzasDashboard = () => {
     // Form egreso
     const [showEgresoForm, setShowEgresoForm] = useState(false);
     const [egresoData, setEgresoData] = useState({
-        monto: "",
-        fecha: new Date().toISOString().split("T")[0],
-        categoria: "",
-        descripcion: "",
+        monto: "", fecha: new Date().toISOString().split("T")[0], categoria: "", descripcion: "",
+        es_gasto_fijo: false, dia_vencimiento: "", pagado: true,
     });
     const [submittingEgreso, setSubmittingEgreso] = useState(false);
+    const [customCats, setCustomCats] = useState(loadCustomCats);
+    const [showNewCatInput, setShowNewCatInput] = useState(false);
+    const [newCatName, setNewCatName] = useState("");
+    const allCategorias = [...CATEGORIAS_EGRESO, ...customCats];
 
-    // Gastos fijos del mes (para punto de equilibrio)
-    const [gastosFijosMes, setGastosFijosMes] = useState(0);
-    const [ingresosPagadosMes, setIngresosPagadosMes] = useState(0);
+    // Gastos recurrentes
+    const [gastosRecurrentes, setGastosRecurrentes] = useState([]);
+    const [pendientesMes, setPendientesMes] = useState([]);
+
+    // Pin-as-monthly inline state
+    const [pinningId, setPinningId] = useState(null);
+    const [pinDay, setPinDay] = useState("");
+    const [pinSubmitting, setPinSubmitting] = useState(false);
+
+    // DeleteModal state for payment confirmation
+    const [confirmModal, setConfirmModal] = useState({ open: false, id: null, nombre: "", monto: 0 });
+    // Undo state
+    const [recentlyPaid, setRecentlyPaid] = useState(null);
+    const [undoTimer, setUndoTimer] = useState(null);
 
     // ═══ CARGA DE DATOS ═══
     const cargarTodo = useCallback(async () => {
@@ -55,12 +80,10 @@ const FinanzasDashboard = () => {
                 finanzasService.getDashboard("NQN"),
             ]);
             setDashboard(dashRes.data || null);
-
-            // Cargar movimientos con filtro
-            await cargarMovimientos(1);
-
-            // Estimar gastos fijos e ingresos del mes
-            await cargarBreakevenData();
+            await Promise.all([
+                cargarMovimientos(1),
+                cargarGastosRecurrentes(),
+            ]);
         } catch (err) {
             console.error("Error al cargar dashboard:", err);
             setError("No se pudieron cargar los datos financieros");
@@ -73,7 +96,6 @@ const FinanzasDashboard = () => {
         try {
             const params = { page, limit: 10 };
             if (filtroTipo !== "todos") params.tipo = filtroTipo;
-
             const res = await finanzasService.getMovimientos(params);
             setMovimientos(res.data || []);
             setTotalPaginas(res.pagination?.totalPages || 1);
@@ -83,51 +105,40 @@ const FinanzasDashboard = () => {
         }
     };
 
-    const cargarBreakevenData = async () => {
+    const cargarGastosRecurrentes = async () => {
         try {
-            // Obtener todos los movimientos del mes actual para breakeven
-            const mesActual = new Date().toISOString().slice(0, 7); // "2026-02"
-            const resEgresos = await finanzasService.getMovimientos({
-                tipo: "egreso",
-                limit: 200,
-            });
-            const resIngresos = await finanzasService.getMovimientos({
-                tipo: "ingreso",
-                estado: "pagado",
-                limit: 200,
-            });
-
-            const egresosMes = (resEgresos.data || []).filter(m =>
-                m.createdAt && m.createdAt.slice(0, 7) === mesActual
-            );
-            const ingresosMes = (resIngresos.data || []).filter(m =>
-                m.createdAt && m.createdAt.slice(0, 7) === mesActual
-            );
-
-            // Sumar gastos fijos (categorías de estructura)
-            const fijos = egresosMes
-                .filter(m => CATEGORIAS_FIJAS.includes(m.categoria))
-                .reduce((sum, m) => sum + (parseFloat(m.monto_ars) || 0), 0);
-
-            const ingresosCobrados = ingresosMes
-                .reduce((sum, m) => sum + (parseFloat(m.monto_ars) || 0), 0);
-
-            setGastosFijosMes(fijos);
-            setIngresosPagadosMes(ingresosCobrados);
+            const [gastosRes, pendientesRes] = await Promise.all([
+                finanzasService.getGastosRecurrentes(),
+                finanzasService.getPendientesMes(),
+            ]);
+            setGastosRecurrentes(gastosRes.data || []);
+            setPendientesMes(pendientesRes.data || []);
         } catch (err) {
-            console.error("Error al cargar breakeven:", err);
+            console.error("Error al cargar gastos recurrentes:", err);
         }
     };
 
-    useEffect(() => {
-        cargarTodo();
-    }, [cargarTodo]);
-
-    useEffect(() => {
-        cargarMovimientos(1);
-    }, [filtroTipo]);
+    useEffect(() => { cargarTodo(); }, [cargarTodo]);
+    useEffect(() => { cargarMovimientos(1); }, [filtroTipo]);
 
     // ═══ ACCIONES ═══
+    const addCustomCat = () => {
+        const name = newCatName.trim();
+        if (!name) return;
+        const value = name.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
+        if (allCategorias.some(c => c.value === value)) {
+            setEgresoData(prev => ({ ...prev, categoria: value }));
+            setShowNewCatInput(false); setNewCatName("");
+            return;
+        }
+        const newCat = { value, label: name };
+        const updated = [...customCats, newCat];
+        setCustomCats(updated);
+        saveCustomCats(updated);
+        setEgresoData(prev => ({ ...prev, categoria: value }));
+        setShowNewCatInput(false); setNewCatName("");
+    };
+
     const handleEgresoSubmit = async (e) => {
         e.preventDefault();
         if (!egresoData.monto || !egresoData.categoria) return;
@@ -136,13 +147,15 @@ const FinanzasDashboard = () => {
             await finanzasService.crearMovimiento({
                 tipo: "egreso",
                 categoria: egresoData.categoria,
-                descripcion: egresoData.descripcion || `Egreso: ${CATEGORIAS_EGRESO.find(c => c.value === egresoData.categoria)?.label || egresoData.categoria}`,
+                descripcion: egresoData.descripcion || `Egreso: ${getCatLabel(egresoData.categoria)}`,
                 monto_ars: parseFloat(egresoData.monto),
-                estado: "pagado",
+                estado: egresoData.pagado ? "pagado" : "pendiente",
+                es_gasto_fijo: egresoData.es_gasto_fijo,
+                dia_vencimiento: egresoData.es_gasto_fijo ? parseInt(egresoData.dia_vencimiento) : null,
             });
             setShowEgresoForm(false);
-            setEgresoData({ monto: "", fecha: new Date().toISOString().split("T")[0], categoria: "", descripcion: "" });
-            await cargarTodo(); // Refrescar todo
+            setEgresoData({ monto: "", fecha: new Date().toISOString().split("T")[0], categoria: "", descripcion: "", es_gasto_fijo: false, dia_vencimiento: "", pagado: true });
+            await cargarTodo();
         } catch (err) {
             console.error("Error al registrar egreso:", err);
         } finally {
@@ -150,13 +163,94 @@ const FinanzasDashboard = () => {
         }
     };
 
+    // Pin as monthly
+    const handlePinAsMonthly = async (mov) => {
+        if (!pinDay || pinDay < 1 || pinDay > 28) return;
+        setPinSubmitting(true);
+        try {
+            await finanzasService.crearGastoRecurrente({
+                categoria: mov.categoria,
+                descripcion: mov.descripcion || `Gasto fijo: ${getCatLabel(mov.categoria)}`,
+                monto_ars: parseFloat(mov.monto_ars),
+                dia_vencimiento: parseInt(pinDay),
+            });
+            setPinningId(null);
+            setPinDay("");
+            await cargarGastosRecurrentes();
+        } catch (err) {
+            console.error("Error al fijar como mensual:", err);
+        } finally {
+            setPinSubmitting(false);
+        }
+    };
+
+    // Mark as paid (with confirmation modal)
+    const openPayConfirm = (mov) => {
+        setConfirmModal({
+            open: true,
+            id: mov.id_movimiento,
+            nombre: mov.descripcion || getCatLabel(mov.categoria),
+            monto: mov.monto_ars,
+        });
+    };
+
+    const handleConfirmPay = async () => {
+        const { id, nombre } = confirmModal;
+        setConfirmModal({ open: false, id: null, nombre: "", monto: 0 });
+        try {
+            await finanzasService.marcarPagado(id);
+            setRecentlyPaid({ id, nombre });
+            // Auto-clear undo after 8 seconds
+            if (undoTimer) clearTimeout(undoTimer);
+            const timer = setTimeout(() => setRecentlyPaid(null), 8000);
+            setUndoTimer(timer);
+            await cargarGastosRecurrentes();
+            await cargarMovimientos(pagina);
+            // Refresh dashboard KPIs
+            const dashRes = await finanzasService.getDashboard("NQN");
+            setDashboard(dashRes.data || null);
+        } catch (err) {
+            console.error("Error al marcar pagado:", err);
+        }
+    };
+
+    const handleUndo = async () => {
+        if (!recentlyPaid) return;
+        try {
+            await finanzasService.desmarcarPagado(recentlyPaid.id);
+            setRecentlyPaid(null);
+            if (undoTimer) clearTimeout(undoTimer);
+            await cargarGastosRecurrentes();
+            await cargarMovimientos(pagina);
+            const dashRes = await finanzasService.getDashboard("NQN");
+            setDashboard(dashRes.data || null);
+        } catch (err) {
+            console.error("Error al deshacer pago:", err);
+        }
+    };
+
+    // Delete movimiento
+    const [deleteConfirm, setDeleteConfirm] = useState({ open: false, id: null, nombre: "" });
+
+    const handleDeleteMovimiento = async () => {
+        try {
+            await finanzasService.eliminarMovimiento(deleteConfirm.id);
+            setDeleteConfirm({ open: false, id: null, nombre: "" });
+            await cargarMovimientos(pagina);
+            // Si era recurrente y del mes actual, refrescar también recurrentes
+            await cargarGastosRecurrentes();
+            // Refrescar dashboard por si cambió el saldo
+            const dashRes = await finanzasService.getDashboard("NQN");
+            setDashboard(dashRes.data || null);
+        } catch (err) {
+            console.error("Error al eliminar movimiento:", err);
+        }
+    };
+
     // ═══ HELPERS ═══
     const formatCurrency = (value) => {
         return new Intl.NumberFormat("es-AR", {
-            style: "currency",
-            currency: "ARS",
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0,
+            style: "currency", currency: "ARS", minimumFractionDigits: 0, maximumFractionDigits: 0,
         }).format(value || 0);
     };
 
@@ -172,31 +266,28 @@ const FinanzasDashboard = () => {
         return "ring-low";
     };
 
-    // SVG ring calculations
+    // SVG ring
     const RING_RADIUS = 52;
     const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
     const ratioCobrabilidad = dashboard?.indicadores?.ratio_cobrabilidad || 0;
     const ringOffset = RING_CIRCUMFERENCE - (ratioCobrabilidad / 100) * RING_CIRCUMFERENCE;
 
-    // Breakeven calculations
-    const breakevenPercent = gastosFijosMes > 0
-        ? Math.min((ingresosPagadosMes / gastosFijosMes) * 100, 150)
-        : (ingresosPagadosMes > 0 ? 100 : 0);
-    const breakevenCubierto = ingresosPagadosMes >= gastosFijosMes;
-
-    // Ganancia por actualización (diferencia entre pendiente en JUS actualizado y pendiente en ARS original)
-    const gananciaInflacion = dashboard
-        ? (dashboard.cartera?.pendiente_jus_actualizado || 0) - ((dashboard.cartera?.pendiente_jus || 0) * (dashboard.indicadores?.valor_jus_actual || 0) * 0)
-        : 0;
+    // Breakeven from actual gastos recurrentes (dynamic!)
+    const totalGastosFijosMes = gastosRecurrentes.reduce((sum, g) => sum + parseFloat(g.monto_ars || 0), 0);
+    const pendientesPagados = pendientesMes.filter(m => m.estado === "pagado");
+    const pendientesSinPagar = pendientesMes.filter(m => m.estado === "pendiente");
+    // Ingresos cobrados del mes (from dashboard percibido, or approximate)
+    const ingresosMesCobrados = dashboard?.caja?.percibido || 0;
+    const breakevenPercent = totalGastosFijosMes > 0
+        ? Math.min((ingresosMesCobrados / totalGastosFijosMes) * 100, 150)
+        : (ingresosMesCobrados > 0 ? 100 : 0);
+    const breakevenCubierto = ingresosMesCobrados >= totalGastosFijosMes;
 
     // ═══ RENDER ═══
     if (loading) {
         return (
             <div className="fin-terminal">
-                <div className="fin-loading">
-                    <SpinnerIcon />
-                    <span>Inicializando Terminal Financiera...</span>
-                </div>
+                <div className="fin-loading"><SpinnerIcon /><span>Inicializando Terminal Financiera...</span></div>
             </div>
         );
     }
@@ -204,10 +295,7 @@ const FinanzasDashboard = () => {
     if (error) {
         return (
             <div className="fin-terminal">
-                <div className="fin-error">
-                    <p>{error}</p>
-                    <button onClick={cargarTodo}>Reintentar</button>
-                </div>
+                <div className="fin-error"><p>{error}</p><button onClick={cargarTodo}>Reintentar</button></div>
             </div>
         );
     }
@@ -223,9 +311,7 @@ const FinanzasDashboard = () => {
                     <span>•  Datos en tiempo real</span>
                 </h1>
                 <div className="fin-header-actions">
-                    <Link to="/dashboard/configuracion" className="fin-btn">
-                        Configurar JUS
-                    </Link>
+                    <Link to="/dashboard/configuracion" className="fin-btn">Configurar JUS</Link>
                     <button
                         className="fin-btn fin-btn-danger"
                         onClick={() => setShowEgresoForm(!showEgresoForm)}
@@ -249,7 +335,6 @@ const FinanzasDashboard = () => {
 
             {/* ═══ KPI CARDS ═══ */}
             <div className="fin-kpi-grid">
-                {/* Caja Neta */}
                 <div className="fin-kpi-card kpi-caja">
                     <div className="fin-kpi-label">Caja Neta</div>
                     <div className={`fin-kpi-value ${(dashboard?.caja?.neto || 0) >= 0 ? 'positive' : 'negative'}`}>
@@ -262,7 +347,6 @@ const FinanzasDashboard = () => {
                     </div>
                 </div>
 
-                {/* Cartera Protegida */}
                 <div className="fin-kpi-card kpi-cartera">
                     <div className="fin-kpi-label">Cartera Protegida</div>
                     <div className="fin-kpi-value warning">
@@ -276,7 +360,6 @@ const FinanzasDashboard = () => {
                     </div>
                 </div>
 
-                {/* JUS Pendientes */}
                 <div className="fin-kpi-card kpi-jus">
                     <div className="fin-kpi-label">JUS Pendientes</div>
                     <div className="fin-kpi-value accent">
@@ -287,7 +370,6 @@ const FinanzasDashboard = () => {
                     </div>
                 </div>
 
-                {/* Egresos */}
                 <div className="fin-kpi-card kpi-egresos">
                     <div className="fin-kpi-label">Egresos Totales</div>
                     <div className="fin-kpi-value negative">
@@ -311,9 +393,7 @@ const FinanzasDashboard = () => {
                             <circle className="fin-ring-bg" cx="65" cy="65" r={RING_RADIUS} />
                             <circle
                                 className={`fin-ring-fill ${getRingClass(ratioCobrabilidad)}`}
-                                cx="65"
-                                cy="65"
-                                r={RING_RADIUS}
+                                cx="65" cy="65" r={RING_RADIUS}
                                 strokeDasharray={RING_CIRCUMFERENCE}
                                 strokeDashoffset={ringOffset}
                             />
@@ -325,57 +405,51 @@ const FinanzasDashboard = () => {
                     </div>
                     <div className="fin-ring-details">
                         <h4>Eficiencia de Cobro</h4>
-                        <p>
-                            Ratio entre honorarios efectivamente cobrados y el total generado
-                            (actualizado al JUS de hoy).
-                        </p>
+                        <p>Ratio entre honorarios cobrados y el total generado (actualizado al JUS de hoy).</p>
                         <div className="fin-ring-legend">
-                            <span>
-                                <span className="dot green"></span>
-                                Percibido: <span className="mono">{formatCurrency(dashboard?.caja?.percibido)}</span>
-                            </span>
-                            <span>
-                                <span className="dot red"></span>
-                                Pendiente: <span className="mono">{formatCurrency(dashboard?.cartera?.total_pendiente_actualizado)}</span>
-                            </span>
+                            <span><span className="dot green"></span>Percibido: <span className="mono">{formatCurrency(dashboard?.caja?.percibido)}</span></span>
+                            <span><span className="dot red"></span>Pendiente: <span className="mono">{formatCurrency(dashboard?.cartera?.total_pendiente_actualizado)}</span></span>
                         </div>
                     </div>
                 </div>
 
-                {/* Punto de Equilibrio */}
+                {/* Punto de Equilibrio - Dinámico desde gastos recurrentes */}
                 <div className="fin-breakeven-card">
                     <h4>Punto de Equilibrio Mensual</h4>
-                    <div className="subtitle">Ingresos cobrados vs Gastos fijos de estructura del mes</div>
-                    <div className="fin-breakeven-bar-container">
-                        <div
-                            className={`fin-breakeven-fill ${breakevenCubierto ? 'over' : 'under'}`}
-                            style={{ width: `${Math.min(breakevenPercent, 100)}%` }}
-                        />
-                        {gastosFijosMes > 0 && (
-                            <div
-                                className="fin-breakeven-marker"
-                                style={{ left: `${Math.min((gastosFijosMes / Math.max(ingresosPagadosMes, gastosFijosMes)) * 100, 100)}%` }}
-                                title={`Punto de equilibrio: ${formatCurrency(gastosFijosMes)}`}
-                            />
-                        )}
+                    <div className="subtitle">
+                        Ingresos cobrados vs {gastosRecurrentes.length} gastos fijos configurados
                     </div>
-                    <div className="fin-breakeven-labels">
-                        <span>
-                            Cobrado: <span className={`mono ${breakevenCubierto ? 'green' : 'red'}`}>{formatCurrency(ingresosPagadosMes)}</span>
-                        </span>
-                        <span>
-                            Gastos Fijos: <span className="mono">{formatCurrency(gastosFijosMes)}</span>
-                        </span>
-                    </div>
-                    <div className={`fin-breakeven-status ${breakevenCubierto ? 'covered' : 'deficit'}`}>
-                        {breakevenCubierto
-                            ? `✓ Costos cubiertos • Superávit: ${formatCurrency(ingresosPagadosMes - gastosFijosMes)}`
-                            : `⚠ Faltan ${formatCurrency(gastosFijosMes - ingresosPagadosMes)} para cubrir costos fijos`
-                        }
-                    </div>
+                    {gastosRecurrentes.length === 0 ? (
+                        <div className="fin-breakeven-empty">
+                            No tenés gastos fijos configurados. Registrá un egreso y usá "📌 Fijar como mensual".
+                        </div>
+                    ) : (
+                        <>
+                            <div className="fin-breakeven-bar-container">
+                                <div
+                                    className={`fin-breakeven-fill ${breakevenCubierto ? 'over' : 'under'}`}
+                                    style={{ width: `${Math.min(breakevenPercent, 100)}%` }}
+                                />
+                                <div
+                                    className="fin-breakeven-marker"
+                                    style={{ left: `${Math.min((totalGastosFijosMes / Math.max(ingresosMesCobrados, totalGastosFijosMes)) * 100, 100)}%` }}
+                                    title={`Punto de equilibrio: ${formatCurrency(totalGastosFijosMes)}`}
+                                />
+                            </div>
+                            <div className="fin-breakeven-labels">
+                                <span>Cobrado: <span className={`mono ${breakevenCubierto ? 'green' : 'red'}`}>{formatCurrency(ingresosMesCobrados)}</span></span>
+                                <span>Gastos Fijos: <span className="mono">{formatCurrency(totalGastosFijosMes)}</span></span>
+                            </div>
+                            <div className={`fin-breakeven-status ${breakevenCubierto ? 'covered' : 'deficit'}`}>
+                                {breakevenCubierto
+                                    ? `✓ Costos cubiertos • Superávit: ${formatCurrency(ingresosMesCobrados - totalGastosFijosMes)}`
+                                    : `⚠ Faltan ${formatCurrency(totalGastosFijosMes - ingresosMesCobrados)} para cubrir costos fijos`
+                                }
+                            </div>
+                        </>
+                    )}
                 </div>
             </div>
-
             {/* ═══ FORMULARIO DE EGRESO ═══ */}
             {showEgresoForm && (
                 <div className="fin-section">
@@ -384,30 +458,22 @@ const FinanzasDashboard = () => {
                             <div className="fin-form-field" style={{ maxWidth: 200 }}>
                                 <label>Monto ($)</label>
                                 <input
-                                    type="number"
-                                    placeholder="0"
-                                    value={egresoData.monto}
+                                    type="number" placeholder="0" value={egresoData.monto}
                                     onChange={(e) => setEgresoData(prev => ({ ...prev, monto: e.target.value }))}
-                                    min="0"
-                                    step="0.01"
-                                    required
-                                    autoFocus
+                                    min="0" step="0.01" required autoFocus
                                 />
                             </div>
                             <div className="fin-form-field" style={{ maxWidth: 180 }}>
                                 <label>Fecha</label>
                                 <input
-                                    type="date"
-                                    value={egresoData.fecha}
+                                    type="date" value={egresoData.fecha}
                                     onChange={(e) => setEgresoData(prev => ({ ...prev, fecha: e.target.value }))}
                                 />
                             </div>
                             <div className="fin-form-field">
                                 <label>Descripción (opcional)</label>
                                 <input
-                                    type="text"
-                                    placeholder="Detalle del egreso..."
-                                    value={egresoData.descripcion}
+                                    type="text" placeholder="Detalle del egreso..." value={egresoData.descripcion}
                                     onChange={(e) => setEgresoData(prev => ({ ...prev, descripcion: e.target.value }))}
                                 />
                             </div>
@@ -416,30 +482,88 @@ const FinanzasDashboard = () => {
                             <div className="fin-form-field">
                                 <label>Categoría</label>
                                 <div className="fin-cat-chips">
-                                    {CATEGORIAS_EGRESO.map((cat) => (
+                                    {allCategorias.map((cat) => (
                                         <button
-                                            key={cat.value}
-                                            type="button"
+                                            key={cat.value} type="button"
                                             className={`fin-cat-chip ${egresoData.categoria === cat.value ? 'active' : ''}`}
                                             onClick={() => setEgresoData(prev => ({ ...prev, categoria: cat.value }))}
                                         >
                                             {cat.label}
                                         </button>
                                     ))}
+                                    {showNewCatInput ? (
+                                        <span className="fin-cat-inline-add">
+                                            <input
+                                                type="text" placeholder="Nombre..."
+                                                value={newCatName}
+                                                onChange={(e) => setNewCatName(e.target.value)}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === "Enter") { e.preventDefault(); addCustomCat(); }
+                                                    if (e.key === "Escape") { setShowNewCatInput(false); setNewCatName(""); }
+                                                }}
+                                                autoFocus
+                                            />
+                                            <button type="button" className="fin-cat-chip active" onClick={addCustomCat}>✓</button>
+                                            <button type="button" className="fin-cat-chip" onClick={() => { setShowNewCatInput(false); setNewCatName(""); }}>✕</button>
+                                        </span>
+                                    ) : (
+                                        <button type="button" className="fin-cat-chip fin-cat-add" onClick={() => setShowNewCatInput(true)}>+ Agregar</button>
+                                    )}
                                 </div>
                             </div>
                         </div>
+
+                        {/* Opción de Gasto Fijo */}
+                        <div className="fin-form-row">
+                            <label className="fin-checkbox-label" style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--color-texto-principal)", fontWeight: 500, fontSize: "0.9rem", cursor: "pointer", marginTop: "10px" }}>
+                                <input
+                                    type="checkbox"
+                                    className="fin-custom-checkbox"
+                                    checked={egresoData.es_gasto_fijo}
+                                    onChange={(e) => {
+                                        const isFixed = e.target.checked;
+                                        setEgresoData(prev => ({
+                                            ...prev,
+                                            es_gasto_fijo: isFixed,
+                                            dia_vencimiento: isFixed ? "1" : "",
+                                            // Si es fijo, por defecto NO está pagado (es una deuda). Si es egreso normal, sí.
+                                            pagado: !isFixed
+                                        }));
+                                    }}
+                                />
+                                Definir como Gasto Fijo Mensual
+                            </label>
+
+                            {egresoData.es_gasto_fijo && (
+                                <div className="fin-form-field" style={{ maxWidth: 200, marginLeft: "25px" }}>
+                                    <label>Día de pago mensual (1-28)</label>
+                                    <input
+                                        type="number" min="1" max="28"
+                                        value={egresoData.dia_vencimiento}
+                                        onChange={(e) => setEgresoData(prev => ({ ...prev, dia_vencimiento: e.target.value }))}
+                                        required
+                                    />
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Checkbox Pagado (Control Manual) */}
+                        <div className="fin-form-row">
+                            <label className="fin-checkbox-label" style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--color-texto-principal)", fontWeight: 500, fontSize: "0.9rem", cursor: "pointer" }}>
+                                <input
+                                    type="checkbox"
+                                    className="fin-custom-checkbox"
+                                    checked={egresoData.pagado}
+                                    onChange={(e) => setEgresoData(prev => ({ ...prev, pagado: e.target.checked }))}
+                                />
+                                Marcar como Pagado
+                            </label>
+                        </div>
+
                         <div className="fin-form-actions">
+                            <button type="button" className="fin-btn" onClick={() => setShowEgresoForm(false)}>Cancelar</button>
                             <button
-                                type="button"
-                                className="fin-btn"
-                                onClick={() => setShowEgresoForm(false)}
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                type="submit"
-                                className="fin-btn fin-btn-danger"
+                                type="submit" className="fin-btn fin-btn-danger"
                                 disabled={submittingEgreso || !egresoData.monto || !egresoData.categoria}
                             >
                                 {submittingEgreso ? "Registrando..." : "Registrar Egreso"}
@@ -465,80 +589,115 @@ const FinanzasDashboard = () => {
                         ))}
                     </div>
                 </div>
-                <table className="fin-table">
-                    <thead>
-                        <tr>
-                            <th>Fecha</th>
-                            <th>Tipo</th>
-                            <th>Descripción</th>
-                            <th>Monto</th>
-                            <th>Estado</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {movimientos.length === 0 ? (
+                <div style={{ overflowX: 'auto' }}>
+                    <table className="fin-table">
+                        <thead>
                             <tr>
-                                <td colSpan="5" className="fin-table-empty">
-                                    No hay movimientos registrados
-                                </td>
+                                <th>Fecha</th>
+                                <th>Tipo</th>
+                                <th>Descripción</th>
+                                <th>Monto</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
                             </tr>
-                        ) : (
-                            movimientos.map((mov) => (
-                                <tr key={mov.id_movimiento || mov.id}>
-                                    <td className="mono">{formatDate(mov.createdAt)}</td>
-                                    <td>
-                                        <span className={`fin-badge tipo-${mov.tipo}`}>
-                                            {mov.tipo}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        {mov.descripcion?.substring(0, 50)}
-                                        {mov.categoria && (
-                                            <small style={{ color: 'var(--fin-slate-light)', marginLeft: 6 }}>
-                                                {CATEGORIAS_EGRESO.find(c => c.value === mov.categoria)?.label || mov.categoria}
-                                            </small>
-                                        )}
-                                    </td>
-                                    <td className={`mono ${mov.tipo}`}>
-                                        {mov.tipo === "egreso" ? "−" : "+"}{formatCurrency(mov.monto_ars)}
-                                        {mov.monto_jus > 0 && (
-                                            <small style={{ color: '#818cf8', marginLeft: 4 }}>
-                                                ({mov.monto_jus} JUS)
-                                            </small>
-                                        )}
-                                    </td>
-                                    <td>
-                                        <span className={`fin-badge estado-${mov.estado}`}>
-                                            {mov.estado}
-                                        </span>
-                                    </td>
+                        </thead>
+                        <tbody>
+                            {movimientos.length === 0 ? (
+                                <tr>
+                                    <td colSpan="6" className="fin-table-empty">No hay movimientos registrados</td>
                                 </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
+                            ) : (
+                                movimientos.map((mov) => {
+                                    const isEgreso = mov.tipo === "egreso";
+                                    const alreadyRecurrent = gastosRecurrentes.some(g => g.categoria === mov.categoria);
+                                    const isPinning = pinningId === mov.id_movimiento;
+
+                                    return (
+                                        <tr key={mov.id_movimiento || mov.id}>
+                                            <td className="mono">{formatDate(mov.createdAt)}</td>
+                                            <td>
+                                                <span className={`fin-badge tipo-${mov.tipo}`}>{mov.tipo}</span>
+                                            </td>
+                                            <td>
+                                                {mov.descripcion?.substring(0, 50)}
+                                                {mov.categoria && (
+                                                    <small style={{ color: 'var(--color-texto-secundario)', marginLeft: 6 }}>
+                                                        {getCatLabel(mov.categoria)}
+                                                    </small>
+                                                )}
+                                                {mov.es_recurrente && (
+                                                    <span className="fin-recurrente-tag">📌 Mensual</span>
+                                                )}
+                                            </td>
+                                            <td className={`mono ${mov.tipo}`}>
+                                                {isEgreso ? "−" : "+"}{formatCurrency(mov.monto_ars)}
+                                                {mov.monto_jus > 0 && (
+                                                    <small style={{ color: '#818cf8', marginLeft: 4 }}>
+                                                        ({mov.monto_jus} JUS)
+                                                    </small>
+                                                )}
+                                            </td>
+                                            <td>
+                                                <span className={`fin-badge estado-${mov.estado}`}>{mov.estado}</span>
+                                            </td>
+                                            <td>
+                                                <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
+                                                    {isEgreso && mov.estado === "pendiente" && (
+                                                        <button
+                                                            className="fin-btn fin-btn-primary fin-btn-xs"
+                                                            title="Marcar como pagado"
+                                                            onClick={() => openPayConfirm(mov)}
+                                                        >
+                                                            ✓
+                                                        </button>
+                                                    )}
+                                                    <button
+                                                        className="fin-btn fin-btn-xs fin-btn-danger-ghost"
+                                                        title="Eliminar"
+                                                        onClick={() => setDeleteConfirm({ open: true, id: mov.id_movimiento, nombre: mov.descripcion || getCatLabel(mov.categoria) })}
+                                                    >
+                                                        ✕
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })
+                            )}
+                        </tbody>
+                    </table>
+                </div>
                 {totalPaginas > 1 && (
                     <div className="fin-table-pagination">
                         <span>Página {pagina} de {totalPaginas}</span>
                         <div style={{ display: 'flex', gap: 6 }}>
-                            <button
-                                className="fin-btn"
-                                disabled={pagina <= 1}
-                                onClick={() => cargarMovimientos(pagina - 1)}
-                            >
-                                ← Anterior
-                            </button>
-                            <button
-                                className="fin-btn"
-                                disabled={pagina >= totalPaginas}
-                                onClick={() => cargarMovimientos(pagina + 1)}
-                            >
-                                Siguiente →
-                            </button>
+                            <button className="fin-btn" disabled={pagina <= 1} onClick={() => cargarMovimientos(pagina - 1)}>← Anterior</button>
+                            <button className="fin-btn" disabled={pagina >= totalPaginas} onClick={() => cargarMovimientos(pagina + 1)}>Siguiente →</button>
                         </div>
                     </div>
                 )}
             </div>
+
+            {/* ═══ MODALS ═══ */}
+            <DeleteModal
+                isOpen={confirmModal.open}
+                onConfirm={handleConfirmPay}
+                onCancel={() => setConfirmModal({ open: false, id: null, nombre: "", monto: 0 })}
+                title="Confirmar pago"
+                message={`¿Marcás como pagado "${confirmModal.nombre}" por ${formatCurrency(confirmModal.monto)}?`}
+                confirmLabel="Confirmar pago"
+                confirmVariant="success"
+            />
+
+            <DeleteModal
+                isOpen={deleteConfirm.open}
+                onConfirm={handleDeleteMovimiento}
+                onCancel={() => setDeleteConfirm({ open: false, id: null, nombre: "" })}
+                title="Eliminar movimiento"
+                message={`¿Estás seguro que querés eliminar "${deleteConfirm.nombre}"? Esta acción no se puede deshacer.`}
+                confirmLabel="Eliminar"
+                confirmVariant="danger"
+            />
         </div>
     );
 };

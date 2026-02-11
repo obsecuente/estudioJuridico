@@ -6,6 +6,7 @@ import {
     marcarCuotaPagada,
     obtenerMovimientosPorCaso,
     obtenerMovimientos,
+    eliminarMovimiento,
 } from "../controllers/finanzas_controller.js";
 import authMiddleware from "../middleware/authMiddleware.js";
 
@@ -40,6 +41,12 @@ router.get("/dashboard", obtenerDashboard);
  * Movimientos de un caso específico
  */
 router.get("/caso/:id_caso", obtenerMovimientosPorCaso);
+
+/**
+ * DELETE /api/finanzas/:id
+ * Elimina un movimiento financiero
+ */
+router.delete("/:id", eliminarMovimiento);
 
 /**
  * PATCH /api/finanzas/cuotas/:id

@@ -128,8 +128,8 @@ export const testConnection = async () => {
 
 export const syncDatabase = async () => {
   try {
-    // Sin alter para evitar modificaciones accidentales en producción
-    await sequelize.sync();
+    // Con alter: true para actualizar tablas sin borrar datos
+    await sequelize.sync({ alter: true });
     console.log(" Modelos sincronizados con la base de datos [database.js]");
   } catch (error) {
     console.error(

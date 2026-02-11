@@ -67,6 +67,73 @@ const finanzasService = {
         const response = await api.get(`/finanzas?${query.toString()}`);
         return response.data;
     },
+
+    // ═══ GASTOS RECURRENTES ═══
+
+    /**
+     * Obtener gastos recurrentes activos
+     */
+    getGastosRecurrentes: async () => {
+        const response = await api.get("/finanzas/gastos-recurrentes");
+        return response.data;
+    },
+
+    /**
+     * Crear gasto recurrente a partir de un egreso
+     * @param {Object} datos - { categoria, descripcion, monto_ars, dia_vencimiento }
+     */
+    crearGastoRecurrente: async (datos) => {
+        const response = await api.post("/finanzas/gastos-recurrentes", datos);
+        return response.data;
+    },
+
+    /**
+     * Actualizar gasto recurrente
+     */
+    actualizarGastoRecurrente: async (id, datos) => {
+        const response = await api.patch(`/finanzas/gastos-recurrentes/${id}`, datos);
+        return response.data;
+    },
+
+    /**
+     * Eliminar gasto recurrente
+     */
+    eliminarGastoRecurrente: async (id) => {
+        const response = await api.delete(`/finanzas/gastos-recurrentes/${id}`);
+        return response.data;
+    },
+
+    /**
+     * Eliminar movimiento
+     */
+    eliminarMovimiento: async (id) => {
+        const response = await api.delete(`/finanzas/${id}`);
+        return response.data;
+    },
+
+    /**
+     * Obtener movimientos recurrentes pendientes del mes
+     */
+    getPendientesMes: async () => {
+        const response = await api.get("/finanzas/gastos-recurrentes/pendientes");
+        return response.data;
+    },
+
+    /**
+     * Marcar movimiento como pagado
+     */
+    marcarPagado: async (idMovimiento) => {
+        const response = await api.patch(`/finanzas/gastos-recurrentes/movimientos/${idMovimiento}/pagar`);
+        return response.data;
+    },
+
+    /**
+     * Desmarcar movimiento pagado (undo)
+     */
+    desmarcarPagado: async (idMovimiento) => {
+        const response = await api.patch(`/finanzas/gastos-recurrentes/movimientos/${idMovimiento}/despagar`);
+        return response.data;
+    },
 };
 
 export default finanzasService;

@@ -1,5 +1,5 @@
 // src/services/finanzas_service.js
-import { MovimientoFinanciero, Cuota, Cliente, Caso } from "../models/index.js";
+import { MovimientoFinanciero, Cuota, Cliente, Caso, GastoRecurrente } from "../models/index.js";
 import { Op } from "sequelize";
 import sequelize from "../config/database.js";
 import configuracionService from "./configuracion_service.js";
@@ -37,8 +37,12 @@ export const crearMovimiento = async (datos) => {
         provincia = "NQN",
         id_caso,
         id_cliente,
+        id_abogado,
         estado = "pendiente",
         cuotas = [],
+        // Nuevos campos para gasto fijo
+        es_gasto_fijo = false,
+        dia_vencimiento = null,
     } = datos;
 
     // Validaciones
@@ -94,6 +98,26 @@ export const crearMovimiento = async (datos) => {
     const transaction = await sequelize.transaction();
 
     try {
+        let idGastoRecurrente = null;
+
+        // Si es gasto fijo, crearlo primero
+        if (tipo === "egreso" && es_gasto_fijo) {
+            if (!dia_vencimiento || dia_vencimiento < 1 || dia_vencimiento > 28) {
+                throw new AppError("El día de vencimiento debe ser entre 1 y 28", 400);
+            }
+
+            const nuevoGasto = await GastoRecurrente.create({
+                categoria,
+                descripcion: descripcion || `Gasto fijo: ${categoria}`,
+                monto_ars: montoFinalArs,
+                dia_vencimiento,
+                activo: true,
+                id_abogado
+            }, { transaction });
+
+            idGastoRecurrente = nuevoGasto.id_gasto_recurrente;
+        }
+
         const movimiento = await MovimientoFinanciero.create(
             {
                 tipo,
@@ -105,6 +129,10 @@ export const crearMovimiento = async (datos) => {
                 estado,
                 id_caso,
                 id_cliente,
+                id_abogado,
+                // Vincular con gasto recurrente si aplica
+                id_gasto_recurrente: idGastoRecurrente,
+                es_recurrente: !!idGastoRecurrente,
             },
             { transaction }
         );
@@ -139,11 +167,14 @@ export const crearMovimiento = async (datos) => {
         return movimientoCompleto;
     } catch (error) {
         await transaction.rollback();
+        console.error("Error detallado al crear movimiento:", error); // Log para debug
+
         if (error.name === "SequelizeValidationError") {
             const mensajes = error.errors.map((e) => e.message).join(", ");
             throw new AppError(`Error de validación: ${mensajes}`, 400);
         }
-        throw new AppError("Error al crear movimiento financiero", 500);
+        // Incluir el mensaje original del error para debugging
+        throw new AppError(`Error al crear movimiento financiero: ${error.message}`, 500);
     }
 };
 
@@ -396,6 +427,7 @@ export const obtenerMovimientos = async (opciones = {}) => {
         id_cliente,
         id_caso,
         categoria,
+        id_abogado,
     } = opciones;
 
     const offset = (page - 1) * limit;
@@ -406,6 +438,7 @@ export const obtenerMovimientos = async (opciones = {}) => {
     if (id_cliente) where.id_cliente = id_cliente;
     if (id_caso) where.id_caso = id_caso;
     if (categoria) where.categoria = categoria;
+    if (id_abogado) where.id_abogado = id_abogado;
 
     const { count, rows: movimientos } = await MovimientoFinanciero.findAndCountAll({
         where,
@@ -457,6 +490,21 @@ export const registrarAperturaCarpeta = async (
     });
 };
 
+/**
+ * Eliminar movimiento financiero por ID
+ */
+export const eliminarMovimiento = async (id) => {
+    const mov = await MovimientoFinanciero.findByPk(id);
+
+    if (!mov) {
+        throw new AppError("Movimiento no encontrado", 404);
+    }
+
+    // Si es recurrente, solo eliminamos el movimiento, NO la configuración de gasto recurrente
+    await mov.destroy();
+    return { message: "Movimiento eliminado exitosamente" };
+};
+
 export default {
     crearMovimiento,
     obtenerResumenEstudio,
@@ -464,4 +512,6 @@ export default {
     obtenerMovimientosPorCaso,
     obtenerMovimientos,
     registrarAperturaCarpeta,
+    eliminarMovimiento,
 };
+
