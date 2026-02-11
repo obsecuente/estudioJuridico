@@ -11,18 +11,22 @@
   background-attachment: scroll;
   animation: fadeInBg 0.8s ease-in-out;
 }
+
 @keyframes fadeInBg {
   from {
     opacity: 0.9;
   }
+
   to {
     opacity: 1;
   }
 }
 
 .login-card {
-  backdrop-filter: blur(20px) saturate(200%); /* Subimos un toque la saturación */
-  background: rgba(15, 23, 42, 0.75); /* Un gris azulado bien profundo */
+  backdrop-filter: blur(20px) saturate(200%);
+  /* Subimos un toque la saturación */
+  background: rgba(15, 23, 42, 0.75);
+  /* Un gris azulado bien profundo */
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 20px;
   padding: 40px;
@@ -65,7 +69,8 @@
 .login-card .form-group input[type="password"] {
   width: 100%;
   padding: 12px;
-  background: rgba(0, 0, 0, 0.4) !important; /* Fondo negro traslúcido */
+  background: rgba(0, 0, 0, 0.4) !important;
+  /* Fondo negro traslúcido */
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 8px;
   color: #ffffff !important;
@@ -92,7 +97,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(99, 102, 241, 0.15); /* Fondo suave */
+  background: rgba(99, 102, 241, 0.15);
+  /* Fondo suave */
   color: white;
   border: none;
   border-radius: 12px;
@@ -114,11 +120,9 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(
-    to bottom right,
-    rgba(99, 102, 241, 0.8) 0%,
-    transparent 40%
-  );
+  background: linear-gradient(to bottom right,
+      rgba(99, 102, 241, 0.8) 0%,
+      transparent 40%);
   opacity: 0.3;
   transition: opacity 0.3s ease;
 }
@@ -130,7 +134,8 @@
 }
 
 .btn-login:hover::before {
-  opacity: 1; /* Se "enciende" el borde al pasar el mouse */
+  opacity: 1;
+  /* Se "enciende" el borde al pasar el mouse */
 }
 
 /* Efecto de click */
@@ -171,4 +176,99 @@ input:-webkit-autofill:focus {
   border-radius: 5px;
   margin-bottom: 20px;
   border-left: 4px solid #c33;
+}
+
+/* Estilos para Forgot/Reset Password */
+.forgot-description {
+  color: rgba(255, 255, 255, 0.7);
+  text-align: center;
+  margin-bottom: 24px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.success-message {
+  text-align: center;
+  padding: 20px 0;
+}
+
+.success-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.success-message p {
+  color: #ffffff;
+  margin: 0 0 12px 0;
+  font-size: 15px;
+}
+
+.success-hint {
+  color: rgba(255, 255, 255, 0.6) !important;
+  font-size: 13px !important;
+}
+
+.btn-back-login {
+  display: inline-block;
+  margin-top: 20px;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #f1c40f 0%, #d4a90a 100%);
+  color: #0f172a;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  border: none;
+  box-shadow: 0 4px 15px rgba(241, 196, 15, 0.3);
+}
+
+.btn-back-login:hover {
+  background: linear-gradient(135deg, #f4d03f 0%, #f1c40f 100%);
+  box-shadow: 0 6px 20px rgba(241, 196, 15, 0.4);
+  transform: translateY(-2px);
+  color: #0f172a;
+}
+
+.auth-links {
+  margin-top: 24px;
+  text-align: center;
+}
+
+.auth-link {
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+  font-size: 14px;
+  transition: color 0.2s ease;
+}
+
+.auth-link:hover {
+  color: #6366f1;
+}
+
+/* Password input wrapper con toggle */
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-wrapper input {
+  width: 100%;
+  padding-right: 48px !important;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  padding: 0;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.toggle-password:hover {
+  opacity: 1;
 }

@@ -1,17 +1,24 @@
 :root {
-  --color-primario: #0f172a; /* Azul Noche */
-  --color-fondo-oscuro: #1a1f2b; /* Fondo Card/Tabla */
-  --color-acento: #d4af37; /* Dorado Premium */
-  --color-texto-principal: #f1f5f9; /* Blanco Humo */
-  --color-texto-secundario: #94a3b8; /* Gris azulado */
-  --color-borde: rgba(212, 175, 55, 0.3); /* Dorado sutil */
+  --color-primario: #0f172a;
+  /* Azul Noche */
+  --color-fondo-oscuro: #1a1f2b;
+  /* Fondo Card/Tabla */
+  --color-acento: #d4af37;
+  /* Dorado Premium */
+  --color-texto-principal: #f1f5f9;
+  /* Blanco Humo */
+  --color-texto-secundario: #94a3b8;
+  /* Gris azulado */
+  --color-borde: rgba(212, 175, 55, 0.3);
+  /* Dorado sutil */
 }
 
 /* common/GlassTable.css - VERSION DARK/GOLD */
 .table-wrapper-glass {
   background: var(--color-fondo-oscuro, #1a1f2b);
   border-radius: 16px;
-  overflow-x: auto; /* Scroll horizontal si la tabla es más ancha que el móvil */
+  overflow-x: auto;
+  /* Scroll horizontal si la tabla es más ancha que el móvil */
   border: 1px solid rgba(255, 255, 255, 0.05);
   border-left: 5px solid var(--color-acento, #d4af37);
   width: 100%;
@@ -23,6 +30,7 @@
 .table-wrapper-glass::-webkit-scrollbar {
   height: 6px;
 }
+
 .table-wrapper-glass::-webkit-scrollbar-thumb {
   background: rgba(212, 175, 55, 0.3);
   border-radius: 10px;
@@ -58,7 +66,8 @@
 }
 
 .table-glass thead {
-  background: rgba(15, 23, 42, 0.8); /* Encabezado ligeramente más oscuro */
+  background: rgba(15, 23, 42, 0.8);
+  /* Encabezado ligeramente más oscuro */
   border-bottom: 2px solid var(--color-acento, #d4af37);
 }
 
@@ -84,12 +93,14 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-/* Centrado específico para columnas de prioridad, fecha y estado en Vencimientos (1, 2 y 6) */
+/* Centrado específico para columnas de fecha, estado, prioridad y tipo */
 .table-glass th:nth-child(1),
 .table-glass th:nth-child(2),
+.table-glass th:nth-child(3),
 .table-glass th:nth-child(6),
 .table-glass td:nth-child(1),
 .table-glass td:nth-child(2),
+.table-glass td:nth-child(3),
 .table-glass td:nth-child(6) {
   text-align: center !important;
 }
@@ -113,7 +124,8 @@
 }
 
 .table-glass tbody tr:hover {
-  background-color: rgba(212, 175, 55, 0.05); /* Toque dorado muy suave en hover */
+  background-color: rgba(212, 175, 55, 0.05);
+  /* Toque dorado muy suave en hover */
 }
 
 /* Actions Cell */
@@ -123,7 +135,8 @@
   text-align: center !important;
   padding: 0 20px !important;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
-  width: 200px !important; /* Más ancho para que no choque */
+  width: 200px !important;
+  /* Más ancho para que no choque */
 }
 
 .table-glass td:first-child {
@@ -151,7 +164,7 @@
   align-items: center !important;
   justify-content: center !important;
   border-radius: 8px !important;
-  border: 1px solid rgba(255,255,255,0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
   cursor: pointer;
   transition: all 0.2s ease;
   margin: 0 !important;
@@ -163,19 +176,28 @@
   background-color: rgba(139, 92, 246, 0.2) !important;
   border-color: #8b5cf6 !important;
 }
-.btn-view:hover { background-color: #8b5cf6 !important; }
+
+.btn-view:hover {
+  background-color: #8b5cf6 !important;
+}
 
 .btn-edit {
   background-color: rgba(59, 130, 246, 0.2) !important;
   border-color: #3b82f6 !important;
 }
-.btn-edit:hover { background-color: #3b82f6 !important; }
+
+.btn-edit:hover {
+  background-color: #3b82f6 !important;
+}
 
 .btn-delete {
   background-color: rgba(239, 68, 68, 0.2) !important;
   border-color: #ef4444 !important;
 }
-.btn-delete:hover { background-color: #ef4444 !important; }
+
+.btn-delete:hover {
+  background-color: #ef4444 !important;
+}
 
 .btn-action:hover {
   transform: translateY(-3px) !important;
@@ -196,8 +218,9 @@
   font-weight: 700;
   text-transform: uppercase;
   color: white;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-  white-space: nowrap; /* Evita que "ABIERTO" se rompa en mobile */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  white-space: nowrap;
+  /* Evita que "ABIERTO" se rompa en mobile */
 }
 
 .loading-cell {

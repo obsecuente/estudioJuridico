@@ -23,6 +23,16 @@ export const crearEvento = async (req, res) => {
 
 export const obtenerEventos = async (req, res) => {
   try {
+    // Determinar id_abogado: admins pueden ver otros, los demás solo ven sus datos
+    let id_abogado_filtro;
+    if (req.user.rol === "admin" && req.query.id_abogado) {
+      // Admin puede consultar cualquier abogado
+      id_abogado_filtro = req.query.id_abogado;
+    } else {
+      // Usuarios normales solo ven sus propios eventos
+      id_abogado_filtro = req.user.id_abogado;
+    }
+
     const resultado = await eventosService.obtenerTodos({
       page: req.query.page,
       limit: req.query.limit,
@@ -32,7 +42,7 @@ export const obtenerEventos = async (req, res) => {
       year: req.query.year,
       tipo: req.query.tipo,
       estado: req.query.estado,
-      id_abogado: req.query.id_abogado,
+      id_abogado: id_abogado_filtro,
       id_caso: req.query.id_caso,
       id_cliente: req.query.id_cliente,
     });
@@ -71,12 +81,19 @@ export const obtenerEventoPorId = async (req, res) => {
 export const obtenerEventosPorMes = async (req, res) => {
   try {
     const { año, mes } = req.params;
-    const id_abogado = req.query.id_abogado || null;
+
+    // Admin puede ver de otros, usuarios normales solo ven sus propios eventos
+    let id_abogado_filtro;
+    if (req.user.rol === "admin" && req.query.id_abogado) {
+      id_abogado_filtro = req.query.id_abogado;
+    } else {
+      id_abogado_filtro = req.user.id_abogado;
+    }
 
     const eventos = await eventosService.obtenerPorMes(
       parseInt(año),
       parseInt(mes),
-      id_abogado,
+      id_abogado_filtro,
     );
 
     return res.json({
@@ -95,10 +112,17 @@ export const obtenerEventosPorMes = async (req, res) => {
 
 export const obtenerProximosEventos = async (req, res) => {
   try {
-    const id_abogado = req.query.id_abogado || req.user.id_abogado;
+    // Admin puede ver de otros, usuarios normales solo ven sus propios eventos
+    let id_abogado_filtro;
+    if (req.user.rol === "admin" && req.query.id_abogado) {
+      id_abogado_filtro = req.query.id_abogado;
+    } else {
+      id_abogado_filtro = req.user.id_abogado;
+    }
+
     const dias = parseInt(req.query.dias) || 7;
 
-    const eventos = await eventosService.obtenerProximos(id_abogado, dias);
+    const eventos = await eventosService.obtenerProximos(id_abogado_filtro, dias);
 
     return res.json({
       success: true,

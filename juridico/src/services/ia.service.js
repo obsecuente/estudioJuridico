@@ -107,45 +107,143 @@ class IAService {
     }
   }
 
-  construirPrompt(texto, tipoDocumento) {
-    const maxCaracteres = 20000;
-    let textoProcesado = texto;
+  // Constantes para chunking
+  CHUNK_SIZE = 25000;         // 25K caracteres (~6K tokens)
+  MAX_CONSOLIDADO = 15000;    // Si el consolidado supera esto, resumir de nuevo
+  OVERLAP_CHARS = 500;        // Solapamiento entre chunks
+  MAX_TEXTO_TOTAL = 150000;   // 150K chars máximo para evitar out of memory
+  MAX_CHUNKS = 5;             // Máximo 5 chunks para no saturar la API
 
-    if (texto.length > maxCaracteres) {
-      const mitad = Math.floor(maxCaracteres / 2);
-      const inicio = texto.substring(0, mitad);
-      const fin = texto.substring(texto.length - mitad);
-      textoProcesado = `${inicio}\n\n[... CONTENIDO INTERMEDIO OMITIDO ...]\n\n${fin}`;
+  /**
+   * Divide texto largo en chunks manejables con overlap
+   */
+  dividirEnChunks(texto) {
+    const chunks = [];
+    let inicio = 0;
+
+    while (inicio < texto.length && chunks.length < this.MAX_CHUNKS) {
+      let fin = Math.min(inicio + this.CHUNK_SIZE, texto.length);
+
+      // Intentar cortar en un punto natural (párrafo o punto)
+      if (fin < texto.length) {
+        const ultimoPunto = texto.lastIndexOf('.', fin);
+        const ultimoParrafo = texto.lastIndexOf('\n\n', fin);
+        const mejorCorte = Math.max(ultimoPunto, ultimoParrafo);
+
+        if (mejorCorte > inicio + this.CHUNK_SIZE * 0.7) {
+          fin = mejorCorte + 1;
+        }
+      }
+
+      chunks.push(texto.substring(inicio, fin));
+      inicio = fin - this.OVERLAP_CHARS; // Overlap para no perder contexto
+
+      if (inicio < 0) inicio = fin; // Evitar loops infinitos
     }
 
-    return `Sos un asistente especializado en análisis de documentos.
+    if (chunks.length >= this.MAX_CHUNKS && inicio < texto.length) {
+      console.log(`⚠️ Documento muy largo, limitado a ${this.MAX_CHUNKS} chunks`);
+    }
+
+    return chunks;
+  }
+
+  /**
+   * Genera prompt para resumir un chunk específico
+   */
+  construirPromptChunk(texto, indice, total) {
+    return `Sos un asistente legal especializado. Este es el FRAGMENTO ${indice} de ${total} de un documento legal argentino.
 
 **INSTRUCCIONES:**
-1. Primero determiná QUÉ TIPO de documento es (legal, educativo, técnico, comercial, etc.)
-2. Según el tipo, generá un resumen apropiado
-3. NO fuerces un formato legal si el documento NO es legal
-4. Sé conciso y preciso
+1. Resumí SOLO este fragmento, extrayendo la información clave
+2. Sé conciso pero no omitas datos importantes (montos, fechas, nombres, artículos)
+3. Indicá si el fragmento parece estar incompleto o cortado
+4. NO inventes información
+
+**FRAGMENTO ${indice}/${total}:**
+${texto}
+
+**RESUMEN DEL FRAGMENTO:**`;
+  }
+
+  /**
+   * Genera prompt para consolidar múltiples resúmenes parciales
+   */
+  construirPromptConsolidacion(resumenesPartes, longitudOriginal) {
+    const partes = resumenesPartes.map((r, i) =>
+      `### PARTE ${i + 1}/${resumenesPartes.length}\n${r}`
+    ).join('\n\n---\n\n');
+
+    return `Sos un experto en derecho argentino. Debés consolidar los siguientes RESÚMENES PARCIALES de un documento legal de ${longitudOriginal} caracteres.
+
+**INSTRUCCIONES:**
+1. Integrá la información de todas las partes en un resumen COHERENTE y ÚNICO
+2. Eliminá redundancias pero NO pierdas información importante
+3. Mantené el formato estructurado con secciones (PARTES, MONTOS, FECHAS, etc.)
+4. El resumen final debe ser completo y profesional
+
+**RESÚMENES PARCIALES A CONSOLIDAR:**
+
+${partes}
+
+**RESUMEN CONSOLIDADO FINAL:**`;
+  }
+
+  construirPrompt(texto, tipoDocumento) {
+    // Este método ahora solo se usa para documentos cortos
+    return `Sos un asistente legal especializado en análisis de documentos jurídicos argentinos.
+
+**INSTRUCCIONES GENERALES:**
+1. Primero determiná QUÉ TIPO de documento es (demanda, contestación, sentencia, contrato, dictamen, etc.)
+2. Generá un resumen PROFESIONAL y COMPLETO orientado a abogados
+3. NO omitas información crítica como montos, plazos o fundamentos legales
+4. Sé preciso, técnico y fiel al documento original
+5. NUNCA inventes información que no esté en el documento
 
 **SI ES DOCUMENTO LEGAL (demanda, sentencia, contrato, etc.):**
 
-Usá este formato:
+Usá OBLIGATORIAMENTE este formato completo:
 
 ### NATURALEZA Y OBJETO
-(Tipo de documento legal y tema central)
+(Tipo exacto de documento legal y tema central en 2-3 oraciones)
 
 ### 👥 PARTES
-- Actor: (nombre)
-- Demandado: (nombre)
+- **Actor/Demandante:** (nombre completo y datos identificatorios)
+- **Demandado:** (nombre completo, CUIT si figura, domicilio)
+- **Patrocinio Letrado:** (nombre del abogado, tomo y folio si figura)
 
-### 🔑 PUNTOS CLAVE
-- (3-5 puntos jurídicos relevantes)
+### 💰 MONTOS RECLAMADOS
+(CRÍTICO - Listá TODOS los montos con su concepto)
+- **Daño emergente:** (monto en la moneda original)
+- **Lucro cesante:** (monto)
+- **Daño moral:** (monto)
+- **Monto total del reclamo:** (suma)
+- **Monto del contrato original:** (si aplica)
 
-### 📅 FECHAS Y PLAZOS
-- Fechas: (listado)
-- Plazos: (si hay)
+### 🔑 PUNTOS CLAVE DEL CASO
+- (5-7 puntos jurídicos relevantes, con hechos específicos)
+- (Incluí porcentajes, cantidades, especificaciones técnicas si las hay)
+
+### 📅 FECHAS Y PLAZOS IMPORTANTES
+- (Listado cronológico de TODAS las fechas relevantes)
+- Incluí: fecha del contrato, inicio de obra/relación, incumplimientos, intimaciones, rescisión, etc.
+
+### 📍 DATOS DEL OBJETO
+(Ubicación del inmueble, descripción del bien, expediente administrativo, etc.)
+
+### ⚖️ FUNDAMENTO LEGAL
+- **Código Civil y Comercial:** Arts. (listar artículos citados)
+- **Otras normas:** (leyes, decretos, reglamentos técnicos mencionados)
+- **Jurisprudencia:** (si se cita algún fallo)
+
+### 📋 PRUEBAS OFRECIDAS
+- **Documental:** (tipos de documentos acompañados)
+- **Testimonial:** (cantidad de testigos, roles)
+- **Pericial:** (tipo de pericia solicitada)
+- **Otras:** (informes, reconocimiento judicial, etc.)
 
 ### ⚠️ ACCIÓN REQUERIDA
-(Qué debe hacer el abogado)
+(Qué se solicita concretamente al juez - petitorio resumido)
 
 ---
 
@@ -173,47 +271,175 @@ Usá este formato:
 ---
 
 **DOCUMENTO A ANALIZAR:**
-${textoProcesado}`;
+${texto}`;
+  }
+
+  /**
+   * Resume un chunk individual
+   */
+  async resumirChunk(texto, indice, total) {
+    const prompt = this.construirPromptChunk(texto, indice, total);
+
+    const completion = await groq.chat.completions.create({
+      messages: [
+        {
+          role: "system",
+          content: "Sos un experto en derecho argentino. Resumís fragmentos de documentos legales de forma precisa y concisa.",
+        },
+        { role: "user", content: prompt },
+      ],
+      model: "llama-3.3-70b-versatile",
+      temperature: 0.15,
+      max_tokens: 1500,
+      top_p: 1,
+    });
+
+    return {
+      resumen: completion.choices[0].message.content,
+      tokens: completion.usage.total_tokens,
+    };
+  }
+
+  /**
+   * Consolida múltiples resúmenes parciales en uno final
+   */
+  async consolidarResumenes(resumenesPartes, longitudOriginal) {
+    const prompt = this.construirPromptConsolidacion(resumenesPartes, longitudOriginal);
+
+    const completion = await groq.chat.completions.create({
+      messages: [
+        {
+          role: "system",
+          content: "Sos un experto en derecho argentino. Tu tarea es consolidar resúmenes parciales en un documento coherente y completo.",
+        },
+        { role: "user", content: prompt },
+      ],
+      model: "llama-3.3-70b-versatile",
+      temperature: 0.2,
+      max_tokens: 2500,
+      top_p: 1,
+    });
+
+    return {
+      resumen: completion.choices[0].message.content,
+      tokens: completion.usage.total_tokens,
+    };
   }
 
   async generarResumen(texto, tipoDocumento = "legal") {
     console.log("🤖 Generando resumen con Groq...");
+    console.log("📊 Tamaño texto original:", texto.length, "caracteres");
     const inicioTiempo = Date.now();
+    let tokensTotal = 0;
+    let textoTruncado = false;
+
+    // Si el texto es demasiado largo, truncar inteligentemente
+    if (texto.length > this.MAX_TEXTO_TOTAL) {
+      console.log(`⚠️ Texto muy largo (${texto.length} chars), truncando a ${this.MAX_TEXTO_TOTAL}...`);
+      // Tomar principio (40%), medio (20%) y fin (40%)
+      const partePrincipio = Math.floor(this.MAX_TEXTO_TOTAL * 0.4);
+      const parteMedio = Math.floor(this.MAX_TEXTO_TOTAL * 0.2);
+      const parteFin = Math.floor(this.MAX_TEXTO_TOTAL * 0.4);
+
+      const inicio = texto.substring(0, partePrincipio);
+      const medio = texto.substring(
+        Math.floor(texto.length / 2) - Math.floor(parteMedio / 2),
+        Math.floor(texto.length / 2) + Math.floor(parteMedio / 2)
+      );
+      const fin = texto.substring(texto.length - parteFin);
+
+      texto = `${inicio}\n\n[... SECCIÓN INTERMEDIA 1 ...]\n\n${medio}\n\n[... SECCIÓN INTERMEDIA 2 ...]\n\n${fin}`;
+      textoTruncado = true;
+      console.log(`✂️ Texto truncado a ${texto.length} caracteres`);
+    }
 
     try {
-      const prompt = this.construirPrompt(texto, tipoDocumento);
-      console.log("📤 Enviando a Groq API...");
-      console.log("📊 Tamaño prompt:", prompt.length, "caracteres");
+      // Si el texto es corto, resumir directo (método original)
+      if (texto.length <= this.CHUNK_SIZE) {
+        console.log("📄 Documento corto - resumen directo");
+        const prompt = this.construirPrompt(texto, tipoDocumento);
+        console.log("📤 Enviando a Groq API...");
 
-      const chatCompletion = await groq.chat.completions.create({
-        messages: [
-          {
-            role: "system",
-            content:
-              "Sos un experto en derecho argentino. Tus respuestas son técnicas, precisas y fieles al documento original. NUNCA inventes información.",
-          },
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
-        model: "llama-3.3-70b-versatile",
-        temperature: 0.15,
-        max_tokens: 2500,
-        top_p: 1,
-      });
+        const chatCompletion = await groq.chat.completions.create({
+          messages: [
+            {
+              role: "system",
+              content:
+                "Sos un experto en derecho argentino. Tus respuestas son técnicas, precisas y fieles al documento original. NUNCA inventes información.",
+            },
+            {
+              role: "user",
+              content: prompt,
+            },
+          ],
+          model: "llama-3.3-70b-versatile",
+          temperature: 0.15,
+          max_tokens: 2500,
+          top_p: 1,
+        });
+
+        const tiempoProcesamiento = Date.now() - inicioTiempo;
+
+        console.log("✅ Respuesta recibida");
+        console.log("⏱️  Tiempo:", tiempoProcesamiento, "ms");
+        console.log("🎯 Tokens:", chatCompletion.usage.total_tokens);
+
+        return {
+          resumen: chatCompletion.choices[0].message.content,
+          tokensUsados: chatCompletion.usage.total_tokens,
+          tiempoProcesamiento,
+          modelo: "llama-3.3-70b-versatile",
+        };
+      }
+
+      // Documento largo - usar chunking
+      console.log("🔄 Documento largo detectado - iniciando chunking...");
+      const chunks = this.dividirEnChunks(texto);
+      console.log(`📦 Dividido en ${chunks.length} chunks`);
+
+      // Resumir cada chunk
+      const resumenesPartes = [];
+      for (let i = 0; i < chunks.length; i++) {
+        console.log(`🤖 Procesando chunk ${i + 1}/${chunks.length} (${chunks[i].length} chars)...`);
+
+        const resultado = await this.resumirChunk(chunks[i], i + 1, chunks.length);
+        resumenesPartes.push(resultado.resumen);
+        tokensTotal += resultado.tokens;
+
+        console.log(`✅ Chunk ${i + 1}/${chunks.length} completado (${resultado.tokens} tokens)`);
+
+        // Pequeña pausa para no saturar la API
+        if (i < chunks.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      }
+
+      // Consolidar resúmenes
+      console.log("🔗 Consolidando", resumenesPartes.length, "resúmenes parciales...");
+      let resultadoFinal = await this.consolidarResumenes(resumenesPartes, texto.length);
+      tokensTotal += resultadoFinal.tokens;
+
+      // Si el consolidado es muy largo, resumir una vez más
+      if (resultadoFinal.resumen.length > this.MAX_CONSOLIDADO) {
+        console.log("📝 Consolidado muy largo, resumiendo nuevamente...");
+        const resumenFinal = await this.resumirChunk(resultadoFinal.resumen, 1, 1);
+        resultadoFinal.resumen = resumenFinal.resumen;
+        tokensTotal += resumenFinal.tokens;
+      }
 
       const tiempoProcesamiento = Date.now() - inicioTiempo;
 
-      console.log("✅ Respuesta recibida");
-      console.log("⏱️  Tiempo:", tiempoProcesamiento, "ms");
-      console.log("🎯 Tokens:", chatCompletion.usage.total_tokens);
+      console.log("✅ Resumen chunked completado");
+      console.log("⏱️  Tiempo total:", tiempoProcesamiento, "ms");
+      console.log("🎯 Tokens totales:", tokensTotal);
+      console.log("📊 Chunks procesados:", chunks.length);
 
       return {
-        resumen: chatCompletion.choices[0].message.content,
-        tokensUsados: chatCompletion.usage.total_tokens,
+        resumen: resultadoFinal.resumen,
+        tokensUsados: tokensTotal,
         tiempoProcesamiento,
         modelo: "llama-3.3-70b-versatile",
+        chunksUsados: chunks.length,
       };
     } catch (error) {
       console.error("❌ Error Groq:", error);
@@ -323,7 +549,7 @@ ${textoProcesado}`;
 
       // 2. Limitar texto para el prompt
       const maxCaracteres = 15000;
-      const textoProcesado = contenido.length > maxCaracteres 
+      const textoProcesado = contenido.length > maxCaracteres
         ? contenido.substring(0, maxCaracteres) + "\n...[Texto truncado para la consulta]..."
         : contenido;
 

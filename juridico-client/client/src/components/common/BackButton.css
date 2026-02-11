@@ -6,25 +6,25 @@
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 18px;
-  background: rgba(255, 255, 255, 0.05);
-  color: #fff;
-  border: 1px solid rgba(212, 175, 55, 0.3);
-  border-radius: 8px;
+  padding: 8px 16px;
+  background: rgba(255, 252, 240, 0.95); /* Fondo crema muy sutilmente visible */
+  color: #c9a531; /* Dorado más oscuro para mejor contraste sobre crema */
+  border: 1px solid rgba(212, 175, 55, 0.5);
+  border-radius: 10px;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   text-decoration: none;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), inset 0 0 0 1px rgba(255, 255, 255, 0.5);
 }
 
 .btn-back-premium:hover {
-  background: rgba(212, 175, 55, 0.15);
-  color: #d4af37;
+  background: #ffffff;
+  color: #d4af37; /* Dorado brillante en hover */
   border-color: #d4af37;
   transform: translateX(-5px);
-  box-shadow: 0 6px 20px rgba(212, 175, 55, 0.1);
+  box-shadow: 0 6px 20px rgba(212, 175, 55, 0.25);
 }
 
 .btn-back-premium svg {

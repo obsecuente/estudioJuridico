@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import api from "../../services/api";
+import finanzasService from "../../services/finanzas.service";
 import ModalFrame from "../../components/common/ModalFrame";
 import CustomSelect from "../../components/common/CustomSelect";
 import "./CasoForm.css";
@@ -17,6 +18,13 @@ const CasoForm = ({ caso, clienteId, onClose, showToast }) => {
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
   const [errors, setErrors] = useState({});
+
+  // Estados para Apertura de Carpeta
+  const [registrarApertura, setRegistrarApertura] = useState(false);
+  const [cantidadJus, setCantidadJus] = useState("3");
+  const [valorJusActual, setValorJusActual] = useState(0);
+  const [usarMontoFijo, setUsarMontoFijo] = useState(false);
+  const [montoFijo, setMontoFijo] = useState("");
 
   useEffect(() => {
     cargarDatos();
@@ -50,6 +58,15 @@ const CasoForm = ({ caso, clienteId, onClose, showToast }) => {
       ]);
       setClientes(clientesRes.data.data || []);
       setAbogados(abogadosRes.data.data || []);
+
+      // Cargar valor JUS por separado para manejar error
+      try {
+        const jusRes = await finanzasService.getValoresJus();
+        setValorJusActual(jusRes.data?.valor_jus_nqn || 15000); // Default fallback
+      } catch (jusError) {
+        console.warn("No se pudo cargar valor JUS, usando default");
+        setValorJusActual(15000); // Fallback value
+      }
     } catch (err) {
       showToast("Error al cargar datos", "error");
     } finally {
@@ -76,20 +93,46 @@ const CasoForm = ({ caso, clienteId, onClose, showToast }) => {
     if (!validarFormulario()) return;
     setLoading(true);
     try {
+      // Preparar datos con finanzas si corresponde
+      const datosEnviar = { ...formData };
+
+      if (!caso && registrarApertura) {
+        datosEnviar.finanzas = {
+          registrarApertura: true,
+          // Backend expects 'montoJus' not 'cantidad_jus'
+          montoJus: usarMontoFijo ? 0 : parseFloat(cantidadJus) || 3,
+          montoFijo: usarMontoFijo ? parseFloat(montoFijo) || 0 : undefined,
+          provincia: "NQN",
+        };
+      }
+
       if (caso) {
         await api.put(`/casos/${caso.id_caso}`, formData);
         showToast("Caso actualizado", "success");
       } else {
-        await api.post("/casos", formData);
-        showToast("Caso creado", "success");
+        await api.post("/casos", datosEnviar);
+        showToast("Caso creado" + (registrarApertura ? " con apertura de carpeta" : ""), "success");
       }
-      onClose(true); // Refresca la lista de expedientes
+      onClose(true);
     } catch (err) {
-      showToast("Error al guardar", "error");
+      console.error("Error al guardar caso:", err);
+      showToast(err.response?.data?.error || "Error al guardar", "error");
     } finally {
       setLoading(false);
     }
   };
+
+  const formatCurrency = (value) => {
+    return new Intl.NumberFormat("es-AR", {
+      style: "currency",
+      currency: "ARS",
+      minimumFractionDigits: 0,
+    }).format(value || 0);
+  };
+
+  const totalCalculado = usarMontoFijo
+    ? parseFloat(montoFijo) || 0
+    : (parseFloat(cantidadJus) || 0) * valorJusActual;
 
   return (
     <ModalFrame
@@ -166,6 +209,89 @@ const CasoForm = ({ caso, clienteId, onClose, showToast }) => {
                 disabled={loading}
               />
             </div>
+
+            {/* Sección Apertura de Carpeta - Solo para nuevos casos */}
+            {!caso && (
+              <div className="apertura-section">
+                <div className="apertura-header">
+                  <h4>💰 Gestión de Honorarios Iniciales</h4>
+                </div>
+
+                <div className="apertura-toggle">
+                  <label className="toggle-switch">
+                    <input
+                      type="checkbox"
+                      checked={registrarApertura}
+                      onChange={(e) => setRegistrarApertura(e.target.checked)}
+                      disabled={loading}
+                    />
+                    <span className="toggle-slider"></span>
+                  </label>
+                  <span className="toggle-label">
+                    ¿Registrar gastos de apertura de carpeta?
+                  </span>
+                </div>
+
+                {registrarApertura && (
+                  <div className="apertura-form">
+                    <div className="apertura-mode-toggle">
+                      <button
+                        type="button"
+                        className={!usarMontoFijo ? "active" : ""}
+                        onClick={() => setUsarMontoFijo(false)}
+                      >
+                        En JUS
+                      </button>
+                      <button
+                        type="button"
+                        className={usarMontoFijo ? "active" : ""}
+                        onClick={() => setUsarMontoFijo(true)}
+                      >
+                        En Pesos
+                      </button>
+                    </div>
+
+                    {!usarMontoFijo ? (
+                      <div className="form-group">
+                        <label>Cantidad de JUS</label>
+                        <input
+                          type="number"
+                          value={cantidadJus}
+                          onChange={(e) => setCantidadJus(e.target.value)}
+                          min="0"
+                          step="0.5"
+                          disabled={loading}
+                          placeholder="3"
+                        />
+                        <div className="jus-feedback">
+                          <span>Valor JUS actual: <strong>{formatCurrency(valorJusActual)}</strong></span>
+                          <span className="total-sugerido">
+                            Total sugerido: <strong>{formatCurrency(totalCalculado)}</strong>
+                          </span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="form-group">
+                        <label>Monto en Pesos ($)</label>
+                        <input
+                          type="number"
+                          value={montoFijo}
+                          onChange={(e) => setMontoFijo(e.target.value)}
+                          min="0"
+                          disabled={loading}
+                          placeholder="Ej: 45000"
+                        />
+                      </div>
+                    )}
+
+                    <div className="apertura-info">
+                      <span>📋</span>
+                      <span>Se registrará como ingreso pendiente asociado a este caso</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
           <div className="modal-footer">
             <button

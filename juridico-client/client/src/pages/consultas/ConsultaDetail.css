@@ -1,123 +1,376 @@
-/* 1. Badges de Estado: Estilo "Glass" con bordes brillantes */
+/* ConsultaDetail.css - Estilos para detalle de consultas */
+
+/* VARIABLES */
+:root {
+  --color-primario: #0f172a;
+  --color-acento: #d4af37;
+  --color-borde: #e2e8f0;
+  --color-fondo: #f8fafc;
+  --text-main: #1e293b;
+  --text-muted: #64748b;
+  --color-azul-link: #2563eb;
+}
+
+/* Container principal */
+.detail-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 30px;
+  background-color: var(--color-fondo);
+  min-height: 100vh;
+}
+
+/* Header */
+.detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 30px;
+  border-bottom: 1px solid var(--color-borde);
+  padding-bottom: 20px;
+}
+
+.detail-header h1 {
+  margin: 5px 0;
+  font-size: 32px;
+  color: var(--text-main);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-info {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.fecha-envio {
+  color: var(--text-muted);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Estado badge */
 .estado-badge-large {
-  padding: 6px 16px;
-  border-radius: 99px;
+  padding: 8px 16px;
+  border-radius: 20px;
   color: white;
   font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 8px;
-  /* Efecto de cristal */
-  backdrop-filter: blur(4px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  text-shadow: 0px 1px 2px rgba(0, 0, 0, 0.1);
-  box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.2);
 }
 
-/* Colores más vibrantes y con transparencia para el fondo */
-.estado-badge-large[style*="background-color: rgb(245, 158, 11)"] {
-  /* Pendiente */
-  background-color: rgba(245, 158, 11, 0.2) !important;
-  color: #ffffff !important;
-  font-weight: 700;
-  border-color: rgba(245, 158, 11, 0.4);
+/* Header actions */
+.header-actions {
+  display: flex;
+  gap: 12px;
 }
 
-.estado-badge-large[style*="background-color: rgb(59, 130, 246)"] {
-  /* En Progreso */
-  background-color: rgba(59, 130, 246, 0.2) !important;
-  color: #60a5fa;
-  border-color: rgba(59, 130, 246, 0.4);
-}
-
-.estado-badge-large[style*="background-color: rgb(16, 185, 129)"] {
-  /* Resuelta */
-  background-color: rgba(16, 185, 129, 0.2) !important;
-  color: #34d399;
-  border-color: rgba(16, 185, 129, 0.4);
-}
-
-/* 2. Botones de cambio de estado: Menos "botón" y más "tab" */
-.estado-actions {
-  background: rgba(30, 41, 59, 0.4); /* Fondo oscuro traslúcido */
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  padding: 24px;
-  border-radius: 16px;
-}
-
-.btn-estado {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #94a3b8;
+.btn-action-header {
+  padding: 10px 22px;
+  border-radius: 10px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 14px;
+  border: none;
+  cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+.btn-action-header.btn-edit {
+  background: linear-gradient(135deg, #4483f2 0%, #3666be 100%) !important;
+  color: white !important;
+  box-shadow: 0 4px 12px rgba(68, 131, 242, 0.2);
+}
+
+.btn-action-header.btn-edit:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(68, 131, 242, 0.3);
+  filter: brightness(1.1);
+}
+
+.btn-action-header.btn-delete {
+  background: linear-gradient(135deg, #f24e4e 0%, #d43f3f 100%) !important;
+  color: white !important;
+  box-shadow: 0 4px 12px rgba(242, 78, 78, 0.2);
+}
+
+.btn-action-header.btn-delete:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(242, 78, 78, 0.3);
+  filter: brightness(1.1);
+}
+
+/* Botones de cambio de estado */
+.estado-actions {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  margin-bottom: 24px;
+  border: 1px solid var(--color-borde);
+}
+
+.estado-actions h3 {
+  margin: 0 0 15px 0;
+  font-size: 16px;
+  color: #374151;
+}
+
+.estado-buttons {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.btn-estado {
+  padding: 12px 24px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 600;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #374151;
+}
+
 .btn-estado:hover:not(:disabled) {
-  background-color: #f8fafc !important; /* Fondo apenas gris */
-  color: #1e293b !important; /* Texto oscuro para que se vea */
-  border-color: #3b82f6 !important; /* Mantenemos el borde azul */
+  background-color: #f8fafc;
+  border-color: #3b82f6;
+  transform: translateY(-2px);
 }
 
 .btn-estado.active {
-  background-color: #3b82f6 !important;
-  color: white !important;
+  background-color: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
 }
 
-/* 3. Cards: Elevación y Bordes */
+.btn-estado:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Grid de cards */
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 25px;
+}
+
+.full-width {
+  grid-column: 1 / -1;
+}
+
+/* Cards */
 .detail-card {
-  background: rgba(30, 41, 59, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  background: white;
+  border-radius: 12px;
+  border: 1px solid var(--color-borde);
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
   transition: transform 0.3s ease;
 }
 
 .detail-card:hover {
-  transform: translateY(-5px);
-  border-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.08);
 }
 
 .card-header {
-  background: rgba(255, 255, 255, 0.02);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  background: linear-gradient(to right, #0f172a, #1e293b) !important;
+  padding: 15px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
 }
 
 .card-header h2 {
-  color: #d4af37; /* Títulos en dorado para ese toque legal premium */
-  font-size: 0.9rem;
+  color: var(--color-acento) !important;
+  margin: 0;
+  font-size: 13px;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 1.5px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-/* 4. El texto del mensaje */
+.card-body {
+  padding: 20px;
+}
+
+/* Mensaje de la consulta */
 .mensaje-completo {
-  color: #1e293b !important; /* Un gris muy oscuro casi negro para máximo contraste */
+  color: var(--text-main);
   font-weight: 500;
-  line-height: 1.6;
+  line-height: 1.7;
+  font-size: 15px;
+  margin: 0;
 }
-/* Mobile responsive adjustments for detail view */
+
+/* Info rows para cliente/abogado - HIGH SPECIFICITY */
+.detail-card .card-body .info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 14px 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.detail-card .card-body .info-row:last-child {
+  border-bottom: none;
+}
+
+.detail-card .card-body .info-label {
+  color: #374151 !important;
+  font-weight: 700 !important;
+  font-size: 12px !important;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.detail-card .card-body .info-value {
+  color: #1f2937 !important;
+  font-weight: 500;
+  font-size: 14px;
+  text-align: right;
+}
+
+.detail-card .card-body .info-value a {
+  color: #d4af37 !important;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.detail-card .card-body .info-value a:hover {
+  color: #0f172a !important;
+  text-decoration: underline;
+}
+
+.info-value a:hover {
+  color: var(--color-primario);
+  text-decoration: underline;
+}
+
+/* Botón dorado pequeño */
+.btn-small.btn-primary {
+  background: rgba(212, 175, 55, 0.05) !important;
+  color: var(--color-acento) !important;
+  border: 1px solid rgba(212, 175, 55, 0.3) !important;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.btn-small.btn-primary:hover {
+  background: var(--color-acento) !important;
+  color: var(--color-primario) !important;
+  transform: translateY(-1px);
+}
+
+/* No data state */
+.no-data {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 20px;
+  font-style: italic;
+}
+
+/* Loading */
+.loading-container {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid #f3f4f6;
+  border-top-color: var(--color-acento);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 20px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.error-message {
+  background: #fee2e2;
+  color: #dc2626;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border-left: 4px solid #dc2626;
+}
+
+/* Responsive */
 @media (max-width: 768px) {
-  .estado-badge-large {
-    padding: 6px 10px;
-    font-size: 11px;
+  .detail-container {
+    padding: 15px;
   }
 
-  .estado-actions {
-    padding: 12px;
-    border-radius: 12px;
+  .detail-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
   }
 
-  .detail-card {
-    padding: 12px;
+  .header-actions {
+    width: 100%;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 8px;
   }
 
-  .card-header h2 {
-    font-size: 12px;
+  .detail-grid {
+    grid-template-columns: 1fr;
   }
 
-  .mensaje-completo {
-    font-size: 15px;
+  .estado-buttons {
+    flex-direction: column;
+  }
+
+  .btn-estado {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .info-row {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .info-value {
+    text-align: left;
   }
 }

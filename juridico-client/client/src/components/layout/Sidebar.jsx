@@ -126,7 +126,18 @@ const Sidebar = ({ isOpen, onClose }) => {
             <span className="nav-icon"><CalculatorIcon /></span>
             <span>Calculadora de Plazos</span>
           </NavLink>
+
+          <NavLink
+            to="/dashboard/finanzas"
+            className={isPathActive("/dashboard/finanzas") ? "nav-link active" : "nav-link"}
+            onClick={() => window.innerWidth < 768 && onClose()}
+          >
+            <span className="nav-icon">💰</span>
+            <span>Finanzas</span>
+          </NavLink>
+
           {/* Solo mostrar Abogados si es admin */}
+
           {user?.rol === "admin" && (
             <NavLink
               to="/dashboard/abogados"

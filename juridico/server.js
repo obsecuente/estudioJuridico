@@ -22,6 +22,9 @@ import documentosRoutes from "./src/routes/documentos.routes.js";
 import abogadosRoutes from "./src/routes/abogados.routes.js";
 import authRoutes from "./src/routes/auth.routes.js";
 import auditoriaRoutes from "./src/routes/auditoria.routes.js";
+import finanzasRoutes from "./src/routes/finanzas.routes.js";
+import configuracionRoutes from "./src/routes/configuracion.routes.js";
+import tareasRoutes from "./src/routes/tareas.routes.js";
 
 // Inicializar Express
 const app = express();
@@ -48,8 +51,8 @@ const limiter = rateLimit({
 });
 
 // Middlewares de Express (Configurar ANTES de las rutas)
-app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
 // Middleware de logging HTTP
 app.use(httpLogger);
@@ -69,6 +72,9 @@ app.use("/api/auditoria", auditoriaRoutes);
 app.use("/api/eventos", eventosRoutes);
 app.use("/api/vencimientos", vencimientosRoutes);
 app.use("/api/calculadora", calculadoraRoutes);
+app.use("/api/finanzas", finanzasRoutes);
+app.use("/api/configuracion", configuracionRoutes);
+app.use("/api/tareas", tareasRoutes);
 
 // Ruta de health check
 app.get("/health", (req, res) => {

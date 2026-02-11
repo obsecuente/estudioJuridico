@@ -177,10 +177,9 @@ const VencimientosList = () => {
 
       <GlassTable
         columns={[
+          "Fecha Venc.",
           "Estado",
           "Prioridad",
-          "Semáforo",
-          "Fecha Venc.",
           "Título",
           "Cliente",
           "Tipo",
@@ -193,6 +192,11 @@ const VencimientosList = () => {
       >
         {vencimientos.map((venc) => (
           <tr key={venc.id_vencimiento}>
+            <td className="text-center" style={{ fontWeight: 600 }}>
+              {new Date(venc.fecha_limite).toLocaleDateString()}
+              <br />
+              <small>{venc.fecha_limite ? new Date(venc.fecha_limite).toISOString().substring(11, 16) : ''}</small>
+            </td>
             <td className="text-center">
               <span
                 className={`badge ${venc.estado === "cumplido"
@@ -206,15 +210,9 @@ const VencimientosList = () => {
               </span>
             </td>
             <td className="text-center" title={`Prioridad: ${venc.prioridad}`}>
-              {getPrioridadIcono(venc.prioridad)}
-            </td>
-            <td className="text-center" title="Tiempo restante">
-              {getSemaforo(venc.fecha_limite, venc.estado.toUpperCase())}
-            </td>
-            <td className="text-center" style={{ fontWeight: 600 }}>
-              {new Date(venc.fecha_limite).toLocaleDateString()}
-              <br />
-              <small>{venc.fecha_limite ? new Date(venc.fecha_limite).toISOString().substring(11, 16) : ''}</small>
+              <div style={{ display: 'inline-flex', justifyContent: 'center', width: '100%' }}>
+                {getPrioridadIcono(venc.prioridad)}
+              </div>
             </td>
             <td title={venc.titulo}>
               {venc.titulo}

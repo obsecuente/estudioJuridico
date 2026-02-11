@@ -88,14 +88,36 @@ const Abogado = sequelize.define(
         },
       },
     },
+
+    // Campos para recuperación de contraseña
+    reset_password_token: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+    },
+    reset_password_expires: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+
+    // Para asistentes: ID del abogado al que están asignados
+    id_abogado_supervisor: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: "abogados",
+        key: "id_abogado",
+      },
+      comment: "Solo para rol=asistente: abogado al que reporta",
+    },
   },
+
   {
     tableName: "abogados",
     timestamps: false,
     scopes: {
       defaultScope: {
         attributes: {
-          exclude: ["password"],
+          exclude: ["password", "reset_password_token", "reset_password_expires"],
         },
       },
       withPassword: {
@@ -106,6 +128,11 @@ const Abogado = sequelize.define(
       withRefreshToken: {
         attributes: {
           include: ["refresh_token", "refresh_token_expires"],
+        },
+      },
+      withResetToken: {
+        attributes: {
+          include: ["reset_password_token", "reset_password_expires"],
         },
       },
     },

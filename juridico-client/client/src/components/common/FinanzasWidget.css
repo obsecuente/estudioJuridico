@@ -1,0 +1,184 @@
+/* src/components/common/FinanzasWidget.css */
+
+.finanzas-widget {
+    background: linear-gradient(135deg, #1a1f2b 0%, #2d3748 100%);
+    border-radius: 16px;
+    border-left: 5px solid #f1c40f;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+}
+
+.finanzas-widget-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.finanzas-widget-header h3 {
+    margin: 0;
+    font-size: 14px;
+    color: #f1c40f;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.finanzas-widget-header a {
+    color: #94a3b8;
+    font-size: 12px;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.finanzas-widget-header a:hover {
+    color: #f1c40f;
+}
+
+.finanzas-widget-body {
+    padding: 20px;
+}
+
+.finanzas-metrics {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.finanzas-metric {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    transition: all 0.3s ease;
+}
+
+.finanzas-metric:hover {
+    background: rgba(241, 196, 15, 0.1);
+    border-color: rgba(241, 196, 15, 0.3);
+    transform: translateY(-2px);
+}
+
+.finanzas-metric-label {
+    font-size: 11px;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.finanzas-metric-value {
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+}
+
+.finanzas-metric-value.positive {
+    color: #22c55e;
+}
+
+.finanzas-metric-value.warning {
+    color: #f1c40f;
+}
+
+.finanzas-metric-value.danger {
+    color: #ef4444;
+}
+
+/* Ratio de Cobrabilidad */
+.cobrabilidad-section {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+    padding: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.cobrabilidad-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.cobrabilidad-label {
+    font-size: 12px;
+    color: #94a3b8;
+    text-transform: uppercase;
+}
+
+.cobrabilidad-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: #f1c40f;
+}
+
+.cobrabilidad-bar {
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.cobrabilidad-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.8s ease-out;
+    background: linear-gradient(90deg, #22c55e, #f1c40f);
+}
+
+.cobrabilidad-fill.low {
+    background: linear-gradient(90deg, #ef4444, #f97316);
+}
+
+.cobrabilidad-fill.medium {
+    background: linear-gradient(90deg, #f97316, #f1c40f);
+}
+
+.cobrabilidad-fill.high {
+    background: linear-gradient(90deg, #22c55e, #10b981);
+}
+
+/* JUS Info */
+.jus-info {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    color: #64748b;
+}
+
+.jus-value {
+    color: #f1c40f;
+    font-weight: 600;
+}
+
+/* Loading */
+.finanzas-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    color: #64748b;
+    gap: 12px;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .finanzas-metrics {
+        grid-template-columns: 1fr;
+    }
+
+    .finanzas-metric-value {
+        font-size: 18px;
+    }
+}

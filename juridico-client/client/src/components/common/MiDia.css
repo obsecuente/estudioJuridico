@@ -1,0 +1,705 @@
+/* ═══ MI DÍA - WIDGET PRINCIPAL ═══ */
+.midia-widget {
+    background: linear-gradient(145deg, rgba(30, 30, 40, 0.95), rgba(15, 15, 25, 0.98));
+    border-radius: 16px;
+    border: 1px solid rgba(212, 175, 55, 0.15);
+    padding: 0;
+    overflow: hidden;
+}
+
+/* ═══ HEADER ═══ */
+.midia-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 24px;
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.12), rgba(212, 175, 55, 0.04));
+    border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.midia-header h3 {
+    margin: 0;
+    font-size: 1.15rem;
+    color: #f5f5f5;
+    font-weight: 600;
+}
+
+.midia-fecha {
+    color: #d4af37;
+    font-weight: 400;
+    font-size: 0.95rem;
+}
+
+.midia-stats {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.midia-stat {
+    font-size: 0.75rem;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-weight: 500;
+}
+
+.midia-stat.atrasadas {
+    background: rgba(239, 68, 68, 0.15);
+    color: #f87171;
+}
+
+.midia-stat.pendientes {
+    background: rgba(59, 130, 246, 0.15);
+    color: #60a5fa;
+}
+
+.midia-stat.completadas {
+    background: rgba(34, 197, 94, 0.15);
+    color: #4ade80;
+}
+
+/* ═══ FORMULARIO DE INPUT RÁPIDO ═══ */
+.midia-form {
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.midia-input-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.midia-input-row input[type="text"] {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #f5f5f5;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.midia-input-row input[type="text"]:focus {
+    border-color: rgba(212, 175, 55, 0.5);
+}
+
+.midia-input-row input[type="text"]::placeholder {
+    color: rgba(255, 255, 255, 0.3);
+}
+
+.midia-advanced-toggle {
+    width: 38px;
+    height: 38px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.midia-advanced-toggle:hover,
+.midia-advanced-toggle.active {
+    background: rgba(212, 175, 55, 0.15);
+    border-color: rgba(212, 175, 55, 0.3);
+}
+
+.midia-input-row button[type="submit"] {
+    background: linear-gradient(135deg, #d4af37, #b8962e);
+    border: none;
+    color: #1a1a2e;
+    padding: 10px 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    transition: opacity 0.2s;
+    flex-shrink: 0;
+}
+
+.midia-input-row button[type="submit"]:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.midia-input-row button[type="submit"] svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* ═══ PANEL AVANZADO ═══ */
+.midia-advanced-panel {
+    margin-top: 12px;
+    padding: 14px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 10px;
+    animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.midia-advanced-row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+
+.midia-advanced-row:last-child {
+    margin-bottom: 0;
+}
+
+.midia-field {
+    flex: 1;
+    min-width: 180px;
+}
+
+.midia-field label {
+    display: block;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.5);
+    margin-bottom: 6px;
+    font-weight: 500;
+}
+
+.midia-field input[type="date"],
+.midia-field input[type="number"] {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #f5f5f5;
+    padding: 7px 10px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    outline: none;
+    box-sizing: border-box;
+}
+
+/* Prioridad selector */
+.midia-prioridad-selector {
+    display: flex;
+    gap: 6px;
+}
+
+.midia-prio-btn {
+    flex: 1;
+    padding: 6px 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.78rem;
+    font-weight: 500;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.04);
+    color: #ccc;
+    transition: all 0.15s;
+}
+
+.midia-prio-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.midia-prio-btn.prio-alta.active {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.5);
+    color: #f87171;
+}
+
+.midia-prio-btn.prio-media.active {
+    background: rgba(234, 179, 8, 0.2);
+    border-color: rgba(234, 179, 8, 0.5);
+    color: #fbbf24;
+}
+
+.midia-prio-btn.prio-baja.active {
+    background: rgba(148, 163, 184, 0.15);
+    border-color: rgba(148, 163, 184, 0.4);
+    color: #94a3b8;
+}
+
+/* Categoría chips */
+.midia-categorias-chips {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.midia-cat-chip {
+    padding: 5px 10px;
+    border-radius: 16px;
+    cursor: pointer;
+    font-size: 0.75rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.04);
+    color: #ccc;
+    transition: all 0.15s;
+    white-space: nowrap;
+}
+
+.midia-cat-chip:hover {
+    background: rgba(212, 175, 55, 0.1);
+}
+
+.midia-cat-chip.active {
+    background: rgba(212, 175, 55, 0.2);
+    border-color: rgba(212, 175, 55, 0.5);
+    color: #d4af37;
+}
+
+.midia-cat-custom {
+    width: 80px;
+    padding: 5px 8px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.04);
+    color: #f5f5f5;
+    font-size: 0.75rem;
+    outline: none;
+}
+
+/* ═══ LISTA PRINCIPAL ═══ */
+.midia-list {
+    padding: 4px 0;
+}
+
+.midia-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 40px 0;
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 0.9rem;
+}
+
+.midia-loading svg {
+    width: 18px;
+    height: 18px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.midia-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 0.9rem;
+}
+
+/* ═══ SECCIONES POR URGENCIA ═══ */
+.midia-section {
+    margin-bottom: 2px;
+}
+
+.midia-section-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 20px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.midia-section-header svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* URGENTE - Plazo de Gracia (rojo pulsante) */
+.midia-section-urgente {
+    background: rgba(220, 38, 38, 0.15);
+    color: #fca5a5;
+    animation: pulseRed 2s ease-in-out infinite;
+}
+
+@keyframes pulseRed {
+
+    0%,
+    100% {
+        background: rgba(220, 38, 38, 0.15);
+    }
+
+    50% {
+        background: rgba(220, 38, 38, 0.25);
+    }
+}
+
+/* VENCE HOY (naranja) */
+.midia-section-vence-hoy {
+    background: rgba(234, 88, 12, 0.12);
+    color: #fdba74;
+}
+
+/* Agenda (azul) */
+.midia-section-agenda {
+    background: rgba(59, 130, 246, 0.12);
+    color: #93c5fd;
+}
+
+/* Vencimientos (rojo suave) */
+.midia-section-vencimiento {
+    background: rgba(239, 68, 68, 0.12);
+    color: #f87171;
+}
+
+/* PENDIENTES (azul) */
+.midia-section-pendientes {
+    background: rgba(59, 130, 246, 0.08);
+    color: #93c5fd;
+}
+
+/* ATRASADAS (rojo tenue) */
+.midia-section-atrasadas {
+    background: rgba(239, 68, 68, 0.12);
+    color: #fca5a5;
+}
+
+/* ═══ TAREA INDIVIDUAL ═══ */
+.midia-tarea {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 20px;
+    border-left: 4px solid transparent;
+    transition: all 0.2s;
+}
+
+.midia-tarea:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+/* Barra lateral por prioridad */
+.midia-tarea.prioridad-alta {
+    border-left-color: #ef4444;
+}
+
+.midia-tarea.prioridad-media {
+    border-left-color: #eab308;
+}
+
+.midia-tarea.prioridad-baja {
+    border-left-color: #64748b;
+}
+
+/* Plazo de gracia: rojo furioso */
+.midia-tarea.plazo-gracia {
+    border-left-color: #dc2626;
+    background: rgba(220, 38, 38, 0.08);
+    animation: pulseRedBg 2s ease-in-out infinite;
+}
+
+@keyframes pulseRedBg {
+
+    0%,
+    100% {
+        background: rgba(220, 38, 38, 0.06);
+    }
+
+    50% {
+        background: rgba(220, 38, 38, 0.12);
+    }
+}
+
+/* Evento del día */
+.midia-tarea.midia-evento {
+    border-left-color: #3b82f6;
+}
+
+/* Vencimiento del día */
+.midia-tarea.midia-vencimiento {
+    border-left-color: #ef4444;
+}
+
+/* ═══ CHECKBOX ═══ */
+.midia-checkbox {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    cursor: pointer;
+    flex-shrink: 0;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.midia-checkbox:hover {
+    border-color: #4ade80;
+    background: rgba(74, 222, 128, 0.1);
+}
+
+/* ✓ animado al marcar */
+.midia-checkbox.checked {
+    border-color: #4ade80;
+    background: #4ade80;
+    animation: checkPop 0.3s ease;
+}
+
+.midia-checkbox.checked::after {
+    content: "✓";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #1a1a2e;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+@keyframes checkPop {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.3);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* ═══ CONTENIDO TAREA ═══ */
+.midia-tarea-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.midia-tarea-texto {
+    color: #e5e5e5;
+    font-size: 0.88rem;
+    line-height: 1.3;
+    word-break: break-word;
+    transition: all 0.4s ease;
+}
+
+/* ═══ SATISFACCIÓN DEL TACHADO ═══ */
+.midia-tarea.completando .midia-tarea-texto.tachado {
+    text-decoration: line-through;
+    color: rgba(255, 255, 255, 0.3);
+    animation: strikeThrough 0.6s ease forwards;
+}
+
+@keyframes strikeThrough {
+    0% {
+        text-decoration-color: transparent;
+        color: #e5e5e5;
+    }
+
+    50% {
+        text-decoration-color: #4ade80;
+        color: #a5a5a5;
+    }
+
+    100% {
+        text-decoration-color: rgba(255, 255, 255, 0.3);
+        color: rgba(255, 255, 255, 0.3);
+    }
+}
+
+.midia-tarea.completando {
+    opacity: 0.7;
+    transform: scale(0.98);
+    transition: all 0.5s ease;
+}
+
+/* ═══ META TAGS ═══ */
+.midia-tarea-meta {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+    flex-wrap: wrap;
+}
+
+.midia-tarea-meta span {
+    font-size: 0.72rem;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.midia-tarea-meta .caso {
+    color: #93c5fd;
+    background: rgba(59, 130, 246, 0.12);
+}
+
+.midia-tarea-meta .caso-link {
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.midia-tarea-meta .caso-link:hover {
+    text-decoration: underline;
+    background: rgba(59, 130, 246, 0.25);
+    color: #bfdbfe;
+}
+
+.midia-tarea-meta .vencida {
+    color: #f87171;
+    background: rgba(239, 68, 68, 0.15);
+}
+
+.midia-tarea-meta .hoy {
+    color: #fdba74;
+    background: rgba(234, 88, 12, 0.15);
+}
+
+.midia-tarea-meta .manana {
+    color: #fbbf24;
+    background: rgba(234, 179, 8, 0.12);
+}
+
+.midia-tarea-meta .hora-limite {
+    color: #f87171;
+    background: rgba(239, 68, 68, 0.12);
+}
+
+.midia-tarea-meta .evento-tipo {
+    color: #60a5fa;
+    background: rgba(59, 130, 246, 0.15);
+    font-weight: 500;
+}
+
+.midia-tarea-meta .vencimiento-tipo {
+    color: #f87171;
+    background: rgba(239, 68, 68, 0.15);
+    font-weight: 500;
+}
+
+.midia-categoria {
+    font-size: 0.72rem;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: rgba(212, 175, 55, 0.12);
+    color: #d4af37;
+}
+
+/* ═══ ACCIONES DE TAREA ═══ */
+.midia-tarea-actions {
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.15s;
+    flex-shrink: 0;
+}
+
+.midia-tarea:hover .midia-tarea-actions {
+    opacity: 1;
+}
+
+.midia-gracia-btn {
+    width: 30px;
+    height: 30px;
+    background: rgba(220, 38, 38, 0.12);
+    border: 1px solid rgba(220, 38, 38, 0.3);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+}
+
+.midia-gracia-btn:hover {
+    background: rgba(220, 38, 38, 0.25);
+    border-color: rgba(220, 38, 38, 0.5);
+}
+
+.midia-tarea-delete {
+    width: 30px;
+    height: 30px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    color: rgba(255, 255, 255, 0.3);
+}
+
+.midia-tarea-delete:hover {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: rgba(239, 68, 68, 0.3);
+    color: #f87171;
+}
+
+.midia-tarea-delete svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* ═══ RESPONSIVE ═══ */
+@media (max-width: 768px) {
+    .midia-header {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 14px 16px;
+    }
+
+    .midia-form {
+        padding: 12px 14px;
+    }
+
+    .midia-input-row {
+        flex-wrap: wrap;
+    }
+
+    .midia-input-row input[type="text"] {
+        flex: 1 1 100%;
+    }
+
+    .midia-advanced-row {
+        flex-direction: column;
+    }
+
+    .midia-tarea {
+        padding: 10px 14px;
+    }
+
+    .midia-tarea-actions {
+        opacity: 1;
+    }
+
+    .midia-prioridad-selector {
+        flex-wrap: wrap;
+    }
+}

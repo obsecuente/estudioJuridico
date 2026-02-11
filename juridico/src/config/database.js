@@ -128,7 +128,7 @@ export const testConnection = async () => {
 
 export const syncDatabase = async () => {
   try {
-    // Como ya tienes las tablas creadas, usa sin opciones
+    // Sin alter para evitar modificaciones accidentales en producción
     await sequelize.sync();
     console.log(" Modelos sincronizados con la base de datos [database.js]");
   } catch (error) {
@@ -139,5 +139,7 @@ export const syncDatabase = async () => {
     );
   }
 };
+
+
 
 export default sequelize;

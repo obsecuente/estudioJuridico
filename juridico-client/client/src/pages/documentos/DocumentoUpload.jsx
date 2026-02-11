@@ -13,6 +13,7 @@ const DocumentoUpload = ({ onClose, showToast, idCasoPredefinido = null }) => {
   const [loadingCasos, setLoadingCasos] = useState(true);
   const [dragActive, setDragActive] = useState(false);
   const [error, setError] = useState("");
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   useEffect(() => {
     cargarCasos();
@@ -63,10 +64,10 @@ const DocumentoUpload = ({ onClose, showToast, idCasoPredefinido = null }) => {
   };
 
   const handleFileChange = (file) => {
-    // Validar tamaño (max 10MB)
-    const maxSize = 10 * 1024 * 1024; // 10MB
+    // Validar tamaño (max 50MB)
+    const maxSize = 50 * 1024 * 1024; // 50MB
     if (file.size > maxSize) {
-      setError("El archivo es muy grande. Máximo 10MB.");
+      setError("El archivo es muy grande. Máximo 50MB.");
       return;
     }
 
@@ -105,6 +106,7 @@ const DocumentoUpload = ({ onClose, showToast, idCasoPredefinido = null }) => {
     }
 
     setLoading(true);
+    setUploadProgress(0);
 
     try {
       const formData = new FormData();
@@ -115,6 +117,13 @@ const DocumentoUpload = ({ onClose, showToast, idCasoPredefinido = null }) => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
+        timeout: 300000, // 5 minutos para archivos grandes
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total
+          );
+          setUploadProgress(percentCompleted);
+        },
       });
 
       showToast("Documento subido exitosamente", "success");
@@ -122,13 +131,16 @@ const DocumentoUpload = ({ onClose, showToast, idCasoPredefinido = null }) => {
     } catch (err) {
       console.error("Error al subir documento:", err);
 
-      if (err.response?.data?.error) {
+      if (err.code === "ECONNABORTED") {
+        showToast("Tiempo de espera agotado. Intentá de nuevo.", "error");
+      } else if (err.response?.data?.error) {
         showToast(err.response.data.error, "error");
       } else {
         showToast("Error al subir el documento", "error");
       }
     } finally {
       setLoading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -148,9 +160,8 @@ const DocumentoUpload = ({ onClose, showToast, idCasoPredefinido = null }) => {
           <div className="form-body">
             {/* Drop zone */}
             <div
-              className={`drop-zone ${dragActive ? "active" : ""} ${
-                archivo ? "has-file" : ""
-              }`}
+              className={`drop-zone ${dragActive ? "active" : ""} ${archivo ? "has-file" : ""
+                }`}
               onDragEnter={handleDrag}
               onDragLeave={handleDrag}
               onDragOver={handleDrag}
@@ -184,7 +195,7 @@ const DocumentoUpload = ({ onClose, showToast, idCasoPredefinido = null }) => {
                     Arrastrá el archivo acá o hacé click para seleccionar
                   </p>
                   <p className="drop-hint">
-                    PDF, Word, Excel, Imágenes (Máx. 10MB)
+                    PDF, Word, Excel, Imágenes (Máx. 50MB)
                   </p>
                   <input
                     type="file"
@@ -200,6 +211,19 @@ const DocumentoUpload = ({ onClose, showToast, idCasoPredefinido = null }) => {
               )}
             </div>
 
+            {/* Barra de progreso */}
+            {loading && uploadProgress > 0 && (
+              <div className="upload-progress-container">
+                <div className="upload-progress-bar">
+                  <div
+                    className="upload-progress-fill"
+                    style={{ width: `${uploadProgress}%` }}
+                  ></div>
+                </div>
+                <span className="upload-progress-text">{uploadProgress}%</span>
+              </div>
+            )}
+
             {error && <div className="error-message-upload">{error}</div>}
 
             {/* Caso */}
@@ -213,9 +237,8 @@ const DocumentoUpload = ({ onClose, showToast, idCasoPredefinido = null }) => {
                   { value: "", label: "Seleccionar caso..." },
                   ...casos.map((c) => ({
                     value: String(c.id_caso),
-                    label: `#${c.id_caso} - ${c.cliente?.nombre || ""} ${
-                      c.cliente?.apellido || ""
-                    }`,
+                    label: `#${c.id_caso} - ${c.cliente?.nombre || ""} ${c.cliente?.apellido || ""
+                      }`,
                   })),
                 ]}
                 value={idCaso ? String(idCaso) : ""}
@@ -240,7 +263,7 @@ const DocumentoUpload = ({ onClose, showToast, idCasoPredefinido = null }) => {
               className="btn-submit"
               disabled={loading || !archivo || !idCaso}
             >
-              {loading ? "Subiendo..." : "Subir Documento"}
+              {loading ? `Subiendo... ${uploadProgress}%` : "Subir Documento"}
             </button>
           </div>
         </form>

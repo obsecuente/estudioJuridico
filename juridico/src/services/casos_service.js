@@ -1,5 +1,6 @@
 import { Caso, Cliente, Abogado, Documento } from "../models/index.js";
 import { Op } from "sequelize";
+import finanzasService from "./finanzas_service.js";
 
 class AppError extends Error {
   constructor(message, statusCode = 500) {
@@ -8,22 +9,32 @@ class AppError extends Error {
     this.name = "AppError";
   }
 }
-export const crear = async (datosCaso) => {
-  /**
-   * Crea un nuevo caso
-   *
-   * @param {Object} datosCaso - Datos del caso
-   * @param {string} datosCaso.descripcion - Descripción del caso (OBLIGATORIO)
-   * @param {number} datosCaso.id_cliente - ID del cliente (OBLIGATORIO)
-   * @param {number} datosCaso.id_abogado - ID del abogado (OBLIGATORIO)
-   * @param {string} datosCaso.estado - Estado: abierto/cerrado (opcional, default: abierto)
-   * @param {string} datosCaso.fecha_inicio - Fecha inicio (opcional, default: hoy)
-   * @returns {Promise<Object>} Caso creado con relaciones
-   * @throws {AppError} Si faltan datos o el cliente/abogado no existe
-   */
 
-  const { descripcion, id_cliente, id_abogado, estado, fecha_inicio } =
-    datosCaso;
+/**
+ * Crea un nuevo caso con opción de registrar apertura de carpeta automática
+ *
+ * @param {Object} datosCaso - Datos del caso
+ * @param {string} datosCaso.descripcion - Descripción del caso (OBLIGATORIO)
+ * @param {number} datosCaso.id_cliente - ID del cliente (OBLIGATORIO)
+ * @param {number} datosCaso.id_abogado - ID del abogado (OBLIGATORIO)
+ * @param {string} datosCaso.estado - Estado: abierto/cerrado (opcional, default: abierto)
+ * @param {string} datosCaso.fecha_inicio - Fecha inicio (opcional, default: hoy)
+ * @param {Object} datosCaso.finanzas - Opciones financieras
+ * @param {boolean} datosCaso.finanzas.registrarApertura - Si true, registra apertura de carpeta
+ * @param {number} datosCaso.finanzas.montoJus - JUS para apertura (default: 3, Ley 1594 NQN)
+ * @param {string} datosCaso.finanzas.provincia - Provincia para JUS (default: NQN)
+ * @returns {Promise<Object>} Caso creado con relaciones y movimiento financiero si aplica
+ * @throws {AppError} Si faltan datos o el cliente/abogado no existe
+ */
+export const crear = async (datosCaso) => {
+  const {
+    descripcion,
+    id_cliente,
+    id_abogado,
+    estado,
+    fecha_inicio,
+    finanzas = {},
+  } = datosCaso;
 
   // validar CAMPOS OBLIGATORIOS
 
@@ -79,6 +90,27 @@ export const crear = async (datosCaso) => {
     );
   }
 
+  // REGISTRAR APERTURA DE CARPETA (si está habilitado)
+  let movimientoApertura = null;
+
+  if (finanzas.registrarApertura === true) {
+    const montoJus = finanzas.montoJus || 3; // Default: 3 JUS (Ley 1594 NQN)
+    const provincia = finanzas.provincia || "NQN";
+
+    try {
+      movimientoApertura = await finanzasService.registrarAperturaCarpeta(
+        nuevoCaso.id_caso,
+        id_cliente,
+        montoJus,
+        provincia
+      );
+    } catch (error) {
+      // Log pero no fallar la creación del caso
+      console.error("Error al registrar apertura de carpeta:", error.message);
+      // El caso ya se creó, retornamos con advertencia
+    }
+  }
+
   // Traer el caso completo con relaciones
   const casoCompleto = await Caso.findByPk(nuevoCaso.id_caso, {
     include: [
@@ -94,6 +126,11 @@ export const crear = async (datosCaso) => {
       },
     ],
   });
+
+  // Agregar movimiento de apertura al resultado si existe
+  if (movimientoApertura) {
+    casoCompleto.dataValues.movimiento_apertura = movimientoApertura;
+  }
 
   return casoCompleto;
 };
@@ -417,8 +454,7 @@ export const eliminar = async (id) => {
     const textoDocumentos =
       tieneDocumentos === 1 ? "1 documento" : `${tieneDocumentos} documentos`;
     throw new AppError(
-      `No se puede eliminar el caso porque tiene ${textoDocumentos} asociado${
-        tieneDocumentos === 1 ? "" : "s"
+      `No se puede eliminar el caso porque tiene ${textoDocumentos} asociado${tieneDocumentos === 1 ? "" : "s"
       }. Primero eliminá los documentos.`,
       409
     );

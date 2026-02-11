@@ -2,7 +2,7 @@ import { useState, useEffect, useContext } from "react";
 import { Link } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import api from "../../services/api";
-import Toast from "../../components/common/Toast"; // ← CAMBIO
+import Toast from "../../components/common/Toast";
 import ClienteForm from "../clientes/ClienteForm";
 import ConsultaForm from "../consultas/ConsultaForm";
 import CasoForm from "../casos/CasoForm";
@@ -11,6 +11,7 @@ import EventoForm from "../eventos/EventoForm";
 import VencimientoForm from "../vencimientos/VencimientoForm";
 import eventosService from "../../services/eventos.service";
 import vencimientosService from "../../services/vencimientos.service";
+import MiDia from "../../components/common/MiDia";
 import "./Home.css";
 import {
   AddIcon,
@@ -20,34 +21,28 @@ import {
   DocumentosIcon,
   LoginIcon,
   LogoutIcon,
-  NextIcon,
   PencilIcon,
   TrashICon,
-  EventIcon,
-  AlarmIcon,
   CalendarIcon,
+  AlarmIcon,
   YellowState,
-  RedState, // Asumiendo que existe o lo creamos inline si no
+  RedState,
   GreenState,
+  DocumentosIcon as DocIcon,
 } from "../../components/common/Icons";
 
 const Home = () => {
   const { user } = useContext(AuthContext);
-  const [stats, setStats] = useState({
-    clientes: 0,
-    consultas: 0,
-    casos: 0,
-    documentos: 0,
-  });
   const [loading, setLoading] = useState(true);
   const [actividadReciente, setActividadReciente] = useState([]);
   const [loadingActividad, setLoadingActividad] = useState(true);
+  const [actividadExpandida, setActividadExpandida] = useState(false);
 
   const [proximosEventos, setProximosEventos] = useState([]);
   const [proximosVencimientos, setProximosVencimientos] = useState([]);
   const [loadingWidgets, setLoadingWidgets] = useState(true);
 
-  const [toast, setToast] = useState(null); // ← AGREGAR
+  const [toast, setToast] = useState(null);
 
   // Estados de modales
   const [showClienteModal, setShowClienteModal] = useState(false);
@@ -58,44 +53,18 @@ const Home = () => {
   const [showVencimientoModal, setShowVencimientoModal] = useState(false);
 
   useEffect(() => {
-    cargarEstadisticas();
     cargarActividadReciente();
     cargarWidgets();
   }, []);
 
-  // ← AGREGAR función showToast
   const showToast = (message, type = "success") => {
     setToast({ message, type });
-  };
-
-  const cargarEstadisticas = async () => {
-    try {
-      setLoading(true);
-      const [clientesRes, consultasRes, casosRes, documentosRes] =
-        await Promise.all([
-          api.get("/clientes?limit=1"),
-          api.get("/consultas?limit=1"),
-          api.get("/casos?limit=1"),
-          api.get("/documentos?limit=1"),
-        ]);
-
-      setStats({
-        clientes: clientesRes.data.pagination?.total || 0,
-        consultas: consultasRes.data.pagination?.total || 0,
-        casos: casosRes.data.pagination?.total || 0,
-        documentos: documentosRes.data.pagination?.total || 0,
-      });
-    } catch (err) {
-      console.error("Error al cargar estadísticas:", err);
-    } finally {
-      setLoading(false);
-    }
   };
 
   const cargarActividadReciente = async () => {
     setLoadingActividad(true);
     try {
-      const response = await api.get("/auditoria/reciente?limit=8");
+      const response = await api.get("/auditoria/reciente?limit=10");
       setActividadReciente(response.data.data);
     } catch (error) {
       console.error("Error al cargar actividad reciente:", error);
@@ -108,8 +77,8 @@ const Home = () => {
     setLoadingWidgets(true);
     try {
       const [eventosRes, vencimientosRes] = await Promise.all([
-        eventosService.getProximos(7),
-        vencimientosService.getProximos(7)
+        eventosService.getProximos(10),
+        vencimientosService.getProximos(10)
       ]);
       setProximosEventos(eventosRes.data || []);
       setProximosVencimientos(vencimientosRes.data || []);
@@ -123,48 +92,32 @@ const Home = () => {
   // Funciones para cerrar modales
   const handleCloseCliente = (reload) => {
     setShowClienteModal(false);
-    if (reload) {
-      cargarEstadisticas();
-      cargarActividadReciente();
-    }
+    if (reload) cargarActividadReciente();
   };
 
   const handleCloseConsulta = (reload) => {
     setShowConsultaModal(false);
-    if (reload) {
-      cargarEstadisticas();
-      cargarActividadReciente();
-    }
+    if (reload) cargarActividadReciente();
   };
 
   const handleCloseCaso = (reload) => {
     setShowCasoModal(false);
-    if (reload) {
-      cargarEstadisticas();
-      cargarActividadReciente();
-    }
+    if (reload) cargarActividadReciente();
   };
 
   const handleCloseDocumento = (reload) => {
     setShowDocumentoModal(false);
-    if (reload) {
-      cargarEstadisticas();
-      cargarActividadReciente();
-    }
+    if (reload) cargarActividadReciente();
   };
 
   const handleCloseEvento = (reload) => {
     setShowEventoModal(false);
-    if (reload) {
-      cargarWidgets();
-    }
+    if (reload) cargarWidgets();
   };
 
   const handleCloseVencimiento = (reload) => {
     setShowVencimientoModal(false);
-    if (reload) {
-      cargarWidgets();
-    }
+    if (reload) cargarWidgets();
   };
 
   // Formatear fecha relativa
@@ -198,15 +151,13 @@ const Home = () => {
       case "LOGOUT":
         return <LogoutIcon />;
       default:
-        return <DocumentosIcon />;
+        return <DocIcon />;
     }
   };
 
   // Obtener descripción de la acción
   const obtenerDescripcionAccion = (registro) => {
     const { accion, entidad, id_entidad, usuario } = registro;
-
-    // Nombre del usuario que hizo la acción
     const nombreUsuario = usuario
       ? `${usuario.nombre} ${usuario.apellido}`
       : "Usuario desconocido";
@@ -226,32 +177,32 @@ const Home = () => {
     return `${nombreUsuario} ${verbo} ${entidad.toLowerCase()} #${id_entidad}`;
   };
 
-  const statsData = [
-    {
-      title: "Clientes",
-      value: stats.clientes,
-      icon: <ClientIcon />,
-      link: "/dashboard/clientes",
-    },
-    {
-      title: "Consultas",
-      value: stats.consultas,
-      icon: <ConsultasIcon />,
-      link: "/dashboard/consultas",
-    },
-    {
-      title: "Casos",
-      value: stats.casos,
-      icon: <CasosIcon />,
-      link: "/dashboard/casos",
-    },
-    {
-      title: "Documentos",
-      value: stats.documentos,
-      icon: <DocumentosIcon />,
-      link: "/dashboard/documentos",
-    },
-  ];
+  // Tipo de evento mapeado
+  const tipoEventoLabel = {
+    audiencia: "Audiencia",
+    reunion: "Reunión",
+    tarea: "Tarea",
+    vencimiento: "Vencimiento",
+    otro: "Otro",
+  };
+
+  const tipoVencimientoLabel = {
+    contestacion_demanda: "Contestación de Demanda",
+    apelacion: "Apelación",
+    recurso: "Recurso",
+    traslado: "Traslado",
+    ofrecimiento_prueba: "Ofrecimiento de Prueba",
+    alegato: "Alegato",
+    expresion_agravios: "Expresión de Agravios",
+    prescripcion: "Prescripción",
+    caducidad: "Caducidad",
+    otro: "Otro",
+  };
+
+  // Actividad reciente visible (colapsable)
+  const actividadVisible = actividadExpandida
+    ? actividadReciente
+    : actividadReciente.slice(0, 3);
 
   return (
     <div className="home-container">
@@ -260,173 +211,121 @@ const Home = () => {
         <p>Panel de gestión para tu estudio jurídico</p>
       </div>
 
-      <div className="stats-grid">
-        {loading
-          ? [...Array(4)].map((_, i) => (
-            <div key={i} className="stat-card skeleton">
-              <div className="skeleton-icon"></div>
-              <div className="skeleton-text"></div>
-            </div>
-          ))
-          : statsData.map((stat, index) => (
-            <Link to={stat.link} key={index} className="stat-card">
-              <div className="stat-icon">{stat.icon}</div>
-              <div className="stat-info">
-                <h3>{stat.title}</h3>
-                <p className="stat-value">{stat.value}</p>
-                <span className="stat-link">
-                  VER TODOS <NextIcon />
-                </span>
-              </div>
-            </Link>
-          ))}
+      {/* ═══════════ MI DÍA - TO DO LIST (Protagonista) ═══════════ */}
+      <div className="dashboard-midia-hero">
+        <MiDia />
       </div>
 
+      {/* ═══════════ AGENDA + VENCIMIENTOS (10 días) ═══════════ */}
+      <div className="dashboard-lists-grid">
+
+        {/* Agenda últimos 10 días */}
+        <div className="midia-widget">
+          <div className="midia-header">
+            <h3><CalendarIcon /> Agenda (10 días)</h3>
+            <Link to="/dashboard/eventos" className="midia-header-link">Ver todo →</Link>
+          </div>
+          <div className="midia-list">
+            {loadingWidgets ? (
+              <div className="midia-loading">
+                <span>Cargando eventos...</span>
+              </div>
+            ) : proximosEventos.length === 0 ? (
+              <div className="midia-empty">📅 No hay eventos próximos</div>
+            ) : (
+              proximosEventos.map((evt) => (
+                <div key={evt.id_evento} className="midia-tarea midia-evento">
+                  <div className="midia-tarea-content" style={{ flex: 1 }}>
+                    <div className="midia-tarea-texto">{evt.titulo}</div>
+                    <div className="midia-tarea-meta">
+                      <span>📅 {new Date(evt.fecha_inicio).toLocaleDateString("es-AR")}</span>
+                      {evt.hora_inicio && (
+                        <span>⏰ {evt.hora_inicio.substring(0, 5)}</span>
+                      )}
+                    </div>
+                  </div>
+                  <span className="midia-badge">
+                    {tipoEventoLabel[evt.tipo] || evt.tipo}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Vencimientos últimos 10 días */}
+        <div className="midia-widget">
+          <div className="midia-header">
+            <h3><AlarmIcon /> Vencimientos (10 días)</h3>
+            <Link to="/dashboard/vencimientos" className="midia-header-link">Ver todo →</Link>
+          </div>
+          <div className="midia-list">
+            {loadingWidgets ? (
+              <div className="midia-loading">
+                <span>Cargando vencimientos...</span>
+              </div>
+            ) : proximosVencimientos.length === 0 ? (
+              <div className="midia-empty">⏰ No hay vencimientos próximos</div>
+            ) : (
+              proximosVencimientos.map((venc) => (
+                <div key={venc.id_vencimiento} className="midia-tarea">
+                  <div className="midia-prioridad-indicator">
+                    {venc.prioridad === "alta" ? (
+                      <RedState />
+                    ) : venc.prioridad === "baja" ? (
+                      <GreenState />
+                    ) : (
+                      <YellowState />
+                    )}
+                  </div>
+                  <div className="midia-tarea-content" style={{ flex: 1 }}>
+                    <div className="midia-tarea-texto">{venc.titulo}</div>
+                    <div className="midia-tarea-meta">
+                      <span>📅 Vence: {new Date(venc.fecha_limite).toLocaleDateString("es-AR")}</span>
+                    </div>
+                  </div>
+                  <span className="midia-badge">
+                    {tipoVencimientoLabel[venc.tipo_vencimiento] || venc.tipo_vencimiento}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ═══════════ ACCIONES RÁPIDAS ═══════════ */}
       <div className="quick-actions">
         <h2>Acciones Rápidas</h2>
         <div className="actions-grid">
           <button onClick={() => setShowEventoModal(true)} className="action-btn">
-            <span className="action-icon">
-              <CalendarIcon />
-            </span>
-            <span>Nuevo Evento</span>
+            <span className="action-icon"><CalendarIcon /></span>
+            <span>Agendar</span>
           </button>
           <button onClick={() => setShowVencimientoModal(true)} className="action-btn">
-            <span className="action-icon">
-              <AlarmIcon />
-            </span>
-            <span>Nuevo Vencimiento</span>
+            <span className="action-icon"><AlarmIcon /></span>
+            <span>Vencimiento</span>
           </button>
-          <button
-            onClick={() => setShowClienteModal(true)}
-            className="action-btn"
-          >
-            <span className="action-icon">
-              <ClientIcon />
-            </span>
+          <button onClick={() => setShowClienteModal(true)} className="action-btn">
+            <span className="action-icon"><ClientIcon /></span>
             <span>Nuevo Cliente</span>
           </button>
-          <button
-            onClick={() => setShowConsultaModal(true)}
-            className="action-btn"
-          >
-            <span className="action-icon">
-              <ConsultasIcon />
-            </span>
+          <button onClick={() => setShowConsultaModal(true)} className="action-btn">
+            <span className="action-icon"><ConsultasIcon /></span>
             <span>Nueva Consulta</span>
           </button>
           <button onClick={() => setShowCasoModal(true)} className="action-btn">
-            <span className="action-icon">
-              <CasosIcon />
-            </span>
+            <span className="action-icon"><CasosIcon /></span>
             <span>Nuevo Caso</span>
           </button>
-          <button
-            onClick={() => setShowDocumentoModal(true)}
-            className="action-btn"
-          >
-            <span className="action-icon">
-              <DocumentosIcon />
-            </span>
+          <button onClick={() => setShowDocumentoModal(true)} className="action-btn">
+            <span className="action-icon"><DocumentosIcon /></span>
             <span>Subir Documento</span>
           </button>
         </div>
       </div>
 
-      <div className="dashboard-widgets-grid">
-
-        {/* Widget Eventos */}
-        <div className="widget-card">
-          <div className="widget-header">
-            <h3>
-              <CalendarIcon /> Agenda (7 días)
-            </h3>
-            <Link to="/dashboard/eventos">Ver todo</Link>
-          </div>
-          <div className="widget-body">
-            {loadingWidgets ? (
-              <p className="text-muted">Cargando...</p>
-            ) : proximosEventos.length === 0 ? (
-              <p className="text-muted">No hay eventos próximos.</p>
-            ) : (
-              <div className="events-list">
-                {proximosEventos.map(evt => (
-                  <div key={evt.id_evento} className="event-item" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px' }}>
-                    <div style={{ flex: 1 }}>
-                      <div>{evt.titulo}</div>
-                      <div style={{ fontSize: '0.85em', color: '#94a3b8' }}>
-                        {new Date(evt.fecha_inicio).toLocaleDateString()} - {evt.hora_inicio ? evt.hora_inicio.substring(0, 5) : "-"}
-                      </div>
-                    </div>
-                    <span className="badge badge-warning" style={{ textTransform: 'uppercase' }}>
-                      {evt.tipo ? {
-                        audiencia: "Audiencia",
-                        reunion: "Reunión",
-                        tarea: "Tarea",
-                        vencimiento: "Vencimiento",
-                        otro: "Otro"
-                      }[evt.tipo] || evt.tipo : "-"}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Widget Vencimientos */}
-        <div className="widget-card">
-          <div className="widget-header">
-            <h3>
-              <AlarmIcon /> Vencimientos (7 días)
-            </h3>
-            <Link to="/dashboard/vencimientos">Ver todo</Link>
-          </div>
-          <div className="widget-body">
-            {loadingWidgets ? (
-              <p className="text-muted">Cargando...</p>
-            ) : proximosVencimientos.length === 0 ? (
-              <p className="text-muted">No hay vencimientos próximos.</p>
-            ) : (
-              <div className="vencimientos-list">
-                {proximosVencimientos.map(venc => (
-                  <div key={venc.id_vencimiento} className="vencimiento-item" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px' }}>
-                    <div style={{ flex: 1 }}>
-                      <div>{venc.titulo}</div>
-                      <div style={{ fontSize: '0.85em', color: '#94a3b8' }}>
-                        Vence: {new Date(venc.fecha_limite).toLocaleDateString()} {venc.fecha_limite ? new Date(venc.fecha_limite).toISOString().substring(11, 16) : ''}
-                      </div>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span title={`Prioridad: ${venc.prioridad}`}>
-                        {venc.prioridad === 'alta' ? <RedState /> : venc.prioridad === 'baja' ? <GreenState /> : <YellowState />}
-                      </span>
-                      <span className="badge badge-warning" style={{ textTransform: 'uppercase' }}>
-                        {venc.tipo_vencimiento ? {
-                          contestacion_demanda: "Contestación de Demanda",
-                          apelacion: "Apelación",
-                          recurso: "Recurso",
-                          traslado: "Traslado",
-                          ofrecimiento_prueba: "Ofrecimiento de Prueba",
-                          alegato: "Alegato",
-                          expresion_agravios: "Expresión de Agravios",
-                          prescripcion: "Prescripción",
-                          caducidad: "Caducidad",
-                          otro: "Otro"
-                        }[venc.tipo_vencimiento] || venc.tipo_vencimiento : "-"}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-      </div>
-
-
-
+      {/* ═══════════ ACTIVIDAD RECIENTE (Colapsable) ═══════════ */}
       <div className="recent-activity">
         <h2>Actividad Reciente</h2>
         <div className="activity-list">
@@ -439,26 +338,42 @@ const Home = () => {
               <p className="empty-state">No hay actividad reciente</p>
             </div>
           ) : (
-            actividadReciente.map((registro) => (
-              <div key={registro.id_auditoria} className="activity-item">
-                <span className="activity-icon">
-                  {obtenerIconoAccion(registro.accion)}
-                </span>
-                <div className="activity-content">
-                  <p className="activity-description">
-                    {obtenerDescripcionAccion(registro)}
-                  </p>
-                  <span className="activity-time">
-                    {formatearFechaRelativa(registro.fecha)}
+            <>
+              {actividadVisible.map((registro) => (
+                <div key={registro.id_auditoria} className="activity-item">
+                  <span className="activity-icon">
+                    {obtenerIconoAccion(registro.accion)}
                   </span>
+                  <div className="activity-content">
+                    <p className="activity-description">
+                      {obtenerDescripcionAccion(registro)}
+                    </p>
+                    <span className="activity-time">
+                      {formatearFechaRelativa(registro.fecha)}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            ))
+              ))}
+
+              {/* Botón colapsable */}
+              {actividadReciente.length > 3 && (
+                <button
+                  className="activity-toggle-btn"
+                  onClick={() => setActividadExpandida(!actividadExpandida)}
+                >
+                  {actividadExpandida ? (
+                    <>▲ Ver menos</>
+                  ) : (
+                    <>▼ Ver más ({actividadReciente.length - 3} más)</>
+                  )}
+                </button>
+              )}
+            </>
           )}
         </div>
       </div>
 
-      {/* Modales */}
+      {/* ═══════════ MODALES ═══════════ */}
       {showClienteModal && (
         <ClienteForm onClose={handleCloseCliente} showToast={showToast} />
       )}

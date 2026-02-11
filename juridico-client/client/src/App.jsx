@@ -2,6 +2,8 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/common/ProtectedRoute";
 import Login from "./pages/auth/Login";
+import ForgotPassword from "./pages/auth/ForgotPassword";
+import ResetPassword from "./pages/auth/ResetPassword";
 import Dashboard from "./components/layout/Dashboard";
 import Home from "./pages/dashboard/Home";
 import ClientesList from "./pages/clientes/ClientesList";
@@ -22,7 +24,11 @@ import DocumentoDetail from "./pages/documentos/DocumentoDetail";
 import EventosList from "./pages/eventos/EventosList";
 import VencimientosList from "./pages/vencimientos/VencimientosList";
 import CalculadoraPage from "./pages/calculadora/CalculadoraPage";
+import ConfiguracionJUS from "./pages/configuracion/ConfiguracionJUS";
+import Finanzas from "./pages/finanzas/Finanzas";
 import "./App.css";
+
+
 
 function App() {
   return (
@@ -32,8 +38,10 @@ function App() {
           {/* Ruta raíz redirige a login */}
           <Route path="/" element={<Navigate to="/login" replace />} />
 
-          {/* Ruta de login */}
+          {/* Rutas de autenticación */}
           <Route path="/login" element={<Login />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
 
           {/* Rutas protegidas del dashboard (Usando ProtectedRoute para autenticación básica) */}
           <Route
@@ -81,7 +89,14 @@ function App() {
 
             {/* Módulo de calculadora */}
             <Route path="calculadora" element={<CalculadoraPage />} />
+
+            {/* Módulo de configuración */}
+            <Route path="configuracion" element={<ConfiguracionJUS />} />
+
+            {/* Módulo de finanzas */}
+            <Route path="finanzas" element={<Finanzas />} />
           </Route>
+
 
           {/* Ruta 404 */}
           <Route path="*" element={<div>404 - Página no encontrada</div>} />

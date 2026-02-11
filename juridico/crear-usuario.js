@@ -1,16 +1,16 @@
 import bcrypt from "bcrypt";
-import sequelize from "../src/config/database.js";
-import { Abogado } from "../src/models/index.js";
+import sequelize from "./src/config/database.js";
+import { Abogado } from "./src/models/index.js";
 
 // Configurá acá el usuario que querés crear
 const nuevoUsuario = {
   nombre: "Admin",
   apellido: "Sistema",
-  email: "[EMAIL_ADDRESS]",
-  password: "[PASSWORD]",
+  email: "arevalogonzaa@gmail.com",
+  password: "abogadopremium123",
   especialidad: "General",
-  dni: "99887766",
-  telefono: "+541122334455",
+  dni: "43372849",
+  telefono: "+542991457849",
   rol: "admin", // Opciones: 'admin', 'abogado', 'asistente'
 };
 

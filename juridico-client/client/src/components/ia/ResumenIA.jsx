@@ -1,15 +1,15 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import "./ResumenIA.css";
 import api from "../../services/api";
-import { 
-  OpenAiIcon, 
-  RenewIcon, 
-  SendIcon, 
-  CenterIcon, 
-  PointIcon, 
-  ClientIcon, 
-  CalendarIcon, 
-  AlarmIcon, 
+import {
+  OpenAiIcon,
+  RenewIcon,
+  SendIcon,
+  CenterIcon,
+  PointIcon,
+  ClientIcon,
+  CalendarIcon,
+  AlarmIcon,
   CheckIcon,
   DocumentosIcon,
   SpinnerIcon
@@ -19,7 +19,7 @@ function ResumenIA({ idDocumento }) {
   const [resumen, setResumen] = useState(null);
   const [cargando, setCargando] = useState(false);
   const [expandido, setExpandido] = useState(false);
-  
+
   // Estados para el Chat
   const [pregunta, setPregunta] = useState("");
   const [mensajes, setMensajes] = useState([]);
@@ -113,6 +113,12 @@ function ResumenIA({ idDocumento }) {
       if (tituloOriginal.includes("NATURALEZA") || tituloOriginal.includes("TEMA PRINCIPAL")) Icono = CenterIcon;
       if (tituloOriginal.includes("CONCLUSIÓN")) Icono = CheckIcon;
       if (tituloOriginal.includes("DOCUMENTO")) Icono = DocumentosIcon;
+      // Nuevas secciones para resúmenes legales profesionales
+      if (tituloOriginal.includes("MONTOS")) Icono = PointIcon;
+      if (tituloOriginal.includes("DATOS DEL OBJETO") || tituloOriginal.includes("UBICACIÓN")) Icono = CenterIcon;
+      if (tituloOriginal.includes("FUNDAMENTO LEGAL") || tituloOriginal.includes("FUNDAMENTO")) Icono = DocumentosIcon;
+      if (tituloOriginal.includes("PRUEBAS")) Icono = DocumentosIcon;
+
 
       // Limpiamos el título de emojis de forma segura sin borrar acentos
       const tituloLimpio = tituloOriginal.replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g, "").trim();
@@ -152,8 +158,8 @@ function ResumenIA({ idDocumento }) {
               <RenewIcon /> Regenerar
             </button>
           )}
-          <button 
-            className={`btn-ia-action ${expandido ? 'btn-ia-secondary' : 'btn-ia-primary'}`} 
+          <button
+            className={`btn-ia-action ${expandido ? 'btn-ia-secondary' : 'btn-ia-primary'}`}
             onClick={() => expandido ? setExpandido(false) : generarResumen(false)}
             disabled={cargando}
           >
@@ -175,7 +181,7 @@ function ResumenIA({ idDocumento }) {
               <div className="chat-divider">
                 <span>Chat con el Documento</span>
               </div>
-              
+
               <div className="chat-messages-container">
                 {mensajes.length === 0 && (
                   <p className="chat-hint">Hacé una pregunta específica sobre este archivo...</p>
@@ -198,13 +204,13 @@ function ResumenIA({ idDocumento }) {
           {/* Footer con Stats y Input */}
           <div className="resumen-footer-premium">
             <div className="ia-stats-bar">
-                <span>🤖 {resumen.modelo_usado}</span>
-                <span>⏱️ {(resumen.tiempo_procesamiento / 1000).toFixed(1)}s</span>
+              <span>🤖 {resumen.modelo_usado}</span>
+              <span>⏱️ {(resumen.tiempo_procesamiento / 1000).toFixed(1)}s</span>
             </div>
             <form className="chat-input-wrapper" onSubmit={handleEnviarPregunta}>
-              <input 
-                type="text" 
-                placeholder="Preguntale algo al documento..." 
+              <input
+                type="text"
+                placeholder="Preguntale algo al documento..."
                 value={pregunta}
                 onChange={(e) => setPregunta(e.target.value)}
                 disabled={enviandoPregunta}
