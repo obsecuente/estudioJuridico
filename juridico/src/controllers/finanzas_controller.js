@@ -36,10 +36,18 @@ export const crearMovimiento = async (req, res) => {
 export const obtenerDashboard = async (req, res) => {
     try {
         const provincia = req.query.provincia || "NQN";
+        const isAdmin = req.user.rol === "admin";
+
         const userContext = {
             id_abogado: req.user.id_abogado,
             rol: req.user.rol,
         };
+
+        // Admin puede filtrar por abogado específico via query param
+        if (isAdmin && req.query.id_abogado) {
+            userContext.id_abogado_filtro = parseInt(req.query.id_abogado);
+        }
+
         const resumen = await finanzasService.obtenerResumenEstudio(provincia, userContext);
         return res.json({
             success: true,
@@ -108,6 +116,8 @@ export const obtenerMovimientosPorCaso = async (req, res) => {
  */
 export const obtenerMovimientos = async (req, res) => {
     try {
+        const isAdmin = req.user.rol === "admin";
+
         const resultado = await finanzasService.obtenerMovimientos({
             page: req.query.page,
             limit: req.query.limit,
@@ -116,7 +126,10 @@ export const obtenerMovimientos = async (req, res) => {
             id_cliente: req.query.id_cliente,
             id_caso: req.query.id_caso,
             categoria: req.query.categoria,
-            id_abogado: req.user.id_abogado,
+            // Admin puede filtrar por abogado o ver todo; abogado solo ve lo suyo
+            id_abogado: isAdmin
+                ? (req.query.id_abogado || null)
+                : req.user.id_abogado,
         });
 
         return res.json({
@@ -155,11 +168,73 @@ export const eliminarMovimiento = async (req, res) => {
     }
 };
 
+/**
+ * Marca un movimiento de ingreso como cobrado
+ * PATCH /api/finanzas/:id/cobrar
+ */
+export const marcarCobrado = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { fecha_cobro } = req.body;
+
+        const movimiento = await finanzasService.marcarMovimientoCobrado(id, fecha_cobro);
+
+        return res.json({
+            success: true,
+            message: "Ingreso marcado como cobrado",
+            data: movimiento,
+        });
+    } catch (error) {
+        console.error("Error al marcar cobrado:", error);
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            error: error.message,
+        });
+    }
+};
+
+/**
+ * Obtener cuotas de un movimiento
+ * GET /api/finanzas/:id_movimiento/cuotas
+ */
+export const obtenerCuotasMovimientoHandler = async (req, res) => {
+    try {
+        const cuotas = await finanzasService.obtenerCuotasMovimiento(req.params.id_movimiento);
+        return res.json({ success: true, data: cuotas });
+    } catch (error) {
+        console.error("Error al obtener cuotas:", error);
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            error: error.message,
+        });
+    }
+};
+
+/**
+ * Actualizar una cuota (fecha/monto)
+ * PATCH /api/finanzas/cuotas/:id/editar
+ */
+export const actualizarCuotaHandler = async (req, res) => {
+    try {
+        const cuota = await finanzasService.actualizarCuota(req.params.id, req.body);
+        return res.json({ success: true, data: cuota });
+    } catch (error) {
+        console.error("Error al actualizar cuota:", error);
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            error: error.message,
+        });
+    }
+};
+
 export default {
     crearMovimiento,
     obtenerDashboard,
     marcarCuotaPagada,
+    marcarCobrado,
     obtenerMovimientosPorCaso,
     obtenerMovimientos,
     eliminarMovimiento,
+    obtenerCuotasMovimientoHandler,
+    actualizarCuotaHandler,
 };

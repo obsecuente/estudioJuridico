@@ -9,6 +9,7 @@ import "./CasoDetail.css";
 import {
   AbogadosIcon,
   ArrowLeftIcon,
+  ArrowRightIcon,
   CalendarIcon,
   ClientIcon,
   DocumentosIcon,
@@ -21,6 +22,7 @@ import {
   SaveIcon,
   TrashICon,
   txtIcon,
+  UploadIcon,
   wordIcon,
   Xicon,
   zipIcon,
@@ -418,7 +420,7 @@ const CasoDetail = () => {
                 to={`/dashboard/clientes/${caso.cliente.id_cliente}`}
                 className="btn-small btn-primary"
               >
-                Ver Perfil →
+                Ver Perfil <ArrowRightIcon />
               </Link>
             )}
           </div>
@@ -505,7 +507,7 @@ const CasoDetail = () => {
               className="btn-small btn-primary"
               onClick={() => setShowUploadModal(true)}
             >
-              ➕ Subir Documento
+              <UploadIcon /> Subir Documento
             </button>
           </div>
           <div className="card-body">
@@ -580,29 +582,29 @@ const CasoDetail = () => {
           deleteConfig.type === "DELETE_CASE"
             ? "¿Eliminar Caso?"
             : deleteConfig.type === "CLOSE_CASE"
-            ? "¿Cerrar Caso?"
-            : "¿Reabrir Caso?"
+              ? "¿Cerrar Caso?"
+              : "¿Reabrir Caso?"
         }
         message={
           deleteConfig.type === "DELETE_CASE"
             ? "Esto eliminará el caso y sus archivos asociados. ¿Continuar?"
             : deleteConfig.type === "CLOSE_CASE"
-            ? "El caso se cerrará y archivará. ¿Desea continuar?"
-            : "El caso será reabierto y volverá a estar activo. ¿Desea continuar?"
+              ? "El caso se cerrará y archivará. ¿Desea continuar?"
+              : "El caso será reabierto y volverá a estar activo. ¿Desea continuar?"
         }
         confirmLabel={
           deleteConfig.type === "DELETE_CASE"
             ? "Eliminar Caso"
             : deleteConfig.type === "CLOSE_CASE"
-            ? "Cerrar Caso"
-            : "Reabrir Caso"
+              ? "Cerrar Caso"
+              : "Reabrir Caso"
         }
         confirmVariant={
           deleteConfig.type === "DELETE_CASE"
             ? "danger"
             : deleteConfig.type === "CLOSE_CASE"
-            ? "warning"
-            : "success"
+              ? "warning"
+              : "success"
         }
         onCancel={() => setShowDeleteModal(false)}
         onConfirm={handleConfirmAction}

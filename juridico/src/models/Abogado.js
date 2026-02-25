@@ -109,6 +109,16 @@ const Abogado = sequelize.define(
       },
       comment: "Solo para rol=asistente: abogado al que reporta",
     },
+
+    // Refresh Token para mantener sesión
+    refresh_token: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    refresh_token_expires: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
   },
 
   {

@@ -19,10 +19,16 @@ import Cuota from "./Cuota.js";
 import ConfiguracionEstudio from "./ConfiguracionEstudio.js";
 import GastoRecurrente from "./GastoRecurrente.js";
 
+import CierreMensual from "./CierreMensual.js";
+
 // MODELO DE TAREAS
 import Tarea from "./Tarea.js";
 
 // --- RELACIONES EXISTENTES ---
+
+// Relaciones de CierreMensual
+CierreMensual.belongsTo(Abogado, { foreignKey: "id_abogado", as: "abogado" });
+Abogado.hasMany(CierreMensual, { foreignKey: "id_abogado", as: "cierres" });
 
 // Relaciones de Cliente
 Cliente.hasMany(Consulta, { foreignKey: "id_cliente", as: "consultas" });

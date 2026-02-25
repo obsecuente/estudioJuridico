@@ -31,6 +31,9 @@ import {
   RedState,
   GreenState,
   DocumentosIcon as DocIcon,
+  DineroIcon,
+  CheckIcon,
+  ArrowRightIcon,
 } from "../../components/common/Icons";
 
 const Home = () => {
@@ -60,6 +63,11 @@ const Home = () => {
   useEffect(() => {
     cargarActividadReciente();
     cargarWidgets();
+
+    // Escuchar evento de MiDia cuando marca un vencimiento como cumplido
+    const handleVencimientoUpdated = () => cargarWidgets();
+    window.addEventListener("vencimiento-updated", handleVencimientoUpdated);
+    return () => window.removeEventListener("vencimiento-updated", handleVencimientoUpdated);
   }, []);
 
   const showToast = (message, type = "success") => {
@@ -201,7 +209,7 @@ const Home = () => {
     expresion_agravios: "Expresión de Agravios",
     prescripcion: "Prescripción",
     caducidad: "Caducidad",
-    gasto_fijo: "💸 Gasto Fijo",
+    gasto_fijo: "Gasto Fijo",
     otro: "Otro",
   };
 
@@ -246,7 +254,7 @@ const Home = () => {
         <div className="midia-widget">
           <div className="midia-header">
             <h3><CalendarIcon /> Agenda (10 días)</h3>
-            <Link to="/dashboard/eventos" className="midia-header-link">Ver todo →</Link>
+            <Link to="/dashboard/eventos" className="midia-header-link">Ver todo <ArrowRightIcon /></Link>
           </div>
           <div className="midia-list">
             {loadingWidgets ? (
@@ -254,16 +262,16 @@ const Home = () => {
                 <span>Cargando eventos...</span>
               </div>
             ) : proximosEventos.length === 0 ? (
-              <div className="midia-empty">📅 No hay eventos próximos</div>
+              <div className="midia-empty">No hay eventos próximos.</div>
             ) : (
               proximosEventos.map((evt) => (
                 <div key={evt.id_evento} className="midia-tarea midia-evento">
                   <div className="midia-tarea-content" style={{ flex: 1 }}>
                     <div className="midia-tarea-texto">{evt.titulo}</div>
                     <div className="midia-tarea-meta">
-                      <span>📅 {new Date(evt.fecha_inicio).toLocaleDateString("es-AR")}</span>
+                      <span><CalendarIcon /> {new Date(evt.fecha_inicio).toLocaleDateString("es-AR")}</span>
                       {evt.hora_inicio && (
-                        <span>⏰ {evt.hora_inicio.substring(0, 5)}</span>
+                        <span><AlarmIcon /> {evt.hora_inicio.substring(0, 5)}</span>
                       )}
                     </div>
                   </div>
@@ -280,7 +288,7 @@ const Home = () => {
         <div className="midia-widget">
           <div className="midia-header">
             <h3><AlarmIcon /> Vencimientos (10 días)</h3>
-            <Link to="/dashboard/vencimientos" className="midia-header-link">Ver todo →</Link>
+            <Link to="/dashboard/vencimientos" className="midia-header-link">Ver todo <ArrowRightIcon /></Link>
           </div>
           <div className="midia-list">
             {loadingWidgets ? (
@@ -288,13 +296,13 @@ const Home = () => {
                 <span>Cargando vencimientos...</span>
               </div>
             ) : proximosVencimientos.length === 0 ? (
-              <div className="midia-empty">⏰ No hay vencimientos próximos</div>
+              <div className="midia-empty"> No hay vencimientos próximos.</div>
             ) : (
               proximosVencimientos.map((venc) => (
                 <div key={venc.id_vencimiento} className={`midia-tarea ${venc.es_gasto_fijo ? 'midia-gasto-fijo' : ''}`}>
                   <div className="midia-prioridad-indicator">
                     {venc.es_gasto_fijo ? (
-                      <span style={{ fontSize: '1.1rem' }}>💸</span>
+                      <span style={{ fontSize: '1.1rem' }}><DineroIcon /></span>
                     ) : venc.prioridad === "alta" ? (
                       <RedState />
                     ) : venc.prioridad === "baja" ? (
@@ -306,7 +314,7 @@ const Home = () => {
                   <div className="midia-tarea-content" style={{ flex: 1 }}>
                     <div className="midia-tarea-texto">{venc.titulo}</div>
                     <div className="midia-tarea-meta">
-                      <span>📅 Vence: {new Date(venc.fecha_limite).toLocaleDateString("es-AR")}</span>
+                      <span><CalendarIcon /> Vence: {new Date(venc.fecha_limite).toLocaleDateString("es-AR")}</span>
                       {venc.es_gasto_fijo && venc.monto_ars && (
                         <span style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 600 }}>
                           {formatCurrency(venc.monto_ars)}
@@ -329,7 +337,7 @@ const Home = () => {
                         })}
                         title="Marcar como pagado"
                       >
-                        ✓ Pagado
+                        <CheckIcon /> Pagado
                       </button>
                     )}
                   </div>

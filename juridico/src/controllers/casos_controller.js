@@ -117,9 +117,8 @@ export const cambiarEstadoCaso = async (req, res) => {
 
     res.json({
       success: true,
-      message: `Caso ${
-        estado === "cerrado" ? "cerrado" : "abierto"
-      } exitosamente`,
+      message: `Caso ${estado === "cerrado" ? "cerrado" : "abierto"
+        } exitosamente`,
       data: caso,
     });
   } catch (error) {
@@ -156,6 +155,34 @@ export const eliminarCaso = async (req, res) => {
   } catch (error) {
     console.error("Error al eliminar caso:", error);
     res.status(error.statusCode || 500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * Lista simple de casos para selects/dropdowns
+ * GET /api/casos/lista-simple
+ */
+export const obtenerListaSimpleCasos = async (req, res) => {
+  try {
+    const options = {};
+    // Filtrar por abogado del usuario si no es admin
+    if (req.user.rol !== "admin") {
+      options.id_abogado = req.user.id_abogado;
+    } else if (req.query.id_abogado) {
+      options.id_abogado = parseInt(req.query.id_abogado);
+    }
+
+    const casos = await casosService.obtenerListaSimple(options);
+    return res.json({
+      success: true,
+      data: casos,
+    });
+  } catch (error) {
+    console.error("Error al obtener lista simple de casos:", error);
+    return res.status(error.statusCode || 500).json({
       success: false,
       error: error.message,
     });

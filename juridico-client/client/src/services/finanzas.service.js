@@ -6,8 +6,10 @@ const finanzasService = {
      * Obtiene el dashboard financiero con métricas anti-inflación
      * @param {string} provincia - NQN o RN (default: NQN)
      */
-    getDashboard: async (provincia = "NQN") => {
-        const response = await api.get(`/finanzas/dashboard?provincia=${provincia}`);
+    getDashboard: async (provincia = "NQN", idAbogado = null) => {
+        let url = `/finanzas/dashboard?provincia=${provincia}`;
+        if (idAbogado) url += `&id_abogado=${idAbogado}`;
+        const response = await api.get(url);
         return response.data;
     },
 
@@ -62,7 +64,7 @@ const finanzasService = {
     getMovimientos: async (params = {}) => {
         const query = new URLSearchParams();
         Object.entries(params).forEach(([key, val]) => {
-            if (val !== undefined && val !== null) query.append(key, val);
+            if (val !== undefined && val !== null && val !== "") query.append(key, val);
         });
         const response = await api.get(`/finanzas?${query.toString()}`);
         return response.data;
@@ -104,6 +106,16 @@ const finanzasService = {
     },
 
     /**
+     * Marcar un ingreso como cobrado
+     */
+    marcarCobrado: async (idMovimiento, fechaCobro = null) => {
+        const response = await api.patch(`/finanzas/${idMovimiento}/cobrar`, {
+            fecha_cobro: fechaCobro,
+        });
+        return response.data;
+    },
+
+    /**
      * Eliminar movimiento
      */
     eliminarMovimiento: async (id) => {
@@ -132,6 +144,36 @@ const finanzasService = {
      */
     desmarcarPagado: async (idMovimiento) => {
         const response = await api.patch(`/finanzas/gastos-recurrentes/movimientos/${idMovimiento}/despagar`);
+        return response.data;
+    },
+
+    // ═══ CUOTAS ═══
+
+    /**
+     * Obtener cuotas de un movimiento
+     */
+    getCuotasMovimiento: async (idMovimiento) => {
+        const response = await api.get(`/finanzas/${idMovimiento}/cuotas`);
+        return response.data;
+    },
+
+    /**
+     * Actualizar fecha/monto de una cuota
+     */
+    actualizarCuota: async (idCuota, datos) => {
+        const response = await api.patch(`/finanzas/cuotas/${idCuota}/editar`, datos);
+        return response.data;
+    },
+
+    // ═══ CIERRES MENSUALES ═══
+
+    getCierres: async (anio) => {
+        const response = await api.get(`/cierres${anio ? `?anio=${anio}` : ""}`);
+        return response.data; // { success, data: [] }
+    },
+
+    generarCierreManual: async (mes, anio) => {
+        const response = await api.post("/cierres/generar", { mes, anio });
         return response.data;
     },
 };

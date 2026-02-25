@@ -1,0 +1,207 @@
+/* src/pages/finanzas/EstadisticasFinanzas.css */
+.estadisticas-container {
+    padding: 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+    color: var(--color-texto-principal, #f1f5f9);
+}
+
+.estadisticas-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+}
+
+.estadisticas-header h1 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--color-acento, #d4af37);
+    text-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
+}
+
+.year-selector {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.year-btn {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--color-texto-secundario, #94a3b8);
+    font-size: 1.2rem;
+    padding: 4px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.year-btn:hover {
+    color: var(--color-acento, #d4af37);
+    border-color: var(--color-acento, #d4af37);
+}
+
+.year-display {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #fff;
+    min-width: 80px;
+    text-align: center;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+    margin-bottom: 32px;
+}
+
+.stat-card {
+    background: var(--color-fondo-oscuro, #1a1f2b);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.stat-card.monthly {
+    border-left: 3px solid transparent;
+    transition: transform 0.2s;
+}
+
+.stat-card.monthly:hover {
+    transform: translateY(-2px);
+    border-left-color: var(--color-acento, #d4af37);
+}
+
+/* Mes actual (en curso) */
+.stat-card.stat-card-actual {
+    border-left-color: var(--color-acento, #d4af37);
+    box-shadow: 0 4px 20px rgba(212, 175, 55, 0.1);
+}
+
+.stat-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding-bottom: 12px;
+}
+
+.stat-month {
+    font-size: 1.25rem;
+    font-weight: 700;
+    text-transform: capitalize;
+    color: var(--color-texto-principal, #f1f5f9);
+}
+
+.stat-balance-tag {
+    font-size: 0.85rem;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.stat-balance-tag.positive {
+    color: #10b981;
+    background: rgba(16, 185, 129, 0.1);
+}
+
+.stat-balance-tag.negative {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    font-size: 0.9rem;
+}
+
+.stat-label {
+    color: var(--color-texto-secundario, #94a3b8);
+}
+
+.stat-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+}
+
+.stat-value.ingreso {
+    color: #10b981;
+}
+
+.stat-value.egreso {
+    color: #ef4444;
+}
+
+.stat-cases {
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    font-size: 0.8rem;
+    color: var(--color-texto-secundario, #94a3b8);
+    display: flex;
+    gap: 12px;
+}
+
+.manual-close-section {
+    margin-top: 40px;
+    padding: 24px;
+    background: rgba(212, 175, 55, 0.05);
+    border: 1px dashed rgba(212, 175, 55, 0.3);
+    border-radius: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.close-btn {
+    background: var(--color-acento, #d4af37);
+    color: #000;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.close-btn:hover {
+    opacity: 0.9;
+}
+
+.close-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Gráfico de barras simple CSS-only */
+.bar-chart {
+    height: 8px;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+    margin-top: 8px;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+}
+
+.bar-segment {
+    height: 100%;
+}
+
+.bar-segment.ingreso {
+    background: #10b981;
+}
+
+.bar-segment.egreso {
+    background: #ef4444;
+}

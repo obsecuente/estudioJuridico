@@ -87,6 +87,27 @@ const MovimientoFinanciero = sequelize.define(
             defaultValue: false,
             comment: "Indica si este movimiento corresponde a un gasto fijo mensual",
         },
+        es_plan_cuotas: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: false,
+            comment: "Indica si este ingreso tiene plan de cuotas",
+        },
+        cantidad_cuotas: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+            comment: "Cantidad de cuotas del plan de pago",
+        },
+        fecha_pago: {
+            type: DataTypes.DATEONLY,
+            allowNull: true,
+            comment: "Fecha real de pago (egreso) o cobro (ingreso)",
+        },
+        fecha_cobro: {
+            type: DataTypes.DATEONLY,
+            allowNull: true,
+            comment: "Legacy: Fecha de cobro para ingresos (se intentará unificar con fecha_pago)",
+        },
     },
 
     {

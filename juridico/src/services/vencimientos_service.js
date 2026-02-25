@@ -522,6 +522,25 @@ export const obtenerTipos = () => {
   }));
 };
 
+/**
+ * Limpieza: elimina vencimientos con estado "cumplido" de hace más de 1 día
+ * @returns {Promise<number>} Cantidad eliminada
+ */
+const limpiezaVencimientosCumplidos = async () => {
+  const ayer = new Date();
+  ayer.setDate(ayer.getDate() - 1);
+
+  const eliminados = await Vencimiento.destroy({
+    where: {
+      estado: "cumplido",
+      updatedAt: { [Op.lt]: ayer },
+    },
+  });
+
+  console.log(`[Limpieza] Vencimientos cumplidos eliminados: ${eliminados}`);
+  return eliminados;
+};
+
 export default {
   crear,
   obtenerPorId,
@@ -534,4 +553,5 @@ export default {
   eliminar,
   obtenerTipos,
   TIPOS_VENCIMIENTO,
+  limpiezaVencimientosCumplidos,
 };

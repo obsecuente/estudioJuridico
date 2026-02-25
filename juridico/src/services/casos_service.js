@@ -102,7 +102,9 @@ export const crear = async (datosCaso) => {
         nuevoCaso.id_caso,
         id_cliente,
         montoJus,
-        provincia
+        provincia,
+        finanzas.montoFijo, // PASAR MONTO FIJO SI EXISTE
+        finanzas.planCuotas // PASAR PLAN DE CUOTAS
       );
     } catch (error) {
       // Log pero no fallar la creación del caso
@@ -468,6 +470,34 @@ export const eliminar = async (id) => {
     id: id,
   };
 };
+
+/**
+ * Lista simple de casos para selects/dropdowns
+ * Devuelve solo id, descripción y apellido del cliente
+ * @param {Object} options - Opciones de filtro
+ * @param {number} options.id_abogado - Filtrar por abogado
+ * @returns {Promise<Array>} Lista simplificada de casos
+ */
+const obtenerListaSimple = async (options = {}) => {
+  const where = { estado: { [Op.ne]: "cerrado" } };
+  if (options.id_abogado) where.id_abogado = options.id_abogado;
+
+  const casos = await Caso.findAll({
+    where,
+    attributes: ["id_caso", "descripcion"],
+    include: [
+      { model: Cliente, as: "cliente", attributes: ["apellido"] },
+    ],
+    order: [["descripcion", "ASC"]],
+  });
+
+  return casos.map(c => ({
+    id_caso: c.id_caso,
+    descripcion: c.descripcion,
+    cliente_apellido: c.cliente?.apellido || "",
+  }));
+};
+
 export default {
   crear,
   obtenerTodos,
@@ -478,4 +508,5 @@ export default {
   cambiarEstado,
   cerrarCaso,
   eliminar,
+  obtenerListaSimple,
 };

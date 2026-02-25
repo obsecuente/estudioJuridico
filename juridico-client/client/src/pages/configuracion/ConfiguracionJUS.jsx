@@ -93,7 +93,7 @@ const ConfiguracionJUS = () => {
 
     return (
         <div className="configuracion-container">
-            <BackButton />
+            <BackButton to="/dashboard/finanzas" />
             <div className="configuracion-header">
                 <h1>⚖️ Configuración de JUS</h1>
                 <p>Actualiza el valor del JUS cuando el Tribunal Superior de Justicia anuncie cambios</p>

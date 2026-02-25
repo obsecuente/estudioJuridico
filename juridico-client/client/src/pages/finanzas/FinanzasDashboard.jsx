@@ -1,10 +1,13 @@
-// src/pages/finanzas/FinanzasDashboard.jsx
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useContext } from "react";
 import { Link } from "react-router-dom";
+import api from "../../services/api"; // Importar API directa para cargar clientes/casos
+import { AuthContext } from "../../context/AuthContext";
 import finanzasService from "../../services/finanzas.service";
+import abogadosService from "../../services/abogados.service";
 import BackButton from "../../components/common/BackButton";
 import DeleteModal from "../../components/common/DeleteModal";
-import { SpinnerIcon } from "../../components/common/Icons";
+import DetalleCuotas from "../../components/common/DetalleCuotas";
+import { DineroIcon, SpinnerIcon } from "../../components/common/Icons";
 import "./FinanzasDashboard.css";
 
 // ═══ CATEGORÍAS DE EGRESOS PRECARGADAS ═══
@@ -34,10 +37,17 @@ const getCatLabel = (val) => {
 };
 
 const FinanzasDashboard = () => {
+    const { user } = useContext(AuthContext);
+    const isAdmin = user?.rol === "admin";
+
     const [dashboard, setDashboard] = useState(null);
     const [movimientos, setMovimientos] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+
+    // Admin: filtro por abogado
+    const [abogados, setAbogados] = useState([]);
+    const [abogadoFiltro, setAbogadoFiltro] = useState("");
 
     // Filtros tabla
     const [filtroTipo, setFiltroTipo] = useState("todos");
@@ -50,7 +60,19 @@ const FinanzasDashboard = () => {
         monto: "", fecha: new Date().toISOString().split("T")[0], categoria: "", descripcion: "",
         es_gasto_fijo: false, dia_vencimiento: "", pagado: true,
     });
+    // Form ingreso
+    const [showIngresoForm, setShowIngresoForm] = useState(false);
+    const [ingresoData, setIngresoData] = useState({
+        monto: "", fecha: new Date().toISOString().split("T")[0], categoria: "honorarios", descripcion: "",
+        id_cliente: "", id_caso: "",
+        es_plan_cuotas: false, cantidad_cuotas: 1, fecha_primera_cuota: new Date().toISOString().split("T")[0],
+    });
+    const [clientes, setClientes] = useState([]);
+    const [casosCliente, setCasosCliente] = useState([]);
+    const [loadingClientes, setLoadingClientes] = useState(false);
+
     const [submittingEgreso, setSubmittingEgreso] = useState(false);
+    const [submittingIngreso, setSubmittingIngreso] = useState(false);
     const [customCats, setCustomCats] = useState(loadCustomCats);
     const [showNewCatInput, setShowNewCatInput] = useState(false);
     const [newCatName, setNewCatName] = useState("");
@@ -76,8 +98,18 @@ const FinanzasDashboard = () => {
         try {
             setLoading(true);
             setError(null);
+
+            // Admin: cargar lista de abogados
+            if (isAdmin && abogados.length === 0) {
+                try {
+                    const abogadosRes = await abogadosService.getAll();
+                    setAbogados(abogadosRes.data || []);
+                } catch (e) { console.error("Error cargando abogados:", e); }
+            }
+
+            const idAbogadoParam = isAdmin && abogadoFiltro ? abogadoFiltro : null;
             const [dashRes] = await Promise.all([
-                finanzasService.getDashboard("NQN"),
+                finanzasService.getDashboard("NQN", idAbogadoParam),
             ]);
             setDashboard(dashRes.data || null);
             await Promise.all([
@@ -90,12 +122,13 @@ const FinanzasDashboard = () => {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [abogadoFiltro]);
 
     const cargarMovimientos = async (page = 1) => {
         try {
             const params = { page, limit: 10 };
             if (filtroTipo !== "todos") params.tipo = filtroTipo;
+            if (isAdmin && abogadoFiltro) params.id_abogado = abogadoFiltro;
             const res = await finanzasService.getMovimientos(params);
             setMovimientos(res.data || []);
             setTotalPaginas(res.pagination?.totalPages || 1);
@@ -119,7 +152,30 @@ const FinanzasDashboard = () => {
     };
 
     useEffect(() => { cargarTodo(); }, [cargarTodo]);
+
     useEffect(() => { cargarMovimientos(1); }, [filtroTipo]);
+
+    // Cargar clientes al abrir form de ingreso
+    useEffect(() => {
+        if (showIngresoForm && clientes.length === 0) {
+            setLoadingClientes(true);
+            api.get("/clientes?limit=1000")
+                .then(res => setClientes(res.data.data || []))
+                .catch(err => console.error(err))
+                .finally(() => setLoadingClientes(false));
+        }
+    }, [showIngresoForm]);
+
+    // Cargar casos al seleccionar cliente
+    useEffect(() => {
+        if (ingresoData.id_cliente) {
+            api.get(`/casos?id_cliente=${ingresoData.id_cliente}`)
+                .then(res => setCasosCliente(res.data.data || []))
+                .catch(err => console.error(err));
+        } else {
+            setCasosCliente([]);
+        }
+    }, [ingresoData.id_cliente]);
 
     // ═══ ACCIONES ═══
     const addCustomCat = () => {
@@ -152,6 +208,7 @@ const FinanzasDashboard = () => {
                 estado: egresoData.pagado ? "pagado" : "pendiente",
                 es_gasto_fijo: egresoData.es_gasto_fijo,
                 dia_vencimiento: egresoData.es_gasto_fijo ? parseInt(egresoData.dia_vencimiento) : null,
+                fecha_pago: egresoData.fecha // Enviar fecha real
             });
             setShowEgresoForm(false);
             setEgresoData({ monto: "", fecha: new Date().toISOString().split("T")[0], categoria: "", descripcion: "", es_gasto_fijo: false, dia_vencimiento: "", pagado: true });
@@ -160,6 +217,42 @@ const FinanzasDashboard = () => {
             console.error("Error al registrar egreso:", err);
         } finally {
             setSubmittingEgreso(false);
+        }
+    };
+
+    const handleIngresoSubmit = async (e) => {
+        e.preventDefault();
+        if (!ingresoData.monto || !ingresoData.categoria) return;
+        setSubmittingIngreso(true);
+        try {
+            const planCuotas = ingresoData.es_plan_cuotas ? {
+                cantidad: parseInt(ingresoData.cantidad_cuotas),
+                fecha_primera: ingresoData.fecha_primera_cuota
+            } : null;
+
+            await finanzasService.crearMovimiento({
+                tipo: "ingreso",
+                categoria: ingresoData.categoria,
+                descripcion: ingresoData.descripcion || "Honorarios profesionales",
+                monto_ars: parseFloat(ingresoData.monto),
+                estado: ingresoData.es_plan_cuotas ? "parcial" : "pagado", // Si no es cuotas, asumimos cobrado hoy o en fecha
+                id_cliente: ingresoData.id_cliente || null,
+                id_caso: ingresoData.id_caso || null,
+                fecha_cobro: ingresoData.es_plan_cuotas ? null : ingresoData.fecha, // Si es contado, usamos la fecha indicada
+                plan_cuotas: planCuotas
+            });
+            setShowIngresoForm(false);
+            setIngresoData({
+                monto: "", fecha: new Date().toISOString().split("T")[0], categoria: "honorarios", descripcion: "",
+                id_cliente: "", id_caso: "",
+                es_plan_cuotas: false, cantidad_cuotas: 1, fecha_primera_cuota: new Date().toISOString().split("T")[0],
+            });
+            await cargarTodo();
+        } catch (err) {
+            console.error("Error al registrar ingreso:", err);
+            setError("Error al registrar ingreso: " + (err.response?.data?.error || err.message));
+        } finally {
+            setSubmittingIngreso(false);
         }
     };
 
@@ -207,7 +300,8 @@ const FinanzasDashboard = () => {
             await cargarGastosRecurrentes();
             await cargarMovimientos(pagina);
             // Refresh dashboard KPIs
-            const dashRes = await finanzasService.getDashboard("NQN");
+            const idAbogadoParam = isAdmin && abogadoFiltro ? abogadoFiltro : null;
+            const dashRes = await finanzasService.getDashboard("NQN", idAbogadoParam);
             setDashboard(dashRes.data || null);
         } catch (err) {
             console.error("Error al marcar pagado:", err);
@@ -222,7 +316,8 @@ const FinanzasDashboard = () => {
             if (undoTimer) clearTimeout(undoTimer);
             await cargarGastosRecurrentes();
             await cargarMovimientos(pagina);
-            const dashRes = await finanzasService.getDashboard("NQN");
+            const idAbogadoParam = isAdmin && abogadoFiltro ? abogadoFiltro : null;
+            const dashRes = await finanzasService.getDashboard("NQN", idAbogadoParam);
             setDashboard(dashRes.data || null);
         } catch (err) {
             console.error("Error al deshacer pago:", err);
@@ -232,6 +327,12 @@ const FinanzasDashboard = () => {
     // Delete movimiento
     const [deleteConfirm, setDeleteConfirm] = useState({ open: false, id: null, nombre: "" });
 
+    // Cobrar ingreso modal
+    const [cobrarModal, setCobrarModal] = useState({ open: false, id: null, nombre: "", monto: 0 });
+
+    // Detalle cuotas modal
+    const [cuotasModal, setCuotasModal] = useState({ open: false, movimiento: null });
+
     const handleDeleteMovimiento = async () => {
         try {
             await finanzasService.eliminarMovimiento(deleteConfirm.id);
@@ -240,10 +341,27 @@ const FinanzasDashboard = () => {
             // Si era recurrente y del mes actual, refrescar también recurrentes
             await cargarGastosRecurrentes();
             // Refrescar dashboard por si cambió el saldo
-            const dashRes = await finanzasService.getDashboard("NQN");
+            const idAbogadoParam = isAdmin && abogadoFiltro ? abogadoFiltro : null;
+            const dashRes = await finanzasService.getDashboard("NQN", idAbogadoParam);
             setDashboard(dashRes.data || null);
         } catch (err) {
             console.error("Error al eliminar movimiento:", err);
+        }
+    };
+
+    // Cobrar ingreso
+    const handleCobrar = async () => {
+        const { id } = cobrarModal;
+        setCobrarModal({ open: false, id: null, nombre: "", monto: 0 });
+        try {
+            await finanzasService.marcarCobrado(id);
+            await cargarMovimientos(pagina);
+            const idAbogadoParam = isAdmin && abogadoFiltro ? abogadoFiltro : null;
+            const dashRes = await finanzasService.getDashboard("NQN", idAbogadoParam);
+            setDashboard(dashRes.data || null);
+        } catch (err) {
+            console.error("Error al marcar cobrado:", err);
+            alert(err.response?.data?.error || "Error al marcar como cobrado");
         }
     };
 
@@ -311,12 +429,35 @@ const FinanzasDashboard = () => {
                     <span>•  Datos en tiempo real</span>
                 </h1>
                 <div className="fin-header-actions">
-                    <Link to="/dashboard/configuracion" className="fin-btn">Configurar JUS</Link>
+                    {isAdmin && (
+                        <select
+                            className="fin-btn fin-select-abogado"
+                            value={abogadoFiltro}
+                            onChange={(e) => setAbogadoFiltro(e.target.value)}
+                        >
+                            <option value="">Todo el estudio</option>
+                            {abogados.map(a => (
+                                <option key={a.id_abogado} value={a.id_abogado}>
+                                    {a.nombre} {a.apellido}
+                                </option>
+                            ))}
+                        </select>
+                    )}
+                    <Link to="/dashboard/configuracion" className="fin-btn" style={{ textDecoration: "none" }}>Configurar JUS</Link>
+                    <Link to="/dashboard/finanzas/gastos-fijos" className="fin-btn" style={{ textDecoration: "none" }}>Gastos Fijos</Link>
+                    <Link to="/dashboard/finanzas/estadisticas" className="fin-btn" style={{ textDecoration: "none" }}>Estadísticas</Link>
+                    <button
+                        className="fin-btn"
+                        style={{ backgroundColor: '#10b981', color: 'white' }}
+                        onClick={() => { setShowIngresoForm(!showIngresoForm); setShowEgresoForm(false); }}
+                    >
+                        {showIngresoForm ? "✕ Cerrar" : "＋ Registrar Ingreso"}
+                    </button>
                     <button
                         className="fin-btn fin-btn-danger"
-                        onClick={() => setShowEgresoForm(!showEgresoForm)}
+                        onClick={() => { setShowEgresoForm(!showEgresoForm); setShowIngresoForm(false); }}
                     >
-                        {showEgresoForm ? "✕ Cerrar" : "＋ Registrar Egreso"}
+                        {showEgresoForm ? "✕ Cerrar" : "－ Registrar Egreso"}
                     </button>
                 </div>
             </div>
@@ -329,14 +470,15 @@ const FinanzasDashboard = () => {
                 </span>
                 <span>
                     {dashboard?.indicadores?.total_movimientos || 0} movimientos registrados
-                    {dashboard?.indicadores?.vista === "estudio_completo" ? " • Vista Admin" : ""}
+                    {dashboard?.indicadores?.vista === "estudio_completo" && " • Vista: Todo el Estudio"}
+                    {dashboard?.indicadores?.vista === "filtro_abogado" && ` • Filtro: ${abogados.find(a => String(a.id_abogado) === String(abogadoFiltro))?.nombre || ""} ${abogados.find(a => String(a.id_abogado) === String(abogadoFiltro))?.apellido || ""}`}
                 </span>
             </div>
 
             {/* ═══ KPI CARDS ═══ */}
             <div className="fin-kpi-grid">
                 <div className="fin-kpi-card kpi-caja">
-                    <div className="fin-kpi-label">Caja Neta</div>
+                    <div className="fin-kpi-label">Caja Actual</div>
                     <div className={`fin-kpi-value ${(dashboard?.caja?.neto || 0) >= 0 ? 'positive' : 'negative'}`}>
                         {formatCurrency(dashboard?.caja?.neto)}
                     </div>
@@ -348,38 +490,33 @@ const FinanzasDashboard = () => {
                 </div>
 
                 <div className="fin-kpi-card kpi-cartera">
-                    <div className="fin-kpi-label">Cartera Protegida</div>
+                    <div className="fin-kpi-label">Deudas a favor</div>
                     <div className="fin-kpi-value warning">
                         {formatCurrency(dashboard?.cartera?.total_pendiente_actualizado)}
                     </div>
-                    <div className="fin-kpi-hint">
-                        Recalculado al JUS de hoy
-                        {dashboard?.cartera?.pendiente_jus_actualizado > 0 && (
-                            <> • <span className="gain">↑ {formatCurrency(dashboard?.cartera?.pendiente_jus_actualizado)}</span> en JUS</>
+                    <div className="fin-kpi-hint" style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                        {(dashboard?.cartera?.pendiente_jus_actualizado || 0) > 0 && (
+                            <span><span className="gain">{formatCurrency(dashboard.cartera.pendiente_jus_actualizado)}</span> en JUS</span>
                         )}
-                    </div>
-                </div>
-
-                <div className="fin-kpi-card kpi-jus">
-                    <div className="fin-kpi-label">JUS Pendientes</div>
-                    <div className="fin-kpi-value accent">
-                        {dashboard?.cartera?.pendiente_jus || 0} <small style={{ fontSize: '0.6em', fontWeight: 400 }}>JUS</small>
-                    </div>
-                    <div className="fin-kpi-hint">
-                        Valor unitario: <span className="gain">{formatCurrency(dashboard?.indicadores?.valor_jus_actual)}</span>
+                        {(dashboard?.cartera?.pendiente_ars_fijo || 0) > 0 && (
+                            <span><span className="gain">{formatCurrency(dashboard.cartera.pendiente_ars_fijo)}</span> en efectivo</span>
+                        )}
                     </div>
                 </div>
 
                 <div className="fin-kpi-card kpi-egresos">
-                    <div className="fin-kpi-label">Egresos Totales</div>
+                    <div className="fin-kpi-label">Egresos Mensuales</div>
                     <div className="fin-kpi-value negative">
                         {formatCurrency(dashboard?.caja?.egresos)}
                     </div>
-                    <div className="fin-kpi-hint">
+                    <div className="fin-kpi-hint" style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                         {dashboard?.indicadores?.cuotas_vencidas > 0 && (
-                            <span className="loss">⚠ {dashboard.indicadores.cuotas_vencidas} cuotas vencidas</span>
+                            <span className="loss">⚠ {dashboard.indicadores.cuotas_vencidas} cuota{dashboard.indicadores.cuotas_vencidas > 1 ? 's' : ''} vencida{dashboard.indicadores.cuotas_vencidas > 1 ? 's' : ''}</span>
                         )}
-                        {(dashboard?.indicadores?.cuotas_vencidas || 0) === 0 && "Sin alertas de cuotas"}
+                        {dashboard?.indicadores?.cuotas_proximas > 0 && (
+                            <span style={{ color: '#f59e0b' }}>🔔 {dashboard.indicadores.cuotas_proximas} vence{dashboard.indicadores.cuotas_proximas === 1 ? '' : 'n'} en 7 días</span>
+                        )}
+                        {(dashboard?.indicadores?.cuotas_vencidas || 0) === 0 && (dashboard?.indicadores?.cuotas_proximas || 0) === 0 && "Sin alertas de cuotas"}
                     </div>
                 </div>
             </div>
@@ -450,6 +587,116 @@ const FinanzasDashboard = () => {
                     )}
                 </div>
             </div>
+            {/* ═══ FORMULARIO DE INGRESO ═══ */}
+            {showIngresoForm && (
+                <div className="fin-section">
+                    <form className="fin-egreso-form" onSubmit={handleIngresoSubmit} style={{ borderLeft: "4px solid #10b981" }}>
+                        <h3>Registrar Ingreso</h3>
+                        <div className="fin-form-row">
+                            <div className="fin-form-field" style={{ maxWidth: 200 }}>
+                                <label>Monto ($)</label>
+                                <input
+                                    type="number" placeholder="0" value={ingresoData.monto}
+                                    onChange={(e) => setIngresoData(prev => ({ ...prev, monto: e.target.value }))}
+                                    min="0" step="0.01" required autoFocus
+                                />
+                            </div>
+                            <div className="fin-form-field" style={{ maxWidth: 180 }}>
+                                <label>{ingresoData.es_plan_cuotas ? "Inicio Pagos" : "Fecha Cobro"}</label>
+                                <input
+                                    type="date" value={ingresoData.fecha}
+                                    onChange={(e) => setIngresoData(prev => ({ ...prev, fecha: e.target.value }))}
+                                />
+                            </div>
+                            <div className="fin-form-field">
+                                <label>Descripción</label>
+                                <input
+                                    type="text" placeholder="Honorarios, Consulta, etc." value={ingresoData.descripcion}
+                                    onChange={(e) => setIngresoData(prev => ({ ...prev, descripcion: e.target.value }))}
+                                />
+                            </div>
+                        </div>
+                        <div className="fin-form-row">
+                            <div className="fin-form-field" style={{ flex: 1 }}>
+                                <label>Cliente</label>
+                                <select
+                                    className="fin-select"
+                                    value={ingresoData.id_cliente}
+                                    onChange={(e) => setIngresoData(prev => ({ ...prev, id_cliente: e.target.value, id_caso: "" }))}
+                                >
+                                    <option value="">-- Seleccionar Cliente --</option>
+                                    {clientes.map(c => (
+                                        <option key={c.id_cliente} value={c.id_cliente}>{c.nombre} {c.apellido} ({c.dni})</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="fin-form-field" style={{ flex: 1 }}>
+                                <label>Caso (Opcional)</label>
+                                <select
+                                    className="fin-select"
+                                    value={ingresoData.id_caso}
+                                    onChange={(e) => setIngresoData(prev => ({ ...prev, id_caso: e.target.value }))}
+                                    disabled={!ingresoData.id_cliente}
+                                >
+                                    <option value="">-- General / Sin Caso --</option>
+                                    {casosCliente.map(c => (
+                                        <option key={c.id_caso} value={c.id_caso}>{c.descripcion}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+
+                        {/* PLAN DE CUOTAS */}
+                        <div className="fin-form-row">
+                            <label className="fin-checkbox-label" style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--color-texto-principal)", fontWeight: 500, fontSize: "0.9rem", cursor: "pointer", marginTop: "15px" }}>
+                                <input
+                                    type="checkbox"
+                                    className="fin-custom-checkbox"
+                                    checked={ingresoData.es_plan_cuotas}
+                                    onChange={(e) => setIngresoData(prev => ({ ...prev, es_plan_cuotas: e.target.checked }))}
+                                />
+                                Generar Plan de Cuotas
+                            </label>
+
+                            {ingresoData.es_plan_cuotas && (
+                                <div style={{ display: "flex", gap: 15, marginTop: 10, alignItems: "center", marginLeft: "25px" }}>
+                                    <div className="fin-form-field" style={{ maxWidth: 120 }}>
+                                        <label>Cant. Cuotas</label>
+                                        <input
+                                            type="number" min="2" max="24"
+                                            value={ingresoData.cantidad_cuotas}
+                                            onChange={(e) => setIngresoData(prev => ({ ...prev, cantidad_cuotas: e.target.value }))}
+                                        />
+                                    </div>
+                                    <div className="fin-form-field" style={{ maxWidth: 180 }}>
+                                        <label>1º Vencimiento</label>
+                                        <input
+                                            type="date"
+                                            value={ingresoData.fecha_primera_cuota}
+                                            onChange={(e) => setIngresoData(prev => ({ ...prev, fecha_primera_cuota: e.target.value }))}
+                                        />
+                                    </div>
+                                    <div style={{ fontSize: "0.9em", color: "var(--color-texto-secundario)", paddingTop: 15 }}>
+                                        Se generarán {ingresoData.cantidad_cuotas} cuotas de <b>{formatCurrency(ingresoData.monto / (ingresoData.cantidad_cuotas || 1))}</b>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="fin-form-actions">
+                            <button type="button" className="fin-btn" onClick={() => setShowIngresoForm(false)}>Cancelar</button>
+                            <button
+                                type="submit" className="fin-btn"
+                                style={{ backgroundColor: '#10b981', color: 'white' }}
+                                disabled={submittingIngreso || !ingresoData.monto}
+                            >
+                                {submittingIngreso ? "Registrando..." : "Confirmar Ingreso"}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            )}
+
             {/* ═══ FORMULARIO DE EGRESO ═══ */}
             {showEgresoForm && (
                 <div className="fin-section">
@@ -626,7 +873,7 @@ const FinanzasDashboard = () => {
                                                     </small>
                                                 )}
                                                 {mov.es_recurrente && (
-                                                    <span className="fin-recurrente-tag">📌 Mensual</span>
+                                                    <span className="fin-recurrente-tag">Gasto Mensual</span>
                                                 )}
                                             </td>
                                             <td className={`mono ${mov.tipo}`}>
@@ -649,6 +896,29 @@ const FinanzasDashboard = () => {
                                                             onClick={() => openPayConfirm(mov)}
                                                         >
                                                             ✓
+                                                        </button>
+                                                    )}
+                                                    {!isEgreso && (mov.estado === "pendiente" || mov.estado === "parcial") && (!mov.cuotas || mov.cuotas.length === 0) && (
+                                                        <button
+                                                            className="fin-btn fin-btn-primary fin-btn-xs"
+                                                            title="Marcar como cobrado"
+                                                            onClick={() => setCobrarModal({
+                                                                open: true,
+                                                                id: mov.id_movimiento,
+                                                                nombre: mov.descripcion || "Ingreso",
+                                                                monto: mov.monto_ars,
+                                                            })}
+                                                        >
+                                                            <DineroIcon />
+                                                        </button>
+                                                    )}
+                                                    {mov.es_plan_cuotas && (
+                                                        <button
+                                                            className="fin-btn fin-btn-xs"
+                                                            title="Ver cuotas"
+                                                            onClick={() => setCuotasModal({ open: true, movimiento: mov })}
+                                                        >
+                                                            📋
                                                         </button>
                                                     )}
                                                     <button
@@ -697,6 +967,26 @@ const FinanzasDashboard = () => {
                 message={`¿Estás seguro que querés eliminar "${deleteConfirm.nombre}"? Esta acción no se puede deshacer.`}
                 confirmLabel="Eliminar"
                 confirmVariant="danger"
+            />
+            <DeleteModal
+                isOpen={cobrarModal.open}
+                onConfirm={handleCobrar}
+                onCancel={() => setCobrarModal({ open: false, id: null, nombre: "", monto: 0 })}
+                title="Confirmar cobro"
+                message={`¿Marcás como cobrado "${cobrarModal.nombre}" por ${formatCurrency(cobrarModal.monto)}?`}
+                confirmLabel="Confirmar cobro"
+                confirmVariant="success"
+            />
+            <DetalleCuotas
+                isOpen={cuotasModal.open}
+                onClose={() => setCuotasModal({ open: false, movimiento: null })}
+                movimiento={cuotasModal.movimiento}
+                onCuotaUpdated={async () => {
+                    await cargarMovimientos(pagina);
+                    const idAbogadoParam = isAdmin && abogadoFiltro ? abogadoFiltro : null;
+                    const dashRes = await finanzasService.getDashboard("NQN", idAbogadoParam);
+                    setDashboard(dashRes.data || null);
+                }}
             />
         </div>
     );

@@ -57,6 +57,8 @@ export const obtenerValoresJus = async () => {
         actualizadoEn: null,
     };
 
+    console.log("DEBUG: Configs found:", configs.map(c => ({ clave: c.clave, valor: c.valor })));
+
     for (const config of configs) {
         if (config.clave === CLAVES_JUS.NQN) {
             resultado.NQN = parseFloat(config.valor);
@@ -68,6 +70,8 @@ export const obtenerValoresJus = async () => {
             }
         }
     }
+
+    console.log("DEBUG: Result objects:", resultado);
 
     return resultado;
 };

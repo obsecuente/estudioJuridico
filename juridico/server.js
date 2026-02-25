@@ -26,14 +26,27 @@ import finanzasRoutes from "./src/routes/finanzas.routes.js";
 import configuracionRoutes from "./src/routes/configuracion.routes.js";
 import tareasRoutes from "./src/routes/tareas.routes.js";
 import gastosRecurrentesRoutes from "./src/routes/gastos_recurrentes.routes.js";
+import cierresRoutes from "./src/routes/cierres.routes.js";
 import gastosRecurrentesService from "./src/services/gastos_recurrentes_service.js";
+import { setupSwagger } from "./src/config/swagger.js";
 
 // Inicializar Express
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middlewares de seguridad
-app.use(helmet());
+// Middlewares de seguridad — eximir Swagger de CSP
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", "data:"],
+      },
+    },
+  })
+);
 
 app.use(
   cors({
@@ -46,7 +59,8 @@ app.use(
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 1000, // Aumentado de 100 a 1000 para evitar desconexiones en el dashboard
+  max: process.env.NODE_ENV === "test" ? 0 : 1000, // Sin límite en test, 1000 en producción
+  skip: () => process.env.NODE_ENV === "test", // Saltar completamente en modo test
   message: "Demasiadas solicitudes desde esta IP, intenta de nuevo más tarde",
   standardHeaders: true,
   legacyHeaders: false,
@@ -76,8 +90,12 @@ app.use("/api/vencimientos", vencimientosRoutes);
 app.use("/api/calculadora", calculadoraRoutes);
 app.use("/api/finanzas", finanzasRoutes);
 app.use("/api/configuracion", configuracionRoutes);
+app.use("/api/cierres", cierresRoutes);
 app.use("/api/tareas", tareasRoutes);
 app.use("/api/finanzas/gastos-recurrentes", gastosRecurrentesRoutes);
+
+// Swagger API Docs (antes de 404 handler)
+setupSwagger(app);
 
 // Ruta de health check
 app.get("/health", (req, res) => {
@@ -110,6 +128,9 @@ app.use((err, req, res, next) => {
 });
 
 // Iniciar servidor
+import iniciarJobLimpieza from "./src/jobs/limpieza_diaria.js";
+import iniciarJobCierreMensual from "./src/jobs/cierre_mensual.js";
+
 const startServer = async () => {
   try {
     logger.info("Conectando a MySQL..."); // NUEVO

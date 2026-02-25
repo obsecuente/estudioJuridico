@@ -5,7 +5,8 @@ import tareasService from "../../services/tareas.service";
 import eventosService from "../../services/eventos.service";
 import vencimientosService from "../../services/vencimientos.service";
 import finanzasService from "../../services/finanzas.service";
-import { SpinnerIcon, TrashICon, AddIcon, CalendarIcon, AlarmIcon, CasosIcon, AbogadosIcon, LocacionIcon } from "./Icons";
+import casosService from "../../services/casos.service";
+import { SpinnerIcon, TrashICon, AddIcon, CalendarIcon, AlarmIcon, CasosIcon, AbogadosIcon, LocacionIcon, TuercaIcon } from "./Icons";
 import "./MiDia.css";
 
 // Helper para obtener fecha local como string YYYY-MM-DD (evita problemas de timezone)
@@ -39,11 +40,18 @@ const MiDia = () => {
     const [nuevoIdCaso, setNuevoIdCaso] = useState("");
     const [nuevaFechaLimite, setNuevaFechaLimite] = useState("");
 
+    // Lista simple de casos para el select
+    const [casosLista, setCasosLista] = useState([]);
+
     // Tareas recién completadas (para animación)
     const [recienCompletadas, setRecienCompletadas] = useState(new Set());
 
     useEffect(() => {
         cargarMiDia();
+        // Cargar lista de casos para el select
+        casosService.getListaSimple()
+            .then(res => setCasosLista(res.data || []))
+            .catch(err => console.error("Error cargando casos:", err));
     }, []);
 
     const cargarMiDia = async () => {
@@ -199,6 +207,8 @@ const MiDia = () => {
             }
             // Recargar
             await cargarVencimientosHoy();
+            // Notificar a otros componentes (ej: Home) que recarguen sus listas
+            window.dispatchEvent(new CustomEvent("vencimiento-updated"));
             // Agregar a completadas para animación
             const id = venc.id_vencimiento;
             setRecienCompletadas(prev => new Set(prev).add(id));
@@ -371,7 +381,7 @@ const MiDia = () => {
                         onClick={() => setShowAdvanced(!showAdvanced)}
                         title="Opciones avanzadas"
                     >
-                        ⚙️
+                        <TuercaIcon />
                     </button>
                     <button type="submit" disabled={submitting || !nuevaTarea.trim()}>
                         <AddIcon /> Agregar
@@ -422,7 +432,7 @@ const MiDia = () => {
                         </div>
                         <div className="midia-advanced-row">
                             <div className="midia-field">
-                                <label>📅 Fecha Límite</label>
+                                <label> Fecha Límite</label>
                                 <input
                                     type="date"
                                     value={nuevaFechaLimite}
@@ -430,13 +440,19 @@ const MiDia = () => {
                                 />
                             </div>
                             <div className="midia-field">
-                                <label><CasosIcon /> Caso (ID)</label>
-                                <input
-                                    type="number"
-                                    placeholder="ID del caso"
+                                <label><CasosIcon /> Caso</label>
+                                <select
                                     value={nuevoIdCaso}
                                     onChange={(e) => setNuevoIdCaso(e.target.value)}
-                                />
+                                    className="midia-caso-select"
+                                >
+                                    <option value="">Sin caso</option>
+                                    {casosLista.map(c => (
+                                        <option key={c.id_caso} value={c.id_caso}>
+                                            {c.descripcion}{c.cliente_apellido ? ` (${c.cliente_apellido})` : ""}
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -452,7 +468,7 @@ const MiDia = () => {
                     </div>
                 ) : (
                     <>
-                        {/* 🔴 URGENTE - Plazo de Gracia */}
+                        {/*  URGENTE - Plazo de Gracia */}
                         {urgentes.length > 0 && (
                             <div className="midia-section">
                                 <div className="midia-section-header midia-section-urgente">
@@ -462,7 +478,7 @@ const MiDia = () => {
                             </div>
                         )}
 
-                        {/* 🟠 VENCE HOY */}
+                        {/*  VENCE HOY */}
                         {vencenHoy.length > 0 && (
                             <div className="midia-section">
                                 <div className="midia-section-header midia-section-vence-hoy">
@@ -472,7 +488,7 @@ const MiDia = () => {
                             </div>
                         )}
 
-                        {/* 📅 Agenda de Hoy (eventos) */}
+                        {/*  Agenda de Hoy (eventos) */}
                         {eventosHoy.length > 0 && (
                             <div className="midia-section">
                                 <div className="midia-section-header midia-section-agenda">
@@ -516,7 +532,7 @@ const MiDia = () => {
                             </div>
                         )}
 
-                        {/* ⏰ Vencimientos de Hoy */}
+                        {/*  Vencimientos de Hoy */}
                         {vencimientosHoy.length > 0 && (
                             <div className="midia-section">
                                 <div className="midia-section-header midia-section-vencimiento">
@@ -559,7 +575,7 @@ const MiDia = () => {
                             </div>
                         )}
 
-                        {/* 🔵 PENDIENTES */}
+                        {/*  PENDIENTES */}
                         {pendientes.length > 0 && (
                             <div className="midia-section">
                                 <div className="midia-section-header midia-section-pendientes">
@@ -569,7 +585,7 @@ const MiDia = () => {
                             </div>
                         )}
 
-                        {/* 🔴 ATRASADAS (persistencia automática) */}
+                        {/*  ATRASADAS (persistencia automática) */}
                         {atrasadas.length > 0 && (
                             <div className="midia-section">
                                 <div className="midia-section-header midia-section-atrasadas">

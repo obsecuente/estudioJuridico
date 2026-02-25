@@ -26,6 +26,8 @@ import VencimientosList from "./pages/vencimientos/VencimientosList";
 import CalculadoraPage from "./pages/calculadora/CalculadoraPage";
 import ConfiguracionJUS from "./pages/configuracion/ConfiguracionJUS";
 import FinanzasDashboard from "./pages/finanzas/FinanzasDashboard";
+import GastosFijos from "./pages/finanzas/GastosFijos";
+import EstadisticasFinanzas from "./pages/finanzas/EstadisticasFinanzas";
 import "./App.css";
 
 
@@ -95,6 +97,8 @@ function App() {
 
             {/* Módulo de finanzas */}
             <Route path="finanzas" element={<FinanzasDashboard />} />
+            <Route path="finanzas/gastos-fijos" element={<GastosFijos />} />
+            <Route path="finanzas/estadisticas" element={<EstadisticasFinanzas />} />
           </Route>
 
 

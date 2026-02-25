@@ -1,0 +1,221 @@
+/* ═══ DETALLE CUOTAS MODAL ═══ */
+.dc-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+    animation: dcFadeIn 0.2s ease;
+}
+
+@keyframes dcFadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.dc-modal {
+    background: var(--color-fondo-oscuro, #1a1f2b);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    border-radius: 16px;
+    width: 90%;
+    max-width: 700px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    animation: dcSlideUp 0.3s ease;
+}
+
+@keyframes dcSlideUp {
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.dc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+.dc-header h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--color-acento, #d4af37);
+}
+
+.dc-close {
+    background: none;
+    border: none;
+    color: var(--color-texto-secundario, #94a3b8);
+    font-size: 1.3rem;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.dc-close:hover {
+    color: #dc2626;
+    background: rgba(220, 38, 38, 0.1);
+}
+
+.dc-body {
+    padding: 20px 24px;
+}
+
+.dc-summary {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.dc-summary-item {
+    flex: 1;
+    min-width: 120px;
+    text-align: center;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.dc-summary-item .label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--color-texto-secundario, #94a3b8);
+    margin-bottom: 4px;
+}
+
+.dc-summary-item .value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.dc-summary-item .value.green {
+    color: #10b981;
+}
+
+.dc-summary-item .value.yellow {
+    color: #f59e0b;
+}
+
+.dc-summary-item .value.red {
+    color: #dc2626;
+}
+
+.dc-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.dc-table th {
+    text-align: left;
+    padding: 10px 12px;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--color-acento, #d4af37);
+    border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+.dc-table td {
+    padding: 10px 12px;
+    font-size: 0.85rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    color: var(--color-texto-principal, #f1f5f9);
+}
+
+.dc-table tr:hover td {
+    background: rgba(212, 175, 55, 0.03);
+}
+
+.dc-table .mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+}
+
+.dc-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 5px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.dc-badge.pagado {
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+}
+
+.dc-badge.pendiente {
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+}
+
+.dc-badge.vencido {
+    background: rgba(220, 38, 38, 0.2);
+    color: #dc2626;
+}
+
+.dc-actions {
+    display: flex;
+    gap: 4px;
+}
+
+.dc-actions button {
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    cursor: pointer;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: transparent;
+    color: var(--color-texto-secundario, #94a3b8);
+    transition: all 0.2s;
+}
+
+.dc-actions button:hover {
+    border-color: var(--color-acento, #d4af37);
+    color: var(--color-acento, #d4af37);
+}
+
+.dc-actions .pay-btn:hover {
+    border-color: #10b981;
+    color: #10b981;
+}
+
+.dc-date-input {
+    padding: 4px 6px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--color-acento, #d4af37);
+    border-radius: 4px;
+    color: var(--color-texto-principal, #f1f5f9);
+    font-size: 0.75rem;
+    font-family: inherit;
+    outline: none;
+}

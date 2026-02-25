@@ -8,6 +8,7 @@ import "./ConsultaDetail.css";
 import {
   AbogadosIcon,
   ArrowLeftIcon,
+  ArrowRightIcon,
   BlueState,
   CalendarIcon,
   ClientIcon,
@@ -185,9 +186,8 @@ const ConsultaDetail = () => {
         <h3>Cambiar Estado:</h3>
         <div className="estado-buttons">
           <button
-            className={`btn-estado ${
-              consulta.estado === "pendiente" ? "active" : ""
-            }`}
+            className={`btn-estado ${consulta.estado === "pendiente" ? "active" : ""
+              }`}
             onClick={() => handleCambiarEstado("pendiente")}
             disabled={consulta.estado === "pendiente"}
           >
@@ -195,18 +195,16 @@ const ConsultaDetail = () => {
             Pendiente
           </button>
           <button
-            className={`btn-estado ${
-              consulta.estado === "en_progreso" ? "active" : ""
-            }`}
+            className={`btn-estado ${consulta.estado === "en_progreso" ? "active" : ""
+              }`}
             onClick={() => handleCambiarEstado("en_progreso")}
             disabled={consulta.estado === "en_progreso"}
           >
             <BlueState /> En Progreso
           </button>
           <button
-            className={`btn-estado ${
-              consulta.estado === "resuelta" ? "active" : ""
-            }`}
+            className={`btn-estado ${consulta.estado === "resuelta" ? "active" : ""
+              }`}
             onClick={() => handleCambiarEstado("resuelta")}
             disabled={consulta.estado === "resuelta"}
           >
@@ -240,7 +238,7 @@ const ConsultaDetail = () => {
                 to={`/dashboard/clientes/${consulta.cliente.id_cliente}`}
                 className="btn-small btn-primary"
               >
-                Ver Perfil →
+                Ver Perfil <ArrowRightIcon />
               </Link>
             )}
           </div>

@@ -128,12 +128,42 @@ export const testConnection = async () => {
 
 export const syncDatabase = async () => {
   try {
-    // Con alter: true para actualizar tablas sin borrar datos
-    await sequelize.sync({ alter: true });
-    console.log(" Modelos sincronizados con la base de datos [database.js]");
+    const forceSync = process.env.FORCE_SYNC === "true";
+    const isTest = process.env.NODE_ENV === "test";
+
+    if (isTest) {
+      // En tests, setup.js maneja el sync con force: true
+      console.log("⏭️  Sync saltado en modo test (setup.js lo maneja) [database.js]");
+      return;
+    }
+
+    if (!forceSync) {
+      // Verificar si las tablas principales ya existen
+      try {
+        const [tables] = await sequelize.query("SHOW TABLES");
+        if (tables.length > 5) {
+          console.log(`✅ ${tables.length} tablas detectadas. Sync con alter saltado.`);
+          console.log("   (Usá FORCE_SYNC=true para forzar sincronización) [database.js]");
+          return;
+        }
+      } catch {
+        // Si falla SHOW TABLES (ej: SQLite), seguimos con sync normal
+      }
+    }
+
+    console.log("🔄 Sincronizando modelos con ALTER TABLE...");
+    // Sincronizar modelos uno por uno para evitar que un error detenga todo
+    for (const modelName of Object.keys(sequelize.models)) {
+      try {
+        await sequelize.models[modelName].sync({ alter: true });
+      } catch (error) {
+        console.error(` Error al sincronizar ${modelName}:`, error.message);
+      }
+    }
+    console.log("✅ Modelos sincronizados individualmente [database.js]");
   } catch (error) {
     console.error(
-      " Error al sincronizar modelos:",
+      "❌ Error general al sincronizar modelos:",
       error.message,
       "[database.js]"
     );

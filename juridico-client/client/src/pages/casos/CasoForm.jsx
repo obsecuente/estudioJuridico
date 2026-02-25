@@ -25,6 +25,9 @@ const CasoForm = ({ caso, clienteId, onClose, showToast }) => {
   const [valorJusActual, setValorJusActual] = useState(0);
   const [usarMontoFijo, setUsarMontoFijo] = useState(false);
   const [montoFijo, setMontoFijo] = useState("");
+  const [esPlanCuotas, setEsPlanCuotas] = useState(false);
+  const [cantidadCuotas, setCantidadCuotas] = useState(2);
+  const [fechaPrimeraCuota, setFechaPrimeraCuota] = useState(new Date().toISOString().split("T")[0]);
 
   useEffect(() => {
     cargarDatos();
@@ -62,10 +65,20 @@ const CasoForm = ({ caso, clienteId, onClose, showToast }) => {
       // Cargar valor JUS por separado para manejar error
       try {
         const jusRes = await finanzasService.getValoresJus();
-        setValorJusActual(jusRes.data?.valor_jus_nqn || 15000); // Default fallback
+        console.log("DEBUG: JUS Response in CasoForm:", jusRes);
+        console.log("DEBUG: Valor JUS NQN:", jusRes.data?.NQN);
+
+        const valorNQN = jusRes.data?.NQN || jusRes.data?.valor_jus_nqn; // Handle both potential response formats
+
+        if (valorNQN) {
+          setValorJusActual(valorNQN);
+        } else {
+          console.warn("Valor JUS NQN no encontrado en respuesta, usando 80000 por seguridad");
+          setValorJusActual(80000);
+        }
       } catch (jusError) {
-        console.warn("No se pudo cargar valor JUS, usando default");
-        setValorJusActual(15000); // Fallback value
+        console.error("Error al cargar valor JUS:", jusError);
+        setValorJusActual(80000); // Fallback to current real value
       }
     } catch (err) {
       showToast("Error al cargar datos", "error");
@@ -103,6 +116,10 @@ const CasoForm = ({ caso, clienteId, onClose, showToast }) => {
           montoJus: usarMontoFijo ? 0 : parseFloat(cantidadJus) || 3,
           montoFijo: usarMontoFijo ? parseFloat(montoFijo) || 0 : undefined,
           provincia: "NQN",
+          planCuotas: esPlanCuotas ? {
+            cantidad: parseInt(cantidadCuotas),
+            fecha_primera: fechaPrimeraCuota
+          } : null
         };
       }
 
@@ -299,9 +316,77 @@ const CasoForm = ({ caso, clienteId, onClose, showToast }) => {
                             </div>
                           </div>
                         )}
+
                       </div>
                     )}
 
+                    {/* PLAN DE CUOTAS PARA APERTURA */}
+                    <div className="apertura-cuotas-section" style={{ marginTop: "15px", paddingTop: "15px", borderTop: "1px dashed rgba(255,255,255,0.1)" }}>
+                      <div style={{}}>
+                        <label className="toggle-switch">
+                          <input
+                            type="checkbox"
+                            checked={esPlanCuotas}
+                            onChange={(e) => setEsPlanCuotas(e.target.checked)}
+                            disabled={loading}
+                          />
+                          <span className="toggle-slider"></span>
+                        </label>
+                        <span style={{ fontSize: "0.9rem", color: "#f1f5f9", fontWeight: 500 }}>
+                          ¿Generar Plan de Cuotas?
+                        </span>
+                      </div>
+
+                      {esPlanCuotas && (
+                        <div style={{ display: "flex", gap: 15, marginTop: 15, alignItems: "center", flexWrap: "wrap" }}>
+                          <div className="form-group" style={{ marginBottom: 0, maxWidth: 120 }}>
+                            <label>Cant. Cuotas</label>
+                            <input
+                              type="number" min="2" max="24"
+                              value={cantidadCuotas}
+                              onChange={(e) => setCantidadCuotas(e.target.value)}
+                              disabled={loading}
+                            />
+                          </div>
+                          <div className="form-group" style={{ marginBottom: 0, maxWidth: 180 }}>
+                            <label>1º Vencimiento</label>
+                            <input
+                              type="date"
+                              value={fechaPrimeraCuota}
+                              onChange={(e) => setFechaPrimeraCuota(e.target.value)}
+                              disabled={loading}
+                            />
+                          </div>
+                          {/* Valor por cuota */}
+                          {(() => {
+                            const totalBase = usarMontoFijo
+                              ? parseFloat(montoFijo) || 0
+                              : (parseFloat(cantidadJus) || 0) * valorJusActual;
+                            const nCuotas = parseInt(cantidadCuotas) || 1;
+                            const valorCuota = nCuotas > 0 ? totalBase / nCuotas : 0;
+                            return totalBase > 0 ? (
+                              <div style={{
+                                background: "rgba(16,185,129,0.12)",
+                                border: "1px solid rgba(16,185,129,0.4)",
+                                borderRadius: "8px",
+                                padding: "10px 16px",
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: "2px",
+                                minWidth: 160,
+                              }}>
+                                <span style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                                  Valor por cuota
+                                </span>
+                                <span style={{ fontSize: "1.3rem", fontWeight: 700, color: "#10b981", fontFamily: "monospace" }}>
+                                  {formatCurrency(valorCuota)}
+                                </span>
+                              </div>
+                            ) : null;
+                          })()}
+                        </div>
+                      )}
+                    </div>
                     <div className="apertura-info">
                       <span>📋</span>
                       <span>Se registrará como ingreso pendiente asociado a este caso</span>
@@ -310,6 +395,7 @@ const CasoForm = ({ caso, clienteId, onClose, showToast }) => {
                 )}
               </div>
             )}
+
           </div>
           <div className="modal-footer">
             <button
@@ -325,7 +411,8 @@ const CasoForm = ({ caso, clienteId, onClose, showToast }) => {
           </div>
         </form>
       )}
-    </ModalFrame>
+
+    </ModalFrame >
   );
 };
 

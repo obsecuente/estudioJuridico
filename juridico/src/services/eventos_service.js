@@ -397,6 +397,24 @@ export const eliminar = async (id) => {
   return { message: "Evento eliminado exitosamente", id };
 };
 
+/**
+ * Limpieza: elimina eventos con estado "completado" del día anterior o antes
+ * @returns {Promise<number>} Cantidad eliminada
+ */
+const limpiezaEventosCompletados = async () => {
+  const hoy = new Date().toISOString().split("T")[0];
+
+  const eliminados = await Evento.destroy({
+    where: {
+      estado: "completado",
+      fecha_inicio: { [Op.lt]: hoy },
+    },
+  });
+
+  console.log(`[Limpieza] Eventos completados eliminados: ${eliminados}`);
+  return eliminados;
+};
+
 export default {
   crear,
   obtenerPorId,
@@ -406,4 +424,5 @@ export default {
   actualizar,
   cambiarEstado,
   eliminar,
+  limpiezaEventosCompletados,
 };

@@ -40,10 +40,17 @@ export const crearMovimiento = async (datos) => {
         id_abogado,
         estado = "pendiente",
         cuotas = [],
+        // Plan de cuotas simplificado: { cantidad, fecha_primera }
+        plan_cuotas = null,
         // Nuevos campos para gasto fijo
         es_gasto_fijo = false,
         dia_vencimiento = null,
+        fecha_pago = null, // Fecha manual si se especifica
+        fecha = null, // Alias para fecha_pago/cobro
     } = datos;
+
+    // Determinar fecha de pago/cobro real
+    const fechaReal = fecha_pago || fecha || (estado === "pagado" ? new Date() : null);
 
     // Validaciones
     if (!tipo || !["ingreso", "egreso"].includes(tipo)) {
@@ -118,6 +125,8 @@ export const crearMovimiento = async (datos) => {
             idGastoRecurrente = nuevoGasto.id_gasto_recurrente;
         }
 
+        const esPlanCuotas = plan_cuotas && plan_cuotas.cantidad > 0;
+
         const movimiento = await MovimientoFinanciero.create(
             {
                 tipo,
@@ -126,19 +135,43 @@ export const crearMovimiento = async (datos) => {
                 monto_ars: montoFinalArs,
                 monto_jus: monto_jus || null,
                 valor_jus_referencia: valorJusReferencia,
-                estado,
+                estado: esPlanCuotas ? "parcial" : estado,
                 id_caso,
                 id_cliente,
                 id_abogado,
                 // Vincular con gasto recurrente si aplica
                 id_gasto_recurrente: idGastoRecurrente,
                 es_recurrente: !!idGastoRecurrente,
+                // Plan de cuotas
+                es_plan_cuotas: !!esPlanCuotas,
+                cantidad_cuotas: esPlanCuotas ? plan_cuotas.cantidad : null,
+                // Fechas
+                fecha_pago: (tipo === "egreso" && fechaReal) ? fechaReal : null,
+                fecha_cobro: (tipo === "ingreso" && fechaReal) ? fechaReal : null,
             },
             { transaction }
         );
 
-        // Crear cuotas si se especifican
-        if (cuotas.length > 0) {
+        // Crear cuotas: del plan automático o manuales
+        if (esPlanCuotas) {
+            const { cantidad, fecha_primera } = plan_cuotas;
+            const montoPorCuota = Math.round((montoFinalArs / cantidad) * 100) / 100;
+            const cuotasData = [];
+            const fechaBase = new Date(fecha_primera);
+
+            for (let i = 0; i < cantidad; i++) {
+                const fechaVenc = new Date(fechaBase);
+                fechaVenc.setMonth(fechaVenc.getMonth() + i);
+                cuotasData.push({
+                    id_movimiento: movimiento.id_movimiento,
+                    numero_cuota: i + 1,
+                    monto_cuota: montoPorCuota,
+                    fecha_vencimiento: fechaVenc.toISOString().split("T")[0],
+                    estado: "pendiente",
+                });
+            }
+            await Cuota.bulkCreate(cuotasData, { transaction });
+        } else if (cuotas.length > 0) {
             const cuotasData = cuotas.map((cuota, index) => ({
                 id_movimiento: movimiento.id_movimiento,
                 numero_cuota: index + 1,
@@ -192,36 +225,113 @@ export const obtenerResumenEstudio = async (provincia = "NQN", userContext = nul
     try {
         valorJusActual = await configuracionService.obtenerValorJus(provincia);
     } catch (error) {
-        // Si no hay valor configurado, continuar con 0
         valorJusActual = 0;
     }
 
-    // Construir filtro base - admins ven todo, otros solo sus datos
+    // Construir filtro base - admins ven todo (o filtran), otros solo sus datos
     const baseWhere = {};
     const isAdmin = userContext?.rol === "admin";
 
-    if (!isAdmin && userContext?.id_abogado) {
+    if (isAdmin && userContext?.id_abogado_filtro) {
+        baseWhere.id_abogado = userContext.id_abogado_filtro;
+    } else if (!isAdmin && userContext?.id_abogado) {
         baseWhere.id_abogado = userContext.id_abogado;
     }
 
-    // Agregaciones con Sequelize para performance
-    // 1. Total percibido (pagados)
-    const totalPercibidoResult = await MovimientoFinanciero.findOne({
-        where: { ...baseWhere, tipo: "ingreso", estado: "pagado" },
+    // FECHAS MES ACTUAL
+    const hoy = new Date();
+    const mesActual = hoy.getMonth() + 1;
+    const anioActual = hoy.getFullYear();
+
+    // 1a. PERCIBIDO MENSUAL — movimientos directos pagados este mes (sin cuotas)
+    const ingresosMesResult = await MovimientoFinanciero.findOne({
+        where: {
+            ...baseWhere,
+            tipo: "ingreso",
+            estado: "pagado",
+            // Movimientos con cuotas parciales tienen estado='parcial' y no fecha_cobro,
+            // por lo que naturalmente no aparecen aquí. Los completamente pagados sí.
+            [Op.and]: [
+                sequelize.where(sequelize.fn('MONTH', sequelize.col('fecha_cobro')), mesActual),
+                sequelize.where(sequelize.fn('YEAR', sequelize.col('fecha_cobro')), anioActual)
+            ]
+        },
         attributes: [
             [sequelize.fn("COALESCE", sequelize.fn("SUM", sequelize.col("monto_ars")), 0), "total"],
         ],
         raw: true,
     });
-    const totalPercibido = parseFloat(totalPercibidoResult?.total || 0);
+    const ingresosMesDirectos = parseFloat(ingresosMesResult?.total || 0);
 
-    // 2. Total pendiente en ARS fijos (sin JUS)
+    // 1b. PERCIBIDO MENSUAL — cuotas cobradas este mes (de planes de cuotas)
+    // Esto captura los cobros parciales que el dashboard ignoraba
+    const cuotasMesResult = await Cuota.findOne({
+        where: {
+            estado: "pagado",
+            [Op.and]: [
+                sequelize.where(sequelize.fn('MONTH', sequelize.col('fecha_pago_efectivo')), mesActual),
+                sequelize.where(sequelize.fn('YEAR', sequelize.col('fecha_pago_efectivo')), anioActual)
+            ]
+        },
+        include: [{
+            model: MovimientoFinanciero,
+            as: "movimiento",
+            where: { ...baseWhere, tipo: "ingreso" },
+            attributes: [],
+            required: true,
+        }],
+        attributes: [
+            [sequelize.fn("COALESCE", sequelize.fn("SUM", sequelize.col("Cuota.monto_cuota")), 0), "total"],
+        ],
+        raw: true,
+    });
+    const ingresosMesCuotas = parseFloat(cuotasMesResult?.total || 0);
+
+    const ingresosMes = ingresosMesDirectos + ingresosMesCuotas;
+
+    // 2. EGRESOS MENSUALES
+    const egresosMesResult = await MovimientoFinanciero.findOne({
+        where: {
+            ...baseWhere,
+            tipo: "egreso",
+            estado: "pagado",
+            [Op.or]: [
+                {
+                    fecha_pago: { [Op.not]: null },
+                    [Op.and]: [
+                        sequelize.where(sequelize.fn('MONTH', sequelize.col('fecha_pago')), mesActual),
+                        sequelize.where(sequelize.fn('YEAR', sequelize.col('fecha_pago')), anioActual)
+                    ]
+                },
+                {
+                    fecha_pago: null,
+                    [Op.and]: [
+                        sequelize.where(sequelize.fn('MONTH', sequelize.col('updated_at')), mesActual),
+                        sequelize.where(sequelize.fn('YEAR', sequelize.col('updated_at')), anioActual)
+                    ]
+                }
+            ]
+        },
+        attributes: [
+            [sequelize.fn("COALESCE", sequelize.fn("SUM", sequelize.col("monto_ars")), 0), "total"],
+        ],
+        raw: true,
+    });
+    const egresosMes = parseFloat(egresosMesResult?.total || 0);
+
+    // 3a. CARTERA PENDIENTE EN EFECTIVO — movimientos sin cuotas
     const pendienteArsFijoResult = await MovimientoFinanciero.findOne({
         where: {
             ...baseWhere,
             tipo: "ingreso",
             estado: { [Op.in]: ["pendiente", "parcial"] },
             monto_jus: { [Op.or]: [null, 0] },
+            // Excluir movimientos que tienen cuotas (se calculan por cuota abajo)
+            id_movimiento: {
+                [Op.notIn]: sequelize.literal(
+                    `(SELECT DISTINCT id_movimiento FROM cuotas)`
+                )
+            }
         },
         attributes: [
             [sequelize.fn("COALESCE", sequelize.fn("SUM", sequelize.col("monto_ars")), 0), "total"],
@@ -230,68 +340,172 @@ export const obtenerResumenEstudio = async (provincia = "NQN", userContext = nul
     });
     const pendienteArsFijo = parseFloat(pendienteArsFijoResult?.total || 0);
 
-    // 3. Total JUS pendientes (para recalcular al valor actual)
-    const pendienteJusResult = await MovimientoFinanciero.findOne({
+    // 3b. CARTERA PENDIENTE EN EFECTIVO — solo cuotas no pagadas (no el total del movimiento)
+    // Esto evita contar $1.000.000 como pendiente cuando ya se cobraron 3 cuotas de $100.000
+    const cuotasPendientesResult = await Cuota.findOne({
+        where: {
+            estado: { [Op.ne]: "pagado" },
+        },
+        include: [{
+            model: MovimientoFinanciero,
+            as: "movimiento",
+            where: {
+                ...baseWhere,
+                tipo: "ingreso",
+                estado: { [Op.in]: ["pendiente", "parcial"] },
+                monto_jus: { [Op.or]: [null, 0] },
+            },
+            attributes: [],
+            required: true,
+        }],
+        attributes: [
+            [sequelize.fn("COALESCE", sequelize.fn("SUM", sequelize.col("Cuota.monto_cuota")), 0), "total"],
+        ],
+        raw: true,
+    });
+    const pendienteArsCuotas = parseFloat(cuotasPendientesResult?.total || 0);
+
+    // Total efectivo pendiente = movimientos directos + cuotas pendientes
+    const pendienteArsTotal = pendienteArsFijo + pendienteArsCuotas;
+
+    // 3c. CARTERA PENDIENTE EN JUS — proporcional a cuotas no pagadas
+    // Para movimientos JUS SIN cuotas: suma monto_jus directamente
+    // Para movimientos JUS CON cuotas: monto_jus * (cuotas_pendientes / total_cuotas)
+    // Esto hace que el JUS pendiente baje cuota a cuota, igual que el efectivo
+
+    // Movimientos JUS sin cuotas
+    const pendienteJusSinCuotasResult = await MovimientoFinanciero.findOne({
         where: {
             ...baseWhere,
             tipo: "ingreso",
             estado: { [Op.in]: ["pendiente", "parcial"] },
             monto_jus: { [Op.gt]: 0 },
+            id_movimiento: {
+                [Op.notIn]: sequelize.literal(`(SELECT DISTINCT id_movimiento FROM cuotas)`)
+            }
         },
         attributes: [
             [sequelize.fn("COALESCE", sequelize.fn("SUM", sequelize.col("monto_jus")), 0), "total_jus"],
         ],
         raw: true,
     });
-    const totalJusPendientes = parseFloat(pendienteJusResult?.total_jus || 0);
+    const jusSinCuotas = parseFloat(pendienteJusSinCuotasResult?.total_jus || 0);
 
-    // Recálculo anti-inflación: JUS pendientes * valor actual
-    const pendienteJusActualizado = totalJusPendientes * valorJusActual;
-
-    // Total pendiente actualizado
-    const totalPendienteActualizado = pendienteArsFijo + pendienteJusActualizado;
-
-    // 4. Total egresos
-    const totalEgresosResult = await MovimientoFinanciero.findOne({
-        where: { ...baseWhere, tipo: "egreso" },
-        attributes: [
-            [sequelize.fn("COALESCE", sequelize.fn("SUM", sequelize.col("monto_ars")), 0), "total"],
-        ],
-        raw: true,
+    // Movimientos JUS CON cuotas: calcular JUS proporcional a cuotas pendientes
+    // Usamos raw query para poder hacer la proporción por movimiento
+    const jusQueryWhere = baseWhere.id_abogado
+        ? `AND mf.id_abogado = :idAbogado`
+        : "";
+    const jusConCuotasRows = await sequelize.query(`
+        SELECT
+            mf.id_movimiento,
+            mf.monto_jus,
+            COUNT(c.id_cuota) AS total_cuotas,
+            SUM(CASE WHEN c.estado != 'pagado' THEN 1 ELSE 0 END) AS cuotas_pendientes
+        FROM movimientos_financieros mf
+        INNER JOIN cuotas c ON c.id_movimiento = mf.id_movimiento
+        WHERE mf.tipo = 'ingreso'
+          AND mf.estado IN ('pendiente', 'parcial')
+          AND mf.monto_jus > 0
+          ${jusQueryWhere}
+        GROUP BY mf.id_movimiento, mf.monto_jus
+        HAVING cuotas_pendientes > 0
+    `, {
+        replacements: { idAbogado: baseWhere.id_abogado || null },
+        type: sequelize.QueryTypes.SELECT,
     });
-    const totalEgresos = parseFloat(totalEgresosResult?.total || 0);
+    const jusConCuotas = (jusConCuotasRows || []).reduce((acc, row) => {
+        const proporcion = row.total_cuotas > 0 ? row.cuotas_pendientes / row.total_cuotas : 1;
+        return acc + (parseFloat(row.monto_jus) * proporcion);
+    }, 0);
 
-    // 5. Contadores
-    const [countPendientes, countCuotasVencidas, countTotal] = await Promise.all([
+    const totalJusPendientes = jusSinCuotas + jusConCuotas;
+    const pendienteJusActualizado = totalJusPendientes * valorJusActual;
+    const totalPendienteActualizado = pendienteArsTotal + pendienteJusActualizado;
+
+    // 4. Contadores
+    const proximos7dias = new Date();
+    proximos7dias.setDate(proximos7dias.getDate() + 7);
+
+    const [countPendientes, countCuotasVencidas, countCuotasProximas, countTotal] = await Promise.all([
         MovimientoFinanciero.count({
             where: { ...baseWhere, tipo: "ingreso", estado: { [Op.in]: ["pendiente", "parcial"] } },
         }),
+        // Cuotas ya vencidas — filtradas por abogado via join
         Cuota.count({
             where: {
-                estado: "pendiente",
+                estado: { [Op.in]: ["pendiente", "vencido"] },
                 fecha_vencimiento: { [Op.lt]: new Date() },
             },
+            include: [{
+                model: MovimientoFinanciero,
+                as: "movimiento",
+                where: { ...baseWhere, tipo: "ingreso" },
+                attributes: [],
+                required: true,
+            }],
+        }),
+        // Cuotas que vencen en los próximos 7 días
+        Cuota.count({
+            where: {
+                estado: { [Op.in]: ["pendiente", "vencido"] },
+                fecha_vencimiento: { [Op.between]: [new Date(), proximos7dias] },
+            },
+            include: [{
+                model: MovimientoFinanciero,
+                as: "movimiento",
+                where: { ...baseWhere, tipo: "ingreso" },
+                attributes: [],
+                required: true,
+            }],
         }),
         MovimientoFinanciero.count({ where: baseWhere }),
     ]);
 
-    // Calcular ratio de cobrabilidad
-    const baseCobrabilidad = totalPercibido + totalPendienteActualizado;
+    // 5. Ratio de cobrabilidad histórico — incluye cuotas pagadas
+    const totalPercibidoHistResult = await MovimientoFinanciero.sum("monto_ars", {
+        where: {
+            ...baseWhere, tipo: "ingreso", estado: "pagado",
+            id_movimiento: {
+                [Op.notIn]: sequelize.literal(`(SELECT DISTINCT id_movimiento FROM cuotas)`)
+            }
+        }
+    });
+    const percibidoHistDirecto = totalPercibidoHistResult || 0;
+
+    const cuotasPagadasHistResult = await Cuota.findOne({
+        where: { estado: "pagado" },
+        include: [{
+            model: MovimientoFinanciero,
+            as: "movimiento",
+            where: { ...baseWhere, tipo: "ingreso" },
+            attributes: [],
+            required: true,
+        }],
+        attributes: [
+            [sequelize.fn("COALESCE", sequelize.fn("SUM", sequelize.col("Cuota.monto_cuota")), 0), "total"],
+        ],
+        raw: true,
+    });
+    const percibidoHistCuotas = parseFloat(cuotasPagadasHistResult?.total || 0);
+    const totalPercibidoHist = percibidoHistDirecto + percibidoHistCuotas;
+
+    const baseCobrabilidad = totalPercibidoHist + totalPendienteActualizado;
     const ratioCobrabilidad = baseCobrabilidad > 0
-        ? ((totalPercibido / baseCobrabilidad) * 100).toFixed(2)
+        ? ((totalPercibidoHist / baseCobrabilidad) * 100).toFixed(2)
         : 0;
 
-    // Caja neta (percibido - egresos)
-    const cajaNeta = totalPercibido - totalEgresos;
+    const balanceMensual = ingresosMes - egresosMes;
 
     return {
         caja: {
-            percibido: totalPercibido,
-            egresos: totalEgresos,
-            neto: cajaNeta,
+            percibido: ingresosMes,  // Mensual: directos + cuotas cobradas este mes
+            egresos: egresosMes,
+            neto: balanceMensual,
         },
         cartera: {
-            pendiente_ars_fijo: pendienteArsFijo,
+            pendiente_ars_fijo: pendienteArsTotal,       // Efectivo pendiente (sin JUS)
+            pendiente_ars_cuotas: pendienteArsCuotas,    // Solo la parte de cuotas
             pendiente_jus: totalJusPendientes,
             pendiente_jus_actualizado: pendienteJusActualizado,
             total_pendiente_actualizado: totalPendienteActualizado,
@@ -302,15 +516,20 @@ export const obtenerResumenEstudio = async (provincia = "NQN", userContext = nul
             provincia,
             movimientos_pendientes: countPendientes,
             cuotas_vencidas: countCuotasVencidas,
+            cuotas_proximas: countCuotasProximas,
             total_movimientos: countTotal,
-            vista: isAdmin ? "estudio_completo" : "mis_finanzas",
+            vista: isAdmin
+                ? (userContext?.id_abogado_filtro ? "filtro_abogado" : "estudio_completo")
+                : "mis_finanzas",
+            mes_actual: mesActual,
         },
         formula_aplicada: {
-            descripcion: "Total Pendiente = (JUS pendientes × Valor JUS hoy) + ARS fijos pendientes",
-            calculo: `(${totalJusPendientes} JUS × $${valorJusActual}) + $${pendienteArsFijo} = $${totalPendienteActualizado.toFixed(2)}`,
+            descripcion: "Percibido = mes actual (directos + cuotas). Pendiente = cuotas reales sin cobrar.",
+            calculo: `Balance ${mesActual}/${anioActual}: $${balanceMensual}`,
         },
     };
 };
+
 
 
 /**
@@ -407,7 +626,7 @@ export const obtenerMovimientosPorCaso = async (id_caso) => {
             { model: Cuota, as: "cuotas", order: [["numero_cuota", "ASC"]] },
             { model: Cliente, as: "cliente", attributes: ["id_cliente", "nombre", "apellido"] },
         ],
-        order: [["createdAt", "DESC"]],
+        order: [["updatedAt", "DESC"]],
     });
 
     return movimientos;
@@ -449,7 +668,7 @@ export const obtenerMovimientos = async (opciones = {}) => {
             { model: Cliente, as: "cliente", attributes: ["id_cliente", "nombre", "apellido"] },
             { model: Caso, as: "caso", attributes: ["id_caso", "descripcion"] },
         ],
-        order: [["createdAt", "DESC"]],
+        order: [["updatedAt", "DESC"]],
     });
 
     return {
@@ -476,17 +695,27 @@ export const registrarAperturaCarpeta = async (
     id_caso,
     id_cliente,
     monto_jus = 3,
-    provincia = "NQN"
+    provincia = "NQN",
+    monto_fijo = null,
+    plan_cuotas = null
 ) => {
+    // Si viene monto fijo, usamos ese y descripcion en pesos
+    // Si no, usamos JUS
+    const esFijo = monto_fijo && parseFloat(monto_fijo) > 0;
+
     return await crearMovimiento({
         tipo: "ingreso",
         categoria: "apertura_carpeta",
-        descripcion: `Apertura de carpeta - ${monto_jus} JUS (Ley 1594 ${provincia})`,
-        monto_jus,
-        provincia,
+        descripcion: esFijo
+            ? `Apertura de carpeta - Monto Fijo`
+            : `Apertura de carpeta - ${monto_jus} JUS (Ley 1594 ${provincia})`,
+        monto_jus: esFijo ? null : monto_jus,
+        monto_ars: esFijo ? parseFloat(monto_fijo) : 0, // Si es JUS, monto_ars se calculará o quedará en 0 hasta update
+        provincia: esFijo ? null : provincia,
         id_caso,
         id_cliente,
-        estado: "pendiente",
+        estado: plan_cuotas ? "parcial" : "pendiente",
+        plan_cuotas
     });
 };
 
@@ -505,13 +734,85 @@ export const eliminarMovimiento = async (id) => {
     return { message: "Movimiento eliminado exitosamente" };
 };
 
+/**
+ * Marca un movimiento de ingreso como cobrado
+ * Valida que NO sea un plan de cuotas (esos se marcan individualmente)
+ * @param {number} id_movimiento - ID del movimiento
+ * @param {string} fecha_cobro - Fecha del cobro efectivo (default: hoy)
+ * @returns {Promise<Object>} Movimiento actualizado
+ */
+export const marcarMovimientoCobrado = async (id_movimiento, fecha_cobro = null) => {
+    const mov = await MovimientoFinanciero.findByPk(id_movimiento, {
+        include: [{ model: Cuota, as: "cuotas" }],
+    });
+
+    if (!mov) {
+        throw new AppError("Movimiento no encontrado", 404);
+    }
+
+    if (mov.tipo !== "ingreso") {
+        throw new AppError("Solo se pueden marcar como cobrados los ingresos", 400);
+    }
+
+    if (mov.estado === "pagado") {
+        throw new AppError("Este ingreso ya está marcado como cobrado", 400);
+    }
+
+    // Si tiene cuotas, no se puede marcar el movimiento completo
+    if (mov.cuotas && mov.cuotas.length > 0) {
+        throw new AppError(
+            "Este ingreso tiene plan de cuotas. Marcá las cuotas individualmente.",
+            400
+        );
+    }
+
+    await mov.update({
+        estado: "pagado",
+        fecha_cobro: fecha_cobro || new Date(),
+    });
+
+    return mov;
+};
+/**
+ * Obtiene las cuotas de un movimiento
+ * @param {number} id_movimiento
+ * @returns {Promise<Array>}
+ */
+export const obtenerCuotasMovimiento = async (id_movimiento) => {
+    const mov = await MovimientoFinanciero.findByPk(id_movimiento, {
+        include: [{ model: Cuota, as: "cuotas", order: [["numero_cuota", "ASC"]] }],
+    });
+    if (!mov) throw new AppError("Movimiento no encontrado", 404);
+    return mov.cuotas || [];
+};
+
+/**
+ * Actualiza datos de una cuota (fecha, monto)
+ * @param {number} id_cuota
+ * @param {Object} datos - { fecha_vencimiento, monto_cuota }
+ * @returns {Promise<Object>}
+ */
+export const actualizarCuota = async (id_cuota, datos) => {
+    const cuota = await Cuota.findByPk(id_cuota);
+    if (!cuota) throw new AppError("Cuota no encontrada", 404);
+
+    const updates = {};
+    if (datos.fecha_vencimiento) updates.fecha_vencimiento = datos.fecha_vencimiento;
+    if (datos.monto_cuota) updates.monto_cuota = datos.monto_cuota;
+
+    await cuota.update(updates);
+    return cuota;
+};
+
 export default {
     crearMovimiento,
     obtenerResumenEstudio,
     marcarCuotaPagada,
+    marcarMovimientoCobrado,
     obtenerMovimientosPorCaso,
     obtenerMovimientos,
     registrarAperturaCarpeta,
     eliminarMovimiento,
+    obtenerCuotasMovimiento,
+    actualizarCuota,
 };
-

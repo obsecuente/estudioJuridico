@@ -7,7 +7,7 @@
 
 .welcome-section h1 {
   font-size: 32px;
-  color: #1a1f2b;
+  color: #f5f5f5;
   font-weight: 800;
   margin-bottom: 8px;
 }
@@ -33,6 +33,21 @@
 /* Reúso de estilos MiDia para consistencia */
 .dashboard-lists-grid .midia-widget {
   max-width: 100%;
+  background: #1a1f2b;
+  border: 1px solid rgba(212, 175, 55, 0.15);
+  border-left: 5px solid var(--color-acento, #d4af37);
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.dashboard-lists-grid .midia-header {
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.1), rgba(212, 175, 55, 0.03));
+  border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+}
+
+.dashboard-lists-grid .midia-header h3 {
+  color: #f5f5f5;
+  font-size: 1rem;
 }
 
 .dashboard-lists-grid .midia-header-link {
@@ -83,7 +98,7 @@
 
 .quick-actions h2 {
   font-size: 20px;
-  color: #1a1f2b;
+  color: #f5f5f5;
   margin-bottom: 20px;
 }
 

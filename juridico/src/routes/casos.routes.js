@@ -7,6 +7,7 @@ import {
   eliminarCaso,
   cambiarEstadoCaso,
   cerrarCaso,
+  obtenerListaSimpleCasos,
 } from "../controllers/casos_controller.js";
 import authMiddleware from "../middleware/authMiddleware.js";
 import { verificarRol } from "../middleware/roleMiddleware.js";
@@ -18,6 +19,7 @@ const router = express.Router();
 router.use(authMiddleware);
 
 router.get("/", obtenerCasos);
+router.get("/lista-simple", obtenerListaSimpleCasos);
 router.get("/:id", obtenerCasoPorId);
 
 router.post(

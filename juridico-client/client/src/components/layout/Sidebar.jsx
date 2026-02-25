@@ -12,6 +12,7 @@ import {
   AlarmIcon,
   CalendarIcon,
   CalculatorIcon,
+  FinanzasIcon,
 } from "../common/Icons.jsx";
 import "./Sidebar.css";
 
@@ -132,7 +133,7 @@ const Sidebar = ({ isOpen, onClose }) => {
             className={isPathActive("/dashboard/finanzas") ? "nav-link active" : "nav-link"}
             onClick={() => window.innerWidth < 768 && onClose()}
           >
-            <span className="nav-icon">💰</span>
+            <span className="nav-icon"><FinanzasIcon /></span>
             <span>Finanzas</span>
           </NavLink>
 

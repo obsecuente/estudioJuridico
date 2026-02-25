@@ -427,6 +427,26 @@ export const pasarAPlazoDeGracia = async (id_tarea, id_abogado) => {
     return tareaActualizada;
 };
 
+/**
+ * Limpieza nocturna: elimina tareas completadas de hace más de 7 días
+ * Las atrasadas se mantienen indefinidamente
+ * @returns {Promise<number>} Cantidad eliminada
+ */
+const limpiezaNocturna = async () => {
+    const hace7Dias = new Date();
+    hace7Dias.setDate(hace7Dias.getDate() - 7);
+
+    const eliminadas = await Tarea.destroy({
+        where: {
+            completada: true,
+            updatedAt: { [Op.lt]: hace7Dias },
+        },
+    });
+
+    console.log(`[Limpieza] Tareas completadas eliminadas: ${eliminadas}`);
+    return eliminadas;
+};
+
 export default {
     crear,
     obtenerPorAbogado,
@@ -437,4 +457,5 @@ export default {
     obtenerEstadisticas,
     obtenerMiDia,
     pasarAPlazoDeGracia,
+    limpiezaNocturna,
 };
