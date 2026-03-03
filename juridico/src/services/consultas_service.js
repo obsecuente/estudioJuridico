@@ -121,32 +121,31 @@ export const crearDesdeFormulario = async (datosFormulario) => {
 export const crear = async (datosConsulta) => {
   /**
    * Crea una nueva consulta en la base de datos (uso interno/admin)
-   * Requiere que el cliente ya exista
-   *
-   * @param {Object} datosConsulta - Datos de la consulta
-   * @param {string} datosConsulta.mensaje - Mensaje de la consulta
-   * @param {number} datosConsulta.id_cliente - ID del cliente que hace la consulta
-   * @param {number} datosConsulta.id_abogado_asignado - ID del abogado asignado (opcional)
-   * @param {string} datosConsulta.estado - Estado de la consulta (pendiente, en_progreso, resuelta)
-   * @returns {Promise<Object>} Consulta creada
-   * @throws {AppError} Si faltan datos o el cliente no existe
+   * Soporta tanto clientes existentes como leads (contactos sin cliente)
    */
 
-  const { mensaje, id_cliente, id_abogado_asignado, estado } = datosConsulta;
+  const { mensaje, id_cliente, id_abogado_asignado, estado, nombre_contacto, telefono_contacto } = datosConsulta;
 
   // Validaciones básicas
-  if (!mensaje || !id_cliente) {
-    throw new AppError("El mensaje y el ID del cliente son obligatorios", 400);
+  if (!mensaje) {
+    throw new AppError("El mensaje es obligatorio", 400);
+  }
+
+  // Debe tener id_cliente O nombre_contacto+telefono_contacto
+  if (!id_cliente && (!nombre_contacto || !telefono_contacto)) {
+    throw new AppError("Debe indicar un cliente existente o los datos del contacto (nombre y teléfono)", 400);
   }
 
   if (mensaje.trim().length < 10) {
     throw new AppError("El mensaje debe tener al menos 10 caracteres", 400);
   }
 
-  // Verificar que el cliente existe
-  const clienteExiste = await Cliente.findByPk(id_cliente);
-  if (!clienteExiste) {
-    throw new AppError("El cliente especificado no existe", 404);
+  // Verificar que el cliente existe (si se proporcionó)
+  if (id_cliente) {
+    const clienteExiste = await Cliente.findByPk(id_cliente);
+    if (!clienteExiste) {
+      throw new AppError("El cliente especificado no existe", 404);
+    }
   }
 
   // Si se asignó un abogado, verificar que existe
@@ -169,7 +168,9 @@ export const crear = async (datosConsulta) => {
   try {
     const nuevaConsulta = await Consulta.create({
       mensaje: mensaje.trim(),
-      id_cliente,
+      id_cliente: id_cliente || null,
+      nombre_contacto: !id_cliente ? nombre_contacto?.trim() : null,
+      telefono_contacto: !id_cliente ? telefono_contacto?.trim() : null,
       id_abogado_asignado: id_abogado_asignado || null,
       estado: estado || "pendiente",
       fecha_envio: new Date(),
@@ -201,7 +202,7 @@ export const crear = async (datosConsulta) => {
       throw new AppError(`Error de validación: ${mensajes}`, 400);
     }
     throw new AppError(
-      "Error al crear la consulta en la base de datos [consultas_service.js]",
+      `Error al crear la consulta en la base de datos: ${error.message} [consultas_service.js]`,
       500
     );
   }
@@ -526,9 +527,84 @@ export const obtenerPorAbogado = async (id_abogado) => {
 
   return consultas;
 };
+/**
+ * Convierte un lead (consulta sin cliente) en cliente formal
+ * Crea el cliente usando nombre_contacto y telefono_contacto
+ * y actualiza la consulta con el id_cliente
+ *
+ * @param {number} id_consulta - ID de la consulta lead
+ * @param {Object} datosExtra - Datos adicionales del cliente
+ * @param {string} datosExtra.apellido - Apellido (obligatorio)
+ * @param {string} datosExtra.email - Email (opcional)
+ * @returns {Promise<Object>} { cliente, consulta }
+ */
+export const convertirEnCliente = async (id_consulta, datosExtra = {}) => {
+  const consulta = await Consulta.findByPk(id_consulta);
+
+  if (!consulta) {
+    throw new AppError("Consulta no encontrada", 404);
+  }
+
+  if (consulta.id_cliente) {
+    throw new AppError("Esta consulta ya tiene un cliente asociado", 400);
+  }
+
+  if (!consulta.nombre_contacto) {
+    throw new AppError("La consulta no tiene datos de contacto para convertir", 400);
+  }
+
+  // Separar nombre_contacto en nombre y apellido si es posible
+  const partes = consulta.nombre_contacto.trim().split(/\s+/);
+  const nombre = partes[0] || "";
+  const apellido = datosExtra.apellido || partes.slice(1).join(" ") || "Sin apellido";
+
+  try {
+    // Crear el cliente
+    const nuevoCliente = await Cliente.create({
+      nombre: nombre.trim(),
+      apellido: apellido.trim(),
+      telefono: consulta.telefono_contacto || null,
+      email: datosExtra.email || null,
+      fecha_registro: new Date(),
+    });
+
+    // Vincular la consulta al nuevo cliente
+    await consulta.update({
+      id_cliente: nuevoCliente.id_cliente,
+    });
+
+    // Retornar datos completos
+    const consultaActualizada = await Consulta.findByPk(id_consulta, {
+      include: [
+        {
+          model: Cliente,
+          as: "cliente",
+          attributes: ["id_cliente", "nombre", "apellido", "email", "telefono"],
+        },
+        {
+          model: Abogado,
+          as: "abogado",
+          attributes: ["id_abogado", "nombre", "apellido", "especialidad"],
+        },
+      ],
+    });
+
+    return {
+      cliente: nuevoCliente,
+      consulta: consultaActualizada,
+    };
+  } catch (error) {
+    if (error.name === "SequelizeValidationError") {
+      const mensajes = error.errors.map((e) => e.message).join(", ");
+      throw new AppError(`Error de validación: ${mensajes}`, 400);
+    }
+    throw new AppError("Error al convertir lead en cliente", 500);
+  }
+};
+
 export default {
-  crearDesdeFormulario, // ← NUEVO: Para formularios públicos
-  crear, // Para uso interno/admin
+  crearDesdeFormulario,
+  crear,
   obtenerTodas,
   obtenerPorId,
   actualizar,
@@ -537,4 +613,5 @@ export default {
   cambiarEstado,
   obtenerPorCliente,
   obtenerPorAbogado,
+  convertirEnCliente,
 };

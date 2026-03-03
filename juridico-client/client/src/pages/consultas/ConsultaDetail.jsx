@@ -54,6 +54,7 @@ const ConsultaDetail = () => {
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfig, setDeleteConfig] = useState({});
+  const [converting, setConverting] = useState(false);
 
   const handleEliminar = () => {
     // Abrir modal configurado
@@ -100,6 +101,20 @@ const ConsultaDetail = () => {
     setShowEditModal(false);
     if (reload) {
       cargarConsulta();
+    }
+  };
+
+  const handleConvertirEnCliente = async () => {
+    try {
+      setConverting(true);
+      await api.post(`/consultas/${id}/convertir`, {});
+      showToast("Contacto convertido en cliente exitosamente");
+      cargarConsulta();
+    } catch (err) {
+      console.error("Error al convertir contacto:", err);
+      showToast(err.response?.data?.error || "Error al convertir en cliente", "error");
+    } finally {
+      setConverting(false);
     }
   };
 
@@ -271,6 +286,34 @@ const ConsultaDetail = () => {
                     )}
                   </span>
                 </div>
+              </>
+            ) : consulta.nombre_contacto ? (
+              <>
+                <div style={{ display: "inline-block", background: "rgba(212, 175, 55, 0.15)", color: "#d4af37", fontSize: "11px", fontWeight: 700, padding: "3px 10px", borderRadius: "4px", textTransform: "uppercase", marginBottom: "12px" }}>
+                  Posible Cliente
+                </div>
+                <div className="info-row">
+                  <span className="info-label">Contacto:</span>
+                  <span className="info-value">{consulta.nombre_contacto}</span>
+                </div>
+                <div className="info-row">
+                  <span className="info-label">Teléfono:</span>
+                  <span className="info-value">
+                    {consulta.telefono_contacto ? (
+                      <a href={`tel:${consulta.telefono_contacto}`}>
+                        {consulta.telefono_contacto}
+                      </a>
+                    ) : ("-")}
+                  </span>
+                </div>
+                <button
+                  className="btn-small btn-primary"
+                  onClick={handleConvertirEnCliente}
+                  disabled={converting}
+                  style={{ marginTop: "12px", width: "100%" }}
+                >
+                  {converting ? "Convirtiendo..." : "Convertir en Cliente"}
+                </button>
               </>
             ) : (
               <p className="no-data">Cliente no disponible</p>

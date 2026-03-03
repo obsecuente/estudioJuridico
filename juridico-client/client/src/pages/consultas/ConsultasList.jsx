@@ -175,22 +175,22 @@ const ConsultasList = () => {
         <div className="estado-filters">
           <div className="filter-group">
             <button
-                className={`filter-btn ${estadoFiltro === "todas" ? "active" : ""}`}
-                onClick={() => handleEstadoFilter("todas")}
+              className={`filter-btn ${estadoFiltro === "todas" ? "active" : ""}`}
+              onClick={() => handleEstadoFilter("todas")}
             >
-                Todas
+              Todas
             </button>
             <button
-                className={`filter-btn ${estadoFiltro === "pendiente" ? "active" : ""}`}
-                onClick={() => handleEstadoFilter("pendiente")}
+              className={`filter-btn ${estadoFiltro === "pendiente" ? "active" : ""}`}
+              onClick={() => handleEstadoFilter("pendiente")}
             >
-                Pendientes
+              Pendientes
             </button>
             <button
-                className={`filter-btn ${estadoFiltro === "resuelta" ? "active" : ""}`}
-                onClick={() => handleEstadoFilter("resuelta")}
+              className={`filter-btn ${estadoFiltro === "resuelta" ? "active" : ""}`}
+              onClick={() => handleEstadoFilter("resuelta")}
             >
-                Resueltas
+              Resueltas
             </button>
           </div>
 
@@ -241,6 +241,22 @@ const ConsultasList = () => {
                 <Link to={`/dashboard/clientes/${consulta.cliente.id_cliente}`}>
                   {consulta.cliente.nombre} {consulta.cliente.apellido}
                 </Link>
+              ) : consulta.nombre_contacto ? (
+                <span>
+                  {consulta.nombre_contacto}
+                  <span className="lead-tag" style={{
+                    display: "inline-block",
+                    background: "rgba(212, 175, 55, 0.15)",
+                    color: "#d4af37",
+                    fontSize: "10px",
+                    fontWeight: 700,
+                    letterSpacing: "0.5px",
+                    padding: "2px 8px",
+                    borderRadius: "4px",
+                    textTransform: "uppercase",
+                    marginLeft: "6px",
+                  }}>Posible Cliente</span>
+                </span>
               ) : (
                 "No disponible"
               )}
@@ -303,9 +319,8 @@ const ConsultasList = () => {
               <button
                 key={i}
                 onClick={() => handlePageChange(i + 1)}
-                className={`btn-page-number ${
-                  pagination.page === i + 1 ? "active" : ""
-                }`}
+                className={`btn-page-number ${pagination.page === i + 1 ? "active" : ""
+                  }`}
               >
                 {i + 1}
               </button>

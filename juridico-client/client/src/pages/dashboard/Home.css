@@ -7,9 +7,14 @@
 
 .welcome-section h1 {
   font-size: 32px;
-  color: #f5f5f5;
+  color: #1a1f2b;
   font-weight: 800;
   margin-bottom: 8px;
+}
+
+.welcome-section p {
+  color: #64748b;
+  font-size: 0.95rem;
 }
 
 /* ═══════════ MI DÍA - HERO ═══════════ */
@@ -33,16 +38,11 @@
 /* Reúso de estilos MiDia para consistencia */
 .dashboard-lists-grid .midia-widget {
   max-width: 100%;
-  background: #1a1f2b;
-  border: 1px solid rgba(212, 175, 55, 0.15);
-  border-left: 5px solid var(--color-acento, #d4af37);
-  border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
 .dashboard-lists-grid .midia-header {
-  background: linear-gradient(135deg, rgba(212, 175, 55, 0.1), rgba(212, 175, 55, 0.03));
-  border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+  background: rgba(15, 23, 42, 0.8);
+  border-bottom: 2px solid var(--color-acento, #d4af37);
 }
 
 .dashboard-lists-grid .midia-header h3 {
@@ -147,17 +147,17 @@
 
 /* ═══════════ ACTIVIDAD RECIENTE ═══════════ */
 .recent-activity {
-  background: #1a1f2b;
-  border-radius: 12px;
+  background: var(--color-fondo-oscuro, #1a1f2b);
+  border-radius: 16px;
   padding: 24px;
-  border: none;
-  border-left: 5px solid #f1c40f;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-left: 5px solid var(--color-acento, #d4af37);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
 .recent-activity h2 {
   margin-bottom: 20px;
-  color: #f1c40f;
+  color: var(--color-acento, #d4af37);
   font-size: 20px;
   font-weight: 600;
   text-transform: uppercase;

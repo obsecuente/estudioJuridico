@@ -95,14 +95,14 @@ const ConfiguracionJUS = () => {
         <div className="configuracion-container">
             <BackButton to="/dashboard/finanzas" />
             <div className="configuracion-header">
-                <h1>⚖️ Configuración de JUS</h1>
+                <h1> Configuración de JUS</h1>
                 <p>Actualiza el valor del JUS cuando el Tribunal Superior de Justicia anuncie cambios</p>
             </div>
 
             {/* Card Neuquén */}
             <div className="config-card">
                 <div className="config-card-header">
-                    <h2>🏔️ Neuquén (NQN)</h2>
+                    <h2> Neuquén</h2>
                     <span className="badge">Ley 1594</span>
                 </div>
                 <div className="config-card-body">
@@ -127,7 +127,7 @@ const ConfiguracionJUS = () => {
                                 onClick={() => handleGuardar("NQN")}
                                 disabled={saving}
                             >
-                                {saving ? <SpinnerIcon /> : "💾"} Guardar Neuquén
+                                {saving ? <SpinnerIcon /> : ""} Fijar JUS
                             </button>
                         </div>
                     </div>
@@ -137,7 +137,7 @@ const ConfiguracionJUS = () => {
             {/* Card Río Negro */}
             <div className="config-card">
                 <div className="config-card-header">
-                    <h2>🌊 Río Negro (RN)</h2>
+                    <h2> Río Negro</h2>
                     <span className="badge">Ley Provincial</span>
                 </div>
                 <div className="config-card-body">
@@ -162,7 +162,7 @@ const ConfiguracionJUS = () => {
                                 onClick={() => handleGuardar("RN")}
                                 disabled={saving}
                             >
-                                {saving ? <SpinnerIcon /> : "💾"} Guardar Río Negro
+                                {saving ? <SpinnerIcon /> : ""} Fijar JUS
                             </button>
                         </div>
                     </div>
@@ -173,7 +173,7 @@ const ConfiguracionJUS = () => {
             <div className="config-card">
                 <div className="config-card-body">
                     <div className="info-box">
-                        <h4>ℹ️ ¿Qué es el JUS?</h4>
+                        <h4> ¿Qué es el JUS?</h4>
                         <p>
                             El JUS es la unidad de medida arancelaria que utiliza el Poder Judicial para
                             determinar honorarios profesionales. Su valor se actualiza periódicamente por

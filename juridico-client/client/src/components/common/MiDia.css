@@ -1,10 +1,12 @@
 /* ═══ MI DÍA - WIDGET PRINCIPAL ═══ */
 .midia-widget {
-    background: linear-gradient(145deg, rgba(30, 30, 40, 0.95), rgba(15, 15, 25, 0.98));
+    background: var(--color-fondo-oscuro, #1a1f2b);
     border-radius: 16px;
-    border: 1px solid rgba(212, 175, 55, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-left: 5px solid var(--color-acento, #d4af37);
     padding: 0;
     overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
 /* ═══ HEADER ═══ */
@@ -13,8 +15,8 @@
     justify-content: space-between;
     align-items: center;
     padding: 18px 24px;
-    background: linear-gradient(135deg, rgba(212, 175, 55, 0.12), rgba(212, 175, 55, 0.04));
-    border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+    background: rgba(15, 23, 42, 0.8);
+    border-bottom: 2px solid var(--color-acento, #d4af37);
     flex-wrap: wrap;
     gap: 8px;
 }

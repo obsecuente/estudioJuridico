@@ -462,6 +462,60 @@ export const obtenerResumenEstudio = async (provincia = "NQN", userContext = nul
         MovimientoFinanciero.count({ where: baseWhere }),
     ]);
 
+    // 4b. GASTOS FIJOS PRÓXIMOS A VENCER (para alertas en card de Egresos)
+    const diaHoy = hoy.getDate();
+    const gastosFijosProximos = await GastoRecurrente.findAll({
+        where: {
+            activo: true,
+            ...(baseWhere.id_abogado ? { id_abogado: baseWhere.id_abogado } : {}),
+        },
+        raw: true,
+    });
+    // Calcular días restantes al vencimiento para cada gasto
+    const gastosConDias = gastosFijosProximos.map(g => {
+        let diasRestantes = g.dia_vencimiento - diaHoy;
+        if (diasRestantes < 0) diasRestantes += 30; // ya pasó este mes, siguiente
+        return { ...g, dias_restantes: diasRestantes };
+    }).filter(g => g.dias_restantes >= 0 && g.dias_restantes <= 7)
+        .sort((a, b) => a.dias_restantes - b.dias_restantes);
+
+    // Verificar cuáles de esos gastos fijos ya fueron pagados este mes
+    const gastosFijosConEstado = [];
+    for (const gf of gastosConDias) {
+        const movPagado = await MovimientoFinanciero.findOne({
+            where: {
+                id_gasto_recurrente: gf.id_gasto_recurrente,
+                estado: "pagado",
+                [Op.and]: [
+                    sequelize.where(sequelize.fn('MONTH', sequelize.col('fecha_pago')), mesActual),
+                    sequelize.where(sequelize.fn('YEAR', sequelize.col('fecha_pago')), anioActual)
+                ]
+            },
+        });
+        if (!movPagado) {
+            gastosFijosConEstado.push(gf);
+        }
+    }
+
+    // 4c. CUOTAS PRÓXIMAS DETALLADAS (para alertas en card de Cobros Pendientes)
+    const cuotasProximasDetalle = await Cuota.findAll({
+        where: {
+            estado: { [Op.in]: ["pendiente", "vencido"] },
+            fecha_vencimiento: { [Op.between]: [new Date(), proximos7dias] },
+        },
+        include: [{
+            model: MovimientoFinanciero,
+            as: "movimiento",
+            where: { ...baseWhere, tipo: "ingreso" },
+            attributes: ["id_movimiento", "descripcion", "categoria", "monto_ars", "monto_jus", "id_caso", "id_cliente", "es_plan_cuotas", "cantidad_cuotas"],
+            include: [
+                { model: Cliente, as: "cliente", attributes: ["id_cliente", "nombre", "apellido"] },
+                { model: Caso, as: "caso", attributes: ["id_caso", "descripcion"] },
+            ],
+        }],
+        order: [["fecha_vencimiento", "ASC"]],
+    });
+
     // 5. Ratio de cobrabilidad histórico — incluye cuotas pagadas
     const totalPercibidoHistResult = await MovimientoFinanciero.sum("monto_ars", {
         where: {
@@ -523,6 +577,10 @@ export const obtenerResumenEstudio = async (provincia = "NQN", userContext = nul
                 : "mis_finanzas",
             mes_actual: mesActual,
         },
+        // Alertas de gastos fijos próximos a vencer (para card Egresos)
+        gastos_fijos_proximos: gastosFijosConEstado,
+        // Cuotas de ingreso próximas a vencer con detalle (para card Cobros Pendientes)
+        cuotas_proximas_detalle: cuotasProximasDetalle,
         formula_aplicada: {
             descripcion: "Percibido = mes actual (directos + cuotas). Pendiente = cuotas reales sin cobrar.",
             calculo: `Balance ${mesActual}/${anioActual}: $${balanceMensual}`,
@@ -647,6 +705,8 @@ export const obtenerMovimientos = async (opciones = {}) => {
         id_caso,
         categoria,
         id_abogado,
+        fecha_desde,
+        fecha_hasta,
     } = opciones;
 
     const offset = (page - 1) * limit;
@@ -658,6 +718,9 @@ export const obtenerMovimientos = async (opciones = {}) => {
     if (id_caso) where.id_caso = id_caso;
     if (categoria) where.categoria = categoria;
     if (id_abogado) where.id_abogado = id_abogado;
+    if (fecha_desde && fecha_hasta) {
+        where.createdAt = { [Op.between]: [new Date(fecha_desde), new Date(fecha_hasta)] };
+    }
 
     const { count, rows: movimientos } = await MovimientoFinanciero.findAndCountAll({
         where,
@@ -668,7 +731,11 @@ export const obtenerMovimientos = async (opciones = {}) => {
             { model: Cliente, as: "cliente", attributes: ["id_cliente", "nombre", "apellido"] },
             { model: Caso, as: "caso", attributes: ["id_caso", "descripcion"] },
         ],
-        order: [["updatedAt", "DESC"]],
+        order: [
+            // Only pin cuotas that still have pending payments
+            [sequelize.literal("CASE WHEN `MovimientoFinanciero`.`es_plan_cuotas` = 1 AND `MovimientoFinanciero`.`estado` != 'pagado' THEN 0 ELSE 1 END"), "ASC"],
+            ["updatedAt", "DESC"],
+        ],
     });
 
     return {
@@ -804,6 +871,114 @@ export const actualizarCuota = async (id_cuota, datos) => {
     return cuota;
 };
 
+/**
+ * Estadísticas anuales calculadas directamente desde MovimientosFinancieros (no Cierres)
+ */
+const obtenerEstadisticasAnuales = async (anio, userContext = {}) => {
+    const baseWhere = {};
+    if (userContext.id_abogado && userContext.rol !== "admin") {
+        baseWhere.id_abogado = userContext.id_abogado;
+    }
+
+    const meses = [];
+    const hoy = new Date();
+    const anioActual = hoy.getFullYear();
+    const mesActual = hoy.getMonth() + 1; // 1-12
+
+    for (let mes = 1; mes <= 12; mes++) {
+        if (parseInt(anio) === anioActual && mes > mesActual) continue;
+
+        const inicioMes = new Date(anio, mes - 1, 1);
+        const finMes = new Date(anio, mes, 0, 23, 59, 59);
+
+        const ingresosResult = await MovimientoFinanciero.sum("monto_ars", {
+            where: {
+                ...baseWhere,
+                tipo: "ingreso",
+                estado: "pagado",
+                [Op.or]: [
+                    { fecha_cobro: { [Op.between]: [inicioMes, finMes] } },
+                    { [Op.and]: [{ fecha_cobro: null }, { createdAt: { [Op.between]: [inicioMes, finMes] } }] }
+                ]
+            }
+        });
+
+        const cuotasPagadasResult = await Cuota.sum("monto_cuota", {
+            where: {
+                estado: "pagado",
+                fecha_pago_efectivo: { [Op.between]: [inicioMes, finMes] }
+            },
+            include: [{
+                model: MovimientoFinanciero,
+                as: "movimiento",
+                where: { ...baseWhere, tipo: "ingreso" },
+                attributes: [],
+            }]
+        });
+
+        const ingresos = (ingresosResult || 0) + (cuotasPagadasResult || 0);
+
+        const egresosResult = await MovimientoFinanciero.sum("monto_ars", {
+            where: {
+                ...baseWhere,
+                tipo: "egreso",
+                createdAt: { [Op.between]: [inicioMes, finMes] }
+            }
+        });
+        const egresos = egresosResult || 0;
+
+        const topCategorias = await MovimientoFinanciero.findAll({
+            attributes: [
+                "categoria",
+                [sequelize.fn("SUM", sequelize.col("monto_ars")), "total"]
+            ],
+            where: {
+                ...baseWhere,
+                tipo: "egreso",
+                createdAt: { [Op.between]: [inicioMes, finMes] }
+            },
+            group: ["categoria"],
+            order: [[sequelize.fn("SUM", sequelize.col("monto_ars")), "DESC"]],
+            limit: 3,
+            raw: true,
+        });
+
+        // Caso model has timestamps: false — use fecha_inicio instead
+        const casosNuevos = await Caso.count({
+            where: { fecha_inicio: { [Op.between]: [inicioMes, finMes] } }
+        });
+        // For archived cases, just count all archived
+        const casosCerrados = 0;
+
+        const esActual = parseInt(anio) === anioActual && mes === mesActual;
+
+        meses.push({
+            mes,
+            ingresos,
+            egresos,
+            balance: ingresos - egresos,
+            top_categorias: topCategorias.map(tc => ({
+                categoria: tc.categoria,
+                total: parseFloat(tc.total)
+            })),
+            casos_nuevos: casosNuevos,
+            casos_cerrados: casosCerrados,
+            es_actual: esActual,
+        });
+    }
+
+    const totalIngresos = meses.reduce((s, m) => s + m.ingresos, 0);
+    const totalEgresos = meses.reduce((s, m) => s + m.egresos, 0);
+
+    return {
+        anio: parseInt(anio),
+        total_ingresos: totalIngresos,
+        total_egresos: totalEgresos,
+        resultado_neto: totalIngresos - totalEgresos,
+        meses,
+    };
+};
+
 export default {
     crearMovimiento,
     obtenerResumenEstudio,
@@ -815,4 +990,5 @@ export default {
     eliminarMovimiento,
     obtenerCuotasMovimiento,
     actualizarCuota,
+    obtenerEstadisticasAnuales,
 };

@@ -38,11 +38,18 @@ const GastosFijos = () => {
     // Delete
     const [deleteModal, setDeleteModal] = useState({ open: false, id: null, nombre: "" });
 
+    // Pendientes del mes para saber cuáles ya se pagaron
+    const [pendientesMes, setPendientesMes] = useState([]);
+
     const cargarGastos = useCallback(async () => {
         try {
             setLoading(true);
-            const res = await finanzasService.getGastosRecurrentes();
+            const [res, pendRes] = await Promise.all([
+                finanzasService.getGastosRecurrentes(),
+                finanzasService.getPendientesMes(),
+            ]);
             setGastos(res.data || []);
+            setPendientesMes(pendRes.data || []);
         } catch (err) {
             console.error("Error:", err);
         } finally {
@@ -106,9 +113,14 @@ const GastosFijos = () => {
     const totalMensual = gastos.reduce((s, g) => s + parseFloat(g.monto_ars || 0), 0);
     const gastosActivos = gastos.filter(g => g.activo !== false).length;
     const hoy = new Date().getDate();
+    // Excluir gastos que ya fueron pagados este mes
+    const gastosPagadosEsteMes = new Set(
+        pendientesMes.filter(m => m.estado === "pagado").map(m => m.id_gasto_recurrente)
+    );
     const proximosVencer = gastos.filter(g => {
         const dia = g.dia_vencimiento;
-        return dia >= hoy && dia <= hoy + 5;
+        const yaFuePagado = gastosPagadosEsteMes.has(g.id_gasto_recurrente);
+        return dia >= hoy && dia <= hoy + 5 && !yaFuePagado;
     }).length;
 
     if (loading) {

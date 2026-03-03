@@ -144,6 +144,19 @@ export const syncDatabase = async () => {
         if (tables.length > 5) {
           console.log(`✅ ${tables.length} tablas detectadas. Sync con alter saltado.`);
           console.log("   (Usá FORCE_SYNC=true para forzar sincronización) [database.js]");
+
+          // Sincronizar modelos con columnas nuevas pendientes (lightweight)
+          const modelsToMigrate = ["Consulta"];
+          for (const modelName of modelsToMigrate) {
+            if (sequelize.models[modelName]) {
+              try {
+                await sequelize.models[modelName].sync({ alter: true });
+                console.log(`   ↳ ${modelName} sincronizado (alter) ✓`);
+              } catch (err) {
+                console.error(`   ↳ Error al sincronizar ${modelName}:`, err.message);
+              }
+            }
+          }
           return;
         }
       } catch {
@@ -152,14 +165,56 @@ export const syncDatabase = async () => {
     }
 
     console.log("🔄 Sincronizando modelos con ALTER TABLE...");
-    // Sincronizar modelos uno por uno para evitar que un error detenga todo
-    for (const modelName of Object.keys(sequelize.models)) {
-      try {
-        await sequelize.models[modelName].sync({ alter: true });
-      } catch (error) {
-        console.error(` Error al sincronizar ${modelName}:`, error.message);
+
+    // Orden explícito de sincronización respetando dependencias de foreign keys.
+    // Las tablas padre (sin FK o con FK ya resuelta) van primero.
+    const syncOrder = [
+      // Nivel 0: tablas sin FK a otras tablas del sistema
+      "Abogado",
+      "Cliente",
+      "ConfiguracionEstudio",
+      "Feriado",
+      "FeriaJudicial",
+      "TipoPlazo",
+      // Nivel 1: dependen de Abogado y/o Cliente
+      "Consulta",
+      "Caso",
+      "Auditoria",
+      "GastoRecurrente",
+      "CierreMensual",
+      // Nivel 2: dependen de Caso, Cliente, Abogado, GastoRecurrente
+      "Evento",
+      "Vencimiento",
+      "Documento",
+      "MovimientoFinanciero",
+      "Tarea",
+      // Nivel 3: dependen de tablas de nivel 2
+      "ResumenIA",       // depende de Documento
+      "Cuota",           // depende de MovimientoFinanciero
+    ];
+
+    // Sincronizar en orden de dependencia
+    for (const modelName of syncOrder) {
+      if (sequelize.models[modelName]) {
+        try {
+          await sequelize.models[modelName].sync({ alter: true });
+        } catch (error) {
+          console.error(` Error al sincronizar ${modelName}:`, error.message);
+        }
       }
     }
+
+    // Sincronizar cualquier modelo restante no listado arriba
+    for (const modelName of Object.keys(sequelize.models)) {
+      if (!syncOrder.includes(modelName)) {
+        try {
+          await sequelize.models[modelName].sync({ alter: true });
+        } catch (error) {
+          console.error(` Error al sincronizar ${modelName}:`, error.message);
+        }
+      }
+    }
+
     console.log("✅ Modelos sincronizados individualmente [database.js]");
   } catch (error) {
     console.error(

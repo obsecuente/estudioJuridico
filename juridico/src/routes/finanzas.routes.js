@@ -10,6 +10,7 @@ import {
     eliminarMovimiento,
     obtenerCuotasMovimientoHandler,
     actualizarCuotaHandler,
+    obtenerEstadisticas,
 } from "../controllers/finanzas_controller.js";
 import authMiddleware from "../middleware/authMiddleware.js";
 import { validateMovimientoOwnership } from "../middleware/validateOwnership.js";
@@ -39,6 +40,13 @@ router.get("/", obtenerMovimientos);
  * Query: provincia (NQN|RN), id_abogado (admin only)
  */
 router.get("/dashboard", obtenerDashboard);
+
+/**
+ * GET /api/finanzas/estadisticas
+ * Estadísticas anuales calculadas en tiempo real
+ * Query: anio (default: año actual)
+ */
+router.get("/estadisticas", obtenerEstadisticas);
 
 /**
  * GET /api/finanzas/caso/:id_caso

@@ -64,10 +64,14 @@ const Home = () => {
     cargarActividadReciente();
     cargarWidgets();
 
-    // Escuchar evento de MiDia cuando marca un vencimiento como cumplido
-    const handleVencimientoUpdated = () => cargarWidgets();
-    window.addEventListener("vencimiento-updated", handleVencimientoUpdated);
-    return () => window.removeEventListener("vencimiento-updated", handleVencimientoUpdated);
+    // Escuchar eventos de MiDia cuando marca un vencimiento/evento como cumplido
+    const handleWidgetRefresh = () => cargarWidgets();
+    window.addEventListener("vencimiento-updated", handleWidgetRefresh);
+    window.addEventListener("evento-updated", handleWidgetRefresh);
+    return () => {
+      window.removeEventListener("vencimiento-updated", handleWidgetRefresh);
+      window.removeEventListener("evento-updated", handleWidgetRefresh);
+    };
   }, []);
 
   const showToast = (message, type = "success") => {

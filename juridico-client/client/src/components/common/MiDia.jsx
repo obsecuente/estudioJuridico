@@ -7,6 +7,7 @@ import vencimientosService from "../../services/vencimientos.service";
 import finanzasService from "../../services/finanzas.service";
 import casosService from "../../services/casos.service";
 import { SpinnerIcon, TrashICon, AddIcon, CalendarIcon, AlarmIcon, CasosIcon, AbogadosIcon, LocacionIcon, TuercaIcon } from "./Icons";
+import CustomSelect from "./CustomSelect";
 import "./MiDia.css";
 
 // Helper para obtener fecha local como string YYYY-MM-DD (evita problemas de timezone)
@@ -188,8 +189,22 @@ const MiDia = () => {
 
     const completarEvento = async (evento) => {
         try {
-            await eventosService.update(evento.id_evento, { estado: "completado" });
-            cargarEventosHoy();
+            // Animación de satisfacción
+            const evtKey = `evt-${evento.id_evento}`;
+            setRecienCompletadas(prev => new Set(prev).add(evtKey));
+            setTimeout(async () => {
+                await eventosService.update(evento.id_evento, { estado: "completado" });
+                cargarEventosHoy();
+                // Notificar a Home para que refresque Agenda
+                window.dispatchEvent(new CustomEvent("evento-updated"));
+                setTimeout(() => {
+                    setRecienCompletadas(prev => {
+                        const next = new Set(prev);
+                        next.delete(evtKey);
+                        return next;
+                    });
+                }, 500);
+            }, 800);
         } catch (err) {
             console.error("Error al completar evento:", err);
         }
@@ -279,6 +294,20 @@ const MiDia = () => {
         otro: "Evento",
     };
 
+    const tipoVencimientoLabel = {
+        contestacion_demanda: "Contestación de Demanda",
+        apelacion: "Apelación",
+        recurso: "Recurso",
+        traslado: "Traslado",
+        ofrecimiento_prueba: "Ofrecimiento de Prueba",
+        alegato: "Alegato",
+        expresion_agravios: "Expresión de Agravios",
+        prescripcion: "Prescripción",
+        caducidad: "Caducidad",
+        gasto_fijo: "Gasto Fijo",
+        otro: "Otro",
+    };
+
     // ═══ RENDER DE TAREA INDIVIDUAL ═══
 
     const renderTarea = (tarea, seccion = "pendientes") => {
@@ -310,6 +339,9 @@ const MiDia = () => {
                                 title={`Ir al caso: ${tarea.caso.descripcion}`}
                             >
                                 <CasosIcon /> {tarea.caso.descripcion?.substring(0, 30)}
+                                {tarea.caso.cliente_apellido && (
+                                    <span className="midia-cliente-tag"> ({tarea.caso.cliente_apellido})</span>
+                                )}
                             </span>
                         )}
                         {fechaInfo && (
@@ -402,7 +434,7 @@ const MiDia = () => {
                                             className={`midia-prio-btn prio-${p} ${nuevaPrioridad === p ? "active" : ""}`}
                                             onClick={() => setNuevaPrioridad(p)}
                                         >
-                                            {p === "alta" ? "🔴" : p === "media" ? "🟡" : "⬜"} {p.charAt(0).toUpperCase() + p.slice(1)}
+                                            {p.charAt(0).toUpperCase() + p.slice(1)}
                                         </button>
                                     ))}
                                 </div>
@@ -441,18 +473,18 @@ const MiDia = () => {
                             </div>
                             <div className="midia-field">
                                 <label><CasosIcon /> Caso</label>
-                                <select
+                                <CustomSelect
                                     value={nuevoIdCaso}
-                                    onChange={(e) => setNuevoIdCaso(e.target.value)}
-                                    className="midia-caso-select"
-                                >
-                                    <option value="">Sin caso</option>
-                                    {casosLista.map(c => (
-                                        <option key={c.id_caso} value={c.id_caso}>
-                                            {c.descripcion}{c.cliente_apellido ? ` (${c.cliente_apellido})` : ""}
-                                        </option>
-                                    ))}
-                                </select>
+                                    onChange={(val) => setNuevoIdCaso(val)}
+                                    placeholder="Sin caso"
+                                    options={[
+                                        { value: "", label: "Sin caso" },
+                                        ...casosLista.map(c => ({
+                                            value: String(c.id_caso),
+                                            label: `${c.descripcion}${c.cliente_apellido ? ` (${c.cliente_apellido})` : ""}`
+                                        }))
+                                    ]}
+                                />
                             </div>
                         </div>
                     </div>
@@ -494,41 +526,45 @@ const MiDia = () => {
                                 <div className="midia-section-header midia-section-agenda">
                                     <CalendarIcon /> Agenda de Hoy
                                 </div>
-                                {eventosHoy.map((evento) => (
-                                    <div
-                                        key={`evt-${evento.id_evento}`}
-                                        className="midia-tarea midia-evento"
-                                    >
+                                {eventosHoy.map((evento) => {
+                                    const evtKey = `evt-${evento.id_evento}`;
+                                    const isCompletando = recienCompletadas.has(evtKey);
+                                    return (
                                         <div
-                                            className="midia-checkbox"
-                                            onClick={() => completarEvento(evento)}
-                                            title="Marcar como completado"
-                                        />
-                                        <div className="midia-tarea-content">
-                                            <div className="midia-tarea-texto">{evento.titulo}</div>
-                                            <div className="midia-tarea-meta">
-                                                <span className="evento-tipo">
-                                                    {tipoEventoLabel[evento.tipo] || evento.tipo}
-                                                </span>
-                                                {evento.hora_inicio && (
-                                                    <span><AlarmIcon /> {evento.hora_inicio.substring(0, 5)}</span>
-                                                )}
-                                                {evento.ubicacion && (
-                                                    <span><LocacionIcon /> {evento.ubicacion}</span>
-                                                )}
-                                                {evento.caso && (
-                                                    <span
-                                                        className="caso caso-link"
-                                                        onClick={() => navigate(`/casos/${evento.caso.id_caso}`)}
-                                                        title={`Ir al caso: ${evento.caso.descripcion}`}
-                                                    >
-                                                        <CasosIcon /> {evento.caso.descripcion?.substring(0, 30)}
+                                            key={evtKey}
+                                            className={`midia-tarea midia-evento ${isCompletando ? "completando" : ""}`}
+                                        >
+                                            <div
+                                                className={`midia-checkbox ${isCompletando ? "checked" : ""}`}
+                                                onClick={() => completarEvento(evento)}
+                                                title="Marcar como completado"
+                                            />
+                                            <div className="midia-tarea-content">
+                                                <div className={`midia-tarea-texto ${isCompletando ? "tachado" : ""}`}>{evento.titulo}</div>
+                                                <div className="midia-tarea-meta">
+                                                    <span className="evento-tipo">
+                                                        {tipoEventoLabel[evento.tipo] || evento.tipo}
                                                     </span>
-                                                )}
+                                                    {evento.hora_inicio && (
+                                                        <span><AlarmIcon /> {evento.hora_inicio.substring(0, 5)}</span>
+                                                    )}
+                                                    {evento.ubicacion && (
+                                                        <span><LocacionIcon /> {evento.ubicacion}</span>
+                                                    )}
+                                                    {evento.caso && (
+                                                        <span
+                                                            className="caso caso-link"
+                                                            onClick={() => navigate(`/casos/${evento.caso.id_caso}`)}
+                                                            title={`Ir al caso: ${evento.caso.descripcion}`}
+                                                        >
+                                                            <CasosIcon /> {evento.caso.descripcion?.substring(0, 30)}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         )}
 
@@ -556,7 +592,7 @@ const MiDia = () => {
                                                 </div>
                                                 <div className="midia-tarea-meta">
                                                     <span className="vencimiento-tipo">
-                                                        {venc.tipo_vencimiento || "Vencimiento"}
+                                                        {tipoVencimientoLabel[venc.tipo_vencimiento] || venc.tipo_vencimiento || "Vencimiento"}
                                                     </span>
                                                     {venc.caso && (
                                                         <span

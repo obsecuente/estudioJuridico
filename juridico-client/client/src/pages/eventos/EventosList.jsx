@@ -103,6 +103,18 @@ const EventosList = () => {
     setToast({ message, type });
   }
 
+  const marcarCompletado = async (evento) => {
+    const nuevoEstado = evento.estado === "completado" ? "pendiente" : "completado";
+    try {
+      await eventosService.update(evento.id_evento, { estado: nuevoEstado });
+      showToast(nuevoEstado === "completado" ? "Evento marcado como completado" : "Evento vuelto a pendiente");
+      cargarEventos();
+    } catch (error) {
+      console.error("Error al cambiar estado:", error);
+      showToast("Error al cambiar estado", "error");
+    }
+  };
+
   const meses = [
     { value: 0, label: "Todos los meses" },
     { value: 1, label: "Enero" },
@@ -228,6 +240,15 @@ const EventosList = () => {
             </td>
             <td className="actions-cell">
               <div className="actions-wrapper">
+                {evento.estado !== "cancelado" && (
+                  <button
+                    className={`btn-action ${evento.estado === "completado" ? "btn-undo-complete" : "btn-complete"}`}
+                    title={evento.estado === "completado" ? "Volver a Pendiente" : "Marcar Completado"}
+                    onClick={() => marcarCompletado(evento)}
+                  >
+                    {evento.estado === "completado" ? "↩" : "✓"}
+                  </button>
+                )}
                 <button
                   className="btn-action btn-edit"
                   title="Editar"

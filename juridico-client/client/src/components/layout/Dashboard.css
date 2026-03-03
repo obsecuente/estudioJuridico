@@ -1,7 +1,7 @@
 .dashboard-app-container {
   display: flex;
   min-height: 100vh;
-  background-color: #f8fafc; /* Vuelve el blanco original */
+  background-color: #f8fafc;
 }
 
 /* El área de la derecha que contiene Topbar + Contenido */
@@ -24,6 +24,7 @@
   .dashboard-main-area {
     margin-left: 0;
   }
+
   .dashboard-page-content {
     padding: 15px;
   }

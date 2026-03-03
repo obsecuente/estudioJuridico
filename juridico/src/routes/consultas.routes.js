@@ -8,6 +8,7 @@ import {
   cambiarEstadoConsulta,
   asignarAbogadoAConsulta,
   crearConsultaPublica,
+  convertirEnCliente,
 } from "../controllers/consultas_controller.js";
 import authMiddleware from "../middleware/authMiddleware.js";
 import { verificarRol } from "../middleware/roleMiddleware.js";
@@ -57,6 +58,14 @@ router.delete(
   verificarRol(["admin"]),
   audit("ELIMINAR", "consulta"),
   eliminarConsulta
+);
+
+// Convertir lead en cliente
+router.post(
+  "/:id/convertir",
+  verificarRol(["admin", "abogado"]),
+  audit("CONVERTIR_LEAD", "consulta"),
+  convertirEnCliente
 );
 
 export default router;

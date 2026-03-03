@@ -126,6 +126,8 @@ export const obtenerMovimientos = async (req, res) => {
             id_cliente: req.query.id_cliente,
             id_caso: req.query.id_caso,
             categoria: req.query.categoria,
+            fecha_desde: req.query.fecha_desde,
+            fecha_hasta: req.query.fecha_hasta,
             // Admin puede filtrar por abogado o ver todo; abogado solo ve lo suyo
             id_abogado: isAdmin
                 ? (req.query.id_abogado || null)
@@ -227,6 +229,32 @@ export const actualizarCuotaHandler = async (req, res) => {
     }
 };
 
+/**
+ * Obtiene estadísticas anuales calculadas en tiempo real desde MovimientosFinancieros
+ * GET /api/finanzas/estadisticas?anio=2026
+ */
+export const obtenerEstadisticas = async (req, res) => {
+    try {
+        const anio = req.query.anio || new Date().getFullYear();
+        const userContext = {
+            id_abogado: req.user.id_abogado,
+            rol: req.user.rol,
+        };
+
+        const stats = await finanzasService.obtenerEstadisticasAnuales(anio, userContext);
+        return res.json({
+            success: true,
+            data: stats,
+        });
+    } catch (error) {
+        console.error("Error al obtener estadísticas:", error);
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            error: error.message,
+        });
+    }
+};
+
 export default {
     crearMovimiento,
     obtenerDashboard,
@@ -237,4 +265,5 @@ export default {
     eliminarMovimiento,
     obtenerCuotasMovimientoHandler,
     actualizarCuotaHandler,
+    obtenerEstadisticas,
 };

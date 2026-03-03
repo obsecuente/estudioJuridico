@@ -4,13 +4,13 @@ import { Abogado } from "./src/models/index.js";
 
 // Configurá acá el usuario que querés crear
 const nuevoUsuario = {
-  nombre: "Admin",
-  apellido: "Sistema",
-  email: "arevalogonzaa@gmail.com",
+  nombre: "Lucrecio",
+  apellido: "Roshi",
+  email: "lucrecio@roshi.com",
   password: "abogadopremium123",
-  especialidad: "General",
-  dni: "43372849",
-  telefono: "+542991457849",
+  especialidad: "Todo y nada a la vez",
+  dni: "43372844",
+  telefono: "+542991457844",
   rol: "admin", // Opciones: 'admin', 'abogado', 'asistente'
 };
 

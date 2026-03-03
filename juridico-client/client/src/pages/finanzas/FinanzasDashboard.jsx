@@ -7,6 +7,7 @@ import abogadosService from "../../services/abogados.service";
 import BackButton from "../../components/common/BackButton";
 import DeleteModal from "../../components/common/DeleteModal";
 import DetalleCuotas from "../../components/common/DetalleCuotas";
+import ModalFrame from "../../components/common/ModalFrame";
 import { DineroIcon, SpinnerIcon } from "../../components/common/Icons";
 import "./FinanzasDashboard.css";
 
@@ -333,6 +334,9 @@ const FinanzasDashboard = () => {
     // Detalle cuotas modal
     const [cuotasModal, setCuotasModal] = useState({ open: false, movimiento: null });
 
+    // Cuotas próximas list modal (when multiple cuotas expire same day)
+    const [cuotasProximasModal, setCuotasProximasModal] = useState({ open: false, cuotas: [] });
+
     const handleDeleteMovimiento = async () => {
         try {
             await finanzasService.eliminarMovimiento(deleteConfirm.id);
@@ -361,7 +365,7 @@ const FinanzasDashboard = () => {
             setDashboard(dashRes.data || null);
         } catch (err) {
             console.error("Error al marcar cobrado:", err);
-            alert(err.response?.data?.error || "Error al marcar como cobrado");
+            setError(err.response?.data?.error || "Error al marcar como cobrado");
         }
     };
 
@@ -420,7 +424,7 @@ const FinanzasDashboard = () => {
 
     return (
         <div className="fin-terminal">
-            <BackButton />
+            <BackButton to="/dashboard/finanzas" />
 
             {/* Header */}
             <div className="fin-terminal-header">
@@ -484,13 +488,13 @@ const FinanzasDashboard = () => {
                     </div>
                     <div className="fin-kpi-hint">
                         Percibido <span className="gain">{formatCurrency(dashboard?.caja?.percibido)}</span>
-                        {" — "}
+                        <br />
                         Egresos <span className="loss">{formatCurrency(dashboard?.caja?.egresos)}</span>
                     </div>
                 </div>
 
                 <div className="fin-kpi-card kpi-cartera">
-                    <div className="fin-kpi-label">Deudas a favor</div>
+                    <div className="fin-kpi-label">Cobros Pendientes</div>
                     <div className="fin-kpi-value warning">
                         {formatCurrency(dashboard?.cartera?.total_pendiente_actualizado)}
                     </div>
@@ -501,6 +505,25 @@ const FinanzasDashboard = () => {
                         {(dashboard?.cartera?.pendiente_ars_fijo || 0) > 0 && (
                             <span><span className="gain">{formatCurrency(dashboard.cartera.pendiente_ars_fijo)}</span> en efectivo</span>
                         )}
+                        {/* Alerta de cuotas próximas a vencer (≤7 días) */}
+                        {dashboard?.cuotas_proximas_detalle?.length > 0 && (
+                            <span
+                                style={{ color: '#f59e0b', cursor: 'pointer', marginTop: '4px' }}
+                                onClick={() => {
+                                    const cuotas = dashboard.cuotas_proximas_detalle;
+                                    if (cuotas.length === 1) {
+                                        // Una sola cuota → abrir DetalleCuotas directamente
+                                        setCuotasModal({ open: true, movimiento: cuotas[0].movimiento });
+                                    } else {
+                                        // Múltiples → abrir listado
+                                        setCuotasProximasModal({ open: true, cuotas });
+                                    }
+                                }}
+                                title="Click para ver detalle"
+                            >
+                                📋 Vence{dashboard.cuotas_proximas_detalle.length === 1 ? '' : 'n'} {dashboard.cuotas_proximas_detalle.length} cuota{dashboard.cuotas_proximas_detalle.length === 1 ? '' : 's'} en menos de 7 días
+                            </span>
+                        )}
                     </div>
                 </div>
 
@@ -510,13 +533,15 @@ const FinanzasDashboard = () => {
                         {formatCurrency(dashboard?.caja?.egresos)}
                     </div>
                     <div className="fin-kpi-hint" style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                        {dashboard?.indicadores?.cuotas_vencidas > 0 && (
-                            <span className="loss">⚠ {dashboard.indicadores.cuotas_vencidas} cuota{dashboard.indicadores.cuotas_vencidas > 1 ? 's' : ''} vencida{dashboard.indicadores.cuotas_vencidas > 1 ? 's' : ''}</span>
+                        {dashboard?.gastos_fijos_proximos?.length > 0 ? (
+                            dashboard.gastos_fijos_proximos.map((gf, idx) => (
+                                <span key={idx} style={{ color: gf.dias_restantes <= 2 ? '#ef4444' : '#f59e0b' }}>
+                                    🔔 {gf.descripcion || getCatLabel(gf.categoria)} vence en {gf.dias_restantes === 0 ? 'hoy' : gf.dias_restantes === 1 ? '1 día' : `${gf.dias_restantes} días`}
+                                </span>
+                            ))
+                        ) : (
+                            <span>Sin alertas de gastos fijos</span>
                         )}
-                        {dashboard?.indicadores?.cuotas_proximas > 0 && (
-                            <span style={{ color: '#f59e0b' }}>🔔 {dashboard.indicadores.cuotas_proximas} vence{dashboard.indicadores.cuotas_proximas === 1 ? '' : 'n'} en 7 días</span>
-                        )}
-                        {(dashboard?.indicadores?.cuotas_vencidas || 0) === 0 && (dashboard?.indicadores?.cuotas_proximas || 0) === 0 && "Sin alertas de cuotas"}
                     </div>
                 </div>
             </div>
@@ -558,7 +583,7 @@ const FinanzasDashboard = () => {
                     </div>
                     {gastosRecurrentes.length === 0 ? (
                         <div className="fin-breakeven-empty">
-                            No tenés gastos fijos configurados. Registrá un egreso y usá "📌 Fijar como mensual".
+                            No tenés gastos fijos configurados. Registrá un egreso y usá "Definir como gasto fijo mensual"
                         </div>
                     ) : (
                         <>
@@ -866,8 +891,16 @@ const FinanzasDashboard = () => {
                                                 <span className={`fin-badge tipo-${mov.tipo}`}>{mov.tipo}</span>
                                             </td>
                                             <td>
-                                                {mov.descripcion?.substring(0, 50)}
-                                                {mov.categoria && (
+                                                {mov.descripcion?.substring(0, 60) || getCatLabel(mov.categoria)}
+                                                {mov.caso && (
+                                                    <>
+                                                        {' - '}
+                                                        <Link to={`/dashboard/casos/${mov.caso.id_caso}`} style={{ color: '#818cf8', textDecoration: 'none' }}>
+                                                            {mov.caso.descripcion || `Caso #${mov.caso.id_caso}`}
+                                                        </Link>
+                                                    </>
+                                                )}
+                                                {mov.categoria && !['apertura_carpeta'].includes(mov.categoria) && !mov.caso && (
                                                     <small style={{ color: 'var(--color-texto-secundario)', marginLeft: 6 }}>
                                                         {getCatLabel(mov.categoria)}
                                                     </small>
@@ -988,6 +1021,61 @@ const FinanzasDashboard = () => {
                     setDashboard(dashRes.data || null);
                 }}
             />
+
+            {/* Modal listado cuotas próximas (cuando hay múltiples) */}
+            {cuotasProximasModal.open && (
+                <ModalFrame
+                    title="Cuotas Próximas a Vencer"
+                    onClose={() => setCuotasProximasModal({ open: false, cuotas: [] })}
+                >
+                    <div style={{ padding: '20px' }}>
+                        <p style={{ color: 'var(--color-texto-secundario)', marginBottom: '16px', fontSize: '0.9rem' }}>
+                            Las siguientes cuotas vencen en los próximos 7 días:
+                        </p>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                            {cuotasProximasModal.cuotas.map((cuota, idx) => (
+                                <div
+                                    key={cuota.id_cuota || idx}
+                                    style={{
+                                        background: 'rgba(255,255,255,0.05)',
+                                        border: '1px solid rgba(255,255,255,0.1)',
+                                        borderRadius: '8px',
+                                        padding: '12px 16px',
+                                        cursor: 'pointer',
+                                        transition: 'border-color 0.2s',
+                                    }}
+                                    onClick={() => {
+                                        setCuotasProximasModal({ open: false, cuotas: [] });
+                                        setCuotasModal({ open: true, movimiento: cuota.movimiento });
+                                    }}
+                                    onMouseEnter={e => e.currentTarget.style.borderColor = '#818cf8'}
+                                    onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'}
+                                >
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <div>
+                                            <div style={{ fontWeight: 600, color: 'var(--color-texto-principal)' }}>
+                                                {cuota.movimiento?.caso?.descripcion || cuota.movimiento?.descripcion || 'Sin descripción'}
+                                            </div>
+                                            <div style={{ fontSize: '0.85rem', color: 'var(--color-texto-secundario)', marginTop: '2px' }}>
+                                                {cuota.movimiento?.cliente ? `${cuota.movimiento.cliente.nombre} ${cuota.movimiento.cliente.apellido}` : 'Sin cliente'}
+                                                {' • '}Cuota {cuota.numero_cuota}/{cuota.movimiento?.cantidad_cuotas || '?'}
+                                            </div>
+                                        </div>
+                                        <div style={{ textAlign: 'right' }}>
+                                            <div className="mono" style={{ fontWeight: 600, color: '#f59e0b' }}>
+                                                {formatCurrency(cuota.monto_cuota)}
+                                            </div>
+                                            <div style={{ fontSize: '0.8rem', color: 'var(--color-texto-secundario)' }}>
+                                                Vence {formatDate(cuota.fecha_vencimiento)}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </ModalFrame>
+            )}
         </div>
     );
 };

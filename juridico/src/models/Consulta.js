@@ -38,13 +38,26 @@ const Consulta = sequelize.define(
       },
     },
 
-    // FOREIGN KEY hacia Cliente
+    // ── Lead Management Fields ──
+    // Nombre del contacto (para leads sin cliente formal)
+    nombre_contacto: {
+      type: DataTypes.STRING(200),
+      allowNull: true,
+    },
+
+    // Teléfono del contacto (para leads sin cliente formal)
+    telefono_contacto: {
+      type: DataTypes.STRING(30),
+      allowNull: true,
+    },
+
+    // FOREIGN KEY hacia Cliente (NULLABLE para leads)
     id_cliente: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true, // ← Ahora nullable para soportar leads
       references: {
-        model: "clientes", // Nombre de la tabla referenciada
-        key: "id_cliente", // Columna referenciada
+        model: "clientes",
+        key: "id_cliente",
       },
     },
 
@@ -60,7 +73,9 @@ const Consulta = sequelize.define(
   },
   {
     tableName: "consultas",
-    timestamps: false,
+    timestamps: true,
+    createdAt: "created_at",
+    updatedAt: "updated_at",
   }
 );
 

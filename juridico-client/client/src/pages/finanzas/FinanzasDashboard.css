@@ -112,9 +112,7 @@
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
-.fin-kpi-card:hover {
-    background-color: rgba(212, 175, 55, 0.05);
-}
+/* KPI cards are static — no hover effect */
 
 .fin-kpi-card.kpi-caja {
     border-left-color: #10b981;

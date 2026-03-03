@@ -195,3 +195,23 @@ export const obtenerConsultasPorAbogado = async (req, res) => {
     });
   }
 };
+
+export const convertirEnCliente = async (req, res) => {
+  try {
+    const resultado = await consultaService.convertirEnCliente(
+      req.params.id,
+      req.body
+    );
+    res.json({
+      success: true,
+      message: "Lead convertido en cliente exitosamente",
+      data: resultado,
+    });
+  } catch (error) {
+    console.error("Error al convertir lead en cliente:", error);
+    res.status(error.statusCode || 500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+};

@@ -9,8 +9,15 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .page-header {
@@ -28,7 +35,8 @@
 
 .header-title svg {
   font-size: 32px;
-  color: #d4af37; /* Dorado */
+  color: #d4af37;
+  /* Dorado */
   filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.3));
 }
 
@@ -36,7 +44,8 @@
   font-size: 28px;
   margin: 0;
   font-weight: 700;
-  color: #1a1f2b; /* Azul Noche si el fondo es claro, o blanco si el fondo es oscuro. Asumiendo fondo claro general. */
+  color: #1a1f2b;
+  /* Azul Noche si el fondo es claro, o blanco si el fondo es oscuro. Asumiendo fondo claro general. */
   /* Si el fondo de la pagina es blanco, esto está bien. */
 }
 
@@ -45,25 +54,36 @@
   display: flex;
   gap: 15px;
   margin-bottom: 25px;
-  background: #1a1f2b; /* Azul Noche */
+  background: #1a1f2b;
+  /* Azul Noche */
   padding: 20px;
   border-radius: 12px;
-  border-left: 5px solid #d4af37; /* Dorado */
+  border-left: 5px solid #d4af37;
+  /* Dorado */
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   align-items: center;
 }
 
 .filter-group {
-    display: flex;
-    gap: 15px;
-    flex-wrap: nowrap; /* Forzamos horizontalidad */
-    width: 100%;
+  display: flex;
+  gap: 15px;
+  flex-wrap: nowrap;
+  /* Forzamos horizontalidad */
+  width: 100%;
 }
 
 /* Specific widths for selects in Eventos */
-.filter-date-select { min-width: 180px; }
-.filter-year-select { min-width: 120px; }
-.filter-type-select { min-width: 180px; }
+.filter-date-select {
+  min-width: 180px;
+}
+
+.filter-year-select {
+  min-width: 120px;
+}
+
+.filter-type-select {
+  min-width: 180px;
+}
 
 /* Truncate long titles to prevent table layout collapse */
 .truncate-cell {
@@ -75,9 +95,9 @@
 
 /* Actions Cell refinement */
 .actions-cell {
-    display: flex;
-    justify-content: center;
-    gap: 8px;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
 }
 
 /* Badges override */
@@ -87,4 +107,38 @@
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
+}
+
+/* Completado toggle buttons */
+.btn-complete {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-complete:hover {
+  background: rgba(16, 185, 129, 0.3);
+  transform: translateY(-1px);
+}
+
+.btn-undo-complete {
+  background: rgba(148, 163, 184, 0.15);
+  color: #94a3b8;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-undo-complete:hover {
+  background: rgba(148, 163, 184, 0.3);
+  transform: translateY(-1px);
 }

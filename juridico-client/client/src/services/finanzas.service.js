@@ -176,6 +176,17 @@ const finanzasService = {
         const response = await api.post("/cierres/generar", { mes, anio });
         return response.data;
     },
+
+    // ═══ ESTADÍSTICAS EN TIEMPO REAL ═══
+
+    /**
+     * Obtiene estadísticas anuales calculadas en tiempo real
+     * @param {number} anio
+     */
+    getEstadisticas: async (anio) => {
+        const response = await api.get(`/finanzas/estadisticas${anio ? `?anio=${anio}` : ""}`);
+        return response.data;
+    },
 };
 
 export default finanzasService;
