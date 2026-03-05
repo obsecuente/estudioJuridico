@@ -12,12 +12,18 @@ const CasoForm = ({ caso, clienteId, onClose, showToast }) => {
     fecha_inicio: "",
     id_cliente: "",
     id_abogado: "",
+    instancia: "",
+    tipo_proceso: "",
+    jurisdiccion: "",
+    fuero: "",
+    numero_expediente: "",
   });
   const [clientes, setClientes] = useState([]);
   const [abogados, setAbogados] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
   const [errors, setErrors] = useState({});
+  const [validacionCliente, setValidacionCliente] = useState(null);
 
   // Estados para Apertura de Carpeta
   const [registrarApertura, setRegistrarApertura] = useState(false);
@@ -41,6 +47,11 @@ const CasoForm = ({ caso, clienteId, onClose, showToast }) => {
         fecha_inicio: caso.fecha_inicio || "",
         id_cliente: caso.id_cliente || "",
         id_abogado: caso.id_abogado || "",
+        instancia: caso.instancia || "",
+        tipo_proceso: caso.tipo_proceso || "",
+        jurisdiccion: caso.jurisdiccion || "",
+        fuero: caso.fuero || "",
+        numero_expediente: caso.numero_expediente || "",
       });
     } else {
       const hoy = new Date().toISOString().split("T")[0];
@@ -51,6 +62,17 @@ const CasoForm = ({ caso, clienteId, onClose, showToast }) => {
       }));
     }
   }, [caso, clienteId]);
+
+  // Validar si el cliente tiene perfil completo al seleccionarlo (solo para nuevos casos)
+  useEffect(() => {
+    if (!caso && formData.id_cliente) {
+      api.get(`/clientes/${formData.id_cliente}/validar-apertura`)
+        .then(res => setValidacionCliente(res.data.data))
+        .catch(() => setValidacionCliente(null));
+    } else {
+      setValidacionCliente(null);
+    }
+  }, [formData.id_cliente, caso]);
 
   const cargarDatos = async () => {
     try {
@@ -183,6 +205,11 @@ const CasoForm = ({ caso, clienteId, onClose, showToast }) => {
                 }
                 disabled={loading || !!clienteId}
               />
+              {validacionCliente && !validacionCliente.apto && (
+                <div className="validacion-warning" style={{ marginTop: 8, padding: 12, backgroundColor: 'rgba(245, 158, 11, 0.1)', borderLeft: '4px solid #f59e0b', borderRadius: 4, fontSize: 13, color: '#fcd34d' }}>
+                  <strong> Aviso:</strong> El perfil de este cliente está incompleto ({validacionCliente.porcentaje_completitud}%). Faltan datos legales ({validacionCliente.faltantes.join(', ')}). Aún puedes crear el caso, pero se recomienda completar el perfil del cliente para el expediente.
+                </div>
+              )}
             </div>
             <div className="form-group">
               <label>
@@ -227,11 +254,97 @@ const CasoForm = ({ caso, clienteId, onClose, showToast }) => {
               />
             </div>
 
-            {/* Sección Apertura de Carpeta - Solo para nuevos casos */}
+            {/* Seccion Procesal - Solo para nuevos casos */}
+            {!caso && (
+              <div className="apertura-section" style={{ marginTop: 10 }}>
+                <div className="apertura-header">
+                  <h4>Datos Procesales</h4>
+                  <span className="apertura-ref">Opcionales</span>
+                </div>
+                <div className="form-row-2col">
+                  <div className="form-group">
+                    <label>Instancia</label>
+                    <CustomSelect
+                      name="instancia"
+                      options={[
+                        { value: "", label: "Seleccionar..." },
+                        { value: "Extrajudicial", label: "Extrajudicial" },
+                        { value: "Administrativa", label: "Administrativa" },
+                        { value: "Judicial", label: "Judicial" },
+                      ]}
+                      value={formData.instancia}
+                      onChange={(val) => setFormData(p => ({ ...p, instancia: val }))}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Tipo de Proceso</label>
+                    <CustomSelect
+                      name="tipo_proceso"
+                      options={[
+                        { value: "", label: "Seleccionar..." },
+                        { value: "Ordinario", label: "Ordinario" },
+                        { value: "Ejecutivo", label: "Ejecutivo" },
+                        { value: "Sumarisimo", label: "Sumarisimo" },
+                        { value: "Penal", label: "Penal" },
+                        { value: "Laboral", label: "Laboral" },
+                        { value: "Familia", label: "Familia" },
+                      ]}
+                      value={formData.tipo_proceso}
+                      onChange={(val) => setFormData(p => ({ ...p, tipo_proceso: val }))}
+                    />
+                  </div>
+                </div>
+                <div className="form-row-2col">
+                  <div className="form-group">
+                    <label>Fuero</label>
+                    <CustomSelect
+                      name="fuero"
+                      options={[
+                        { value: "", label: "Seleccionar..." },
+                        { value: "civil", label: "Civil" },
+                        { value: "laboral", label: "Laboral" },
+                        { value: "penal", label: "Penal" },
+                        { value: "familia", label: "Familia" },
+                        { value: "comercial", label: "Comercial" },
+                      ]}
+                      value={formData.fuero}
+                      onChange={(val) => setFormData(p => ({ ...p, fuero: val }))}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Jurisdiccion</label>
+                    <CustomSelect
+                      name="jurisdiccion"
+                      options={[
+                        { value: "", label: "Seleccionar..." },
+                        { value: "nacional", label: "Nacional" },
+                        { value: "neuquen", label: "Neuquen" },
+                        { value: "rio_negro", label: "Rio Negro" },
+                      ]}
+                      value={formData.jurisdiccion}
+                      onChange={(val) => setFormData(p => ({ ...p, jurisdiccion: val }))}
+                    />
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label>Numero de Expediente</label>
+                  <input
+                    type="text"
+                    name="numero_expediente"
+                    value={formData.numero_expediente}
+                    onChange={handleChange}
+                    placeholder="Ej: 12345/2026"
+                    disabled={loading}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Seccion Apertura de Carpeta - Solo para nuevos casos */}
             {!caso && (
               <div className="apertura-section">
                 <div className="apertura-header">
-                  <h4>⚖️ Honorarios de Apertura</h4>
+                  <h4> Honorarios de Apertura</h4>
                   <span className="apertura-ref">Ref: Ley 1594 Neuquén</span>
                 </div>
 

@@ -14,6 +14,7 @@ import vencimientosService from "../../services/vencimientos.service";
 import finanzasService from "../../services/finanzas.service";
 import DeleteModal from "../../components/common/DeleteModal";
 import MiDia from "../../components/common/MiDia";
+import FinanzasWidget from "../../components/common/FinanzasWidget";
 import "./Home.css";
 import {
   AddIcon,
@@ -175,9 +176,9 @@ const Home = () => {
   // Obtener descripción de la acción
   const obtenerDescripcionAccion = (registro) => {
     const { accion, entidad, id_entidad, usuario } = registro;
-    const nombreUsuario = usuario
-      ? `${usuario.nombre} ${usuario.apellido}`
-      : "Usuario desconocido";
+    const nombreUsuario = (usuario?.nombre || usuario?.first_name)
+      ? `${usuario?.nombre || usuario?.first_name} ${usuario?.apellido || usuario?.last_name}`
+      : "El sistema";
 
     const verbo = {
       CREAR: "creó",
@@ -351,6 +352,9 @@ const Home = () => {
           </div>
         </div>
       </div>
+
+      {/* ═══════════ MIS FINANZAS (Widget) ═══════════ */}
+      <FinanzasWidget showToast={showToast} />
 
       {/* ═══════════ ACCIONES RÁPIDAS ═══════════ */}
       <div className="quick-actions">

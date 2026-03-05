@@ -146,7 +146,7 @@ const DocumentoUpload = ({ onClose, showToast, idCasoPredefinido = null }) => {
 
   return (
     <ModalFrame
-      title={`${(<UploadIcon />)} Subir Documento`}
+      title={<><UploadIcon /> Subir Documento</>}
       onClose={onClose}
       className={"upload-modal"}
     >

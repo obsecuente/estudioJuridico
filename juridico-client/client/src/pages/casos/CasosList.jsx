@@ -134,6 +134,7 @@ const CasosList = () => {
   const columnas = [
     "ID",
     "Cliente",
+    "Demandado",
     "Descripción",
     "Estado",
     "Abogado",
@@ -172,17 +173,15 @@ const CasosList = () => {
             Todos
           </button>
           <button
-            className={`filter-btn ${
-              estadoFiltro === "abierto" ? "active" : ""
-            }`}
+            className={`filter-btn ${estadoFiltro === "abierto" ? "active" : ""
+              }`}
             onClick={() => handleEstadoFilter("abierto")}
           >
             Abiertos
           </button>
           <button
-            className={`filter-btn ${
-              estadoFiltro === "cerrado" ? "active" : ""
-            }`}
+            className={`filter-btn ${estadoFiltro === "cerrado" ? "active" : ""
+              }`}
             onClick={() => handleEstadoFilter("cerrado")}
           >
             Cerrados
@@ -192,76 +191,79 @@ const CasosList = () => {
 
       {error && <div className="error-message">{error}</div>}
 
-      <GlassTable 
-        columns={columnas} 
+      <GlassTable
+        columns={columnas}
         loading={loading}
         isEmpty={casos.length === 0}
         emptyTitle="No se encontraron casos"
         emptyMessage="Parece que no hay casos registrados con estos filtros. ¡Agregá uno nuevo para empezar!"
       >
         {casos.map((caso) => {
-            const badge = getEstadoBadge(caso.estado);
-            return (
-              <tr key={caso.id_caso}>
-                <td style={{ textAlign: "center", fontWeight: "bold" }}>
-                  {caso.id_caso}
-                </td>
-                <td className="cliente-cell">
-                  {caso.cliente ? (
-                    <Link to={`/dashboard/clientes/${caso.cliente.id_cliente}`}>
-                      {caso.cliente.nombre} {caso.cliente.apellido}
-                    </Link>
-                  ) : (
-                    "No disponible"
-                  )}
-                </td>
-                <td className="descripcion-cell">
-                  {caso.descripcion?.substring(0, 45)}...
-                </td>
-                <td>
-                  <span
-                    className="estado-badge"
-                    style={{ backgroundColor: badge.color }}
+          const badge = getEstadoBadge(caso.estado);
+          return (
+            <tr key={caso.id_caso}>
+              <td style={{ textAlign: "center", fontWeight: "bold" }}>
+                {caso.id_caso}
+              </td>
+              <td className="cliente-cell">
+                {caso.cliente ? (
+                  <Link to={`/dashboard/clientes/${caso.cliente.id_cliente}`}>
+                    {caso.cliente.nombre} {caso.cliente.apellido}
+                  </Link>
+                ) : (
+                  "No disponible"
+                )}
+              </td>
+              <td className="demandado-cell">
+                {caso.demandado_nombre || <span className="text-muted">A definir</span>}
+              </td>
+              <td className="descripcion-cell">
+                {caso.descripcion?.substring(0, 45)}...
+              </td>
+              <td>
+                <span
+                  className="estado-badge"
+                  style={{ backgroundColor: badge.color }}
+                >
+                  {badge.text}
+                </span>
+              </td>
+              <td className="abogado-cell">
+                {caso.abogado ? (
+                  `${caso.abogado.nombre} ${caso.abogado.apellido}`
+                ) : (
+                  <span className="sin-asignar">Sin asignar</span>
+                )}
+              </td>
+              <td>{formatearFecha(caso.fecha_inicio)}</td>
+              <td className="actions-cell">
+                <div className="actions-wrapper">
+                  <Link
+                    to={`/dashboard/casos/${caso.id_caso}`}
+                    className="btn-action btn-view"
+                    title="Ver"
                   >
-                    {badge.text}
-                  </span>
-                </td>
-                <td className="abogado-cell">
-                  {caso.abogado ? (
-                    `${caso.abogado.nombre} ${caso.abogado.apellido}`
-                  ) : (
-                    <span className="sin-asignar">Sin asignar</span>
-                  )}
-                </td>
-                <td>{formatearFecha(caso.fecha_inicio)}</td>
-                <td className="actions-cell">
-                  <div className="actions-wrapper">
-                    <Link
-                      to={`/dashboard/casos/${caso.id_caso}`}
-                      className="btn-action btn-view"
-                      title="Ver"
-                    >
-                      <EyeIcon />
-                    </Link>
-                    <button
-                      className="btn-action btn-edit"
-                      onClick={() => handleEditarCaso(caso)}
-                      title="Editar"
-                    >
-                      <PencilIcon />
-                    </button>
-                    <button
-                      className="btn-action btn-delete"
-                      onClick={() => handleEliminarCaso(caso.id_caso)}
-                      title="Eliminar"
-                    >
-                      <TrashICon />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            );
-          })
+                    <EyeIcon />
+                  </Link>
+                  <button
+                    className="btn-action btn-edit"
+                    onClick={() => handleEditarCaso(caso)}
+                    title="Editar"
+                  >
+                    <PencilIcon />
+                  </button>
+                  <button
+                    className="btn-action btn-delete"
+                    onClick={() => handleEliminarCaso(caso.id_caso)}
+                    title="Eliminar"
+                  >
+                    <TrashICon />
+                  </button>
+                </div>
+              </td>
+            </tr>
+          );
+        })
         }
       </GlassTable>
 
@@ -279,9 +281,8 @@ const CasosList = () => {
               <button
                 key={i + 1}
                 onClick={() => handlePageChange(i + 1)}
-                className={`btn-page-number ${
-                  pagination.page === i + 1 ? "active" : ""
-                }`}
+                className={`btn-page-number ${pagination.page === i + 1 ? "active" : ""
+                  }`}
               >
                 {i + 1}
               </button>
