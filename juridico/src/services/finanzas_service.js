@@ -3,6 +3,7 @@ import { MovimientoFinanciero, Cuota, Cliente, Caso, GastoRecurrente } from "../
 import { Op } from "sequelize";
 import sequelize from "../config/database.js";
 import configuracionService from "./configuracion_service.js";
+import historialService from "./historial_service.js";
 
 class AppError extends Error {
     constructor(message, statusCode = 500) {
@@ -196,6 +197,17 @@ export const crearMovimiento = async (datos) => {
                 ],
             }
         );
+
+        // Disparar historial si tiene caso asociado
+        if (movimientoCompleto?.id_caso) {
+            await historialService.crearEventoSistema(
+                movimientoCompleto.id_caso,
+                "SISTEMA_FINANZAS",
+                `Se registro ${movimientoCompleto.categoria || movimientoCompleto.tipo}: $${parseFloat(movimientoCompleto.monto_ars || 0).toLocaleString("es-AR")}`,
+                { monto: parseFloat(movimientoCompleto.monto_ars || 0), estado: movimientoCompleto.estado, tipo: movimientoCompleto.tipo },
+                movimientoCompleto.id_abogado || null
+            );
+        }
 
         return movimientoCompleto;
     } catch (error) {
@@ -659,6 +671,18 @@ export const marcarCuotaPagada = async (id_cuota, fecha_pago = null) => {
                 },
             ],
         });
+
+        // Disparar historial si la cuota tiene caso asociado
+        if (cuotaActualizada?.movimiento?.id_caso) {
+            const mov = cuotaActualizada.movimiento;
+            await historialService.crearEventoSistema(
+                mov.id_caso,
+                "SISTEMA_FINANZAS",
+                `Cuota ${cuotaActualizada.numero_cuota} cobrada: $${parseFloat(cuotaActualizada.monto_cuota).toLocaleString("es-AR")}`,
+                { monto: parseFloat(cuotaActualizada.monto_cuota), numero_cuota: cuotaActualizada.numero_cuota, tipo: "cobro_cuota" },
+                null
+            );
+        }
 
         return cuotaActualizada;
     } catch (error) {

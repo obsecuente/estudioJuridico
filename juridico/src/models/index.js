@@ -13,7 +13,7 @@ import Feriado from "./Feriado.js";
 import FeriaJudicial from "./FeriaJudicial.js";
 import TipoPlazo from "./TipoPlazo.js";
 
-// NUEVOS MODELOS FINANCIEROS
+// Modelos financieros
 import MovimientoFinanciero from "./MovimientoFinanciero.js";
 import Cuota from "./Cuota.js";
 import ConfiguracionEstudio from "./ConfiguracionEstudio.js";
@@ -21,43 +21,49 @@ import GastoRecurrente from "./GastoRecurrente.js";
 
 import CierreMensual from "./CierreMensual.js";
 
-// MODELO DE TAREAS
+// Modelo de tareas
 import Tarea from "./Tarea.js";
 
-// --- RELACIONES EXISTENTES ---
+// Fase 2: nuevos modelos
+import EtapaLegal from "./EtapaLegal.js";
+import Etiqueta from "./Etiqueta.js";
+import EtiquetaCaso from "./EtiquetaCaso.js";
+import HistorialCaso from "./HistorialCaso.js";
 
-// Relaciones de CierreMensual
+// --- Relaciones existentes ---
+
+// CierreMensual
 CierreMensual.belongsTo(Abogado, { foreignKey: "id_abogado", as: "abogado" });
 Abogado.hasMany(CierreMensual, { foreignKey: "id_abogado", as: "cierres" });
 
-// Relaciones de Cliente
+// Cliente
 Cliente.hasMany(Consulta, { foreignKey: "id_cliente", as: "consultas" });
 Consulta.belongsTo(Cliente, { foreignKey: "id_cliente", as: "cliente" });
 
 Cliente.hasMany(Caso, { foreignKey: "id_cliente", as: "casos" });
 Caso.belongsTo(Cliente, { foreignKey: "id_cliente", as: "cliente" });
 
-// Relaciones de Abogado
+// Abogado
 Abogado.hasMany(Consulta, { foreignKey: "id_abogado_asignado", as: "consultas" });
 Consulta.belongsTo(Abogado, { foreignKey: "id_abogado_asignado", as: "abogado" });
 
 Abogado.hasMany(Caso, { foreignKey: "id_abogado", as: "casos" });
 Caso.belongsTo(Abogado, { foreignKey: "id_abogado", as: "abogado" });
 
-// Relaciones de Caso con Documentos
+// Caso con Documentos
 Caso.hasMany(Documento, { foreignKey: "id_caso", as: "documentos" });
 Documento.belongsTo(Caso, { foreignKey: "id_caso", as: "caso" });
 
-// Relaciones de Auditoría
+// Auditoria
 Abogado.hasMany(Auditoria, { foreignKey: "id_usuario", as: "auditorias" });
 Auditoria.belongsTo(Abogado, { foreignKey: "id_usuario", as: "usuario" });
 
-// Relaciones de ResumenIA
+// ResumenIA
 Documento.hasOne(ResumenIA, { foreignKey: "id_documento", as: "resumen" });
 ResumenIA.belongsTo(Documento, { foreignKey: "id_documento", as: "documento" });
 ResumenIA.belongsTo(Abogado, { foreignKey: "id_usuario_creo", as: "usuario" });
 
-// Relaciones de Evento
+// Evento
 Evento.belongsTo(Caso, { foreignKey: "id_caso", as: "caso" });
 Caso.hasMany(Evento, { foreignKey: "id_caso", as: "eventos" });
 Evento.belongsTo(Cliente, { foreignKey: "id_cliente", as: "cliente" });
@@ -65,41 +71,52 @@ Cliente.hasMany(Evento, { foreignKey: "id_cliente", as: "eventos" });
 Evento.belongsTo(Abogado, { foreignKey: "id_abogado", as: "abogado" });
 Abogado.hasMany(Evento, { foreignKey: "id_abogado", as: "eventos" });
 
-// Relaciones de Vencimiento
+// Vencimiento
 Vencimiento.belongsTo(Caso, { foreignKey: "id_caso", as: "caso" });
 Caso.hasMany(Vencimiento, { foreignKey: "id_caso", as: "vencimientos" });
 Vencimiento.belongsTo(Abogado, { foreignKey: "id_abogado", as: "abogado" });
 Abogado.hasMany(Vencimiento, { foreignKey: "id_abogado", as: "vencimientos" });
 
-// --- NUEVAS RELACIONES FINANCIERAS ---
+// --- Relaciones financieras ---
 
-// Movimientos vinculados a Clientes y Casos
 Cliente.hasMany(MovimientoFinanciero, { foreignKey: "id_cliente", as: "movimientos" });
 MovimientoFinanciero.belongsTo(Cliente, { foreignKey: "id_cliente", as: "cliente" });
 
 Caso.hasMany(MovimientoFinanciero, { foreignKey: "id_caso", as: "movimientos" });
 MovimientoFinanciero.belongsTo(Caso, { foreignKey: "id_caso", as: "caso" });
 
-// Relación Movimiento <-> Cuotas
 MovimientoFinanciero.hasMany(Cuota, { foreignKey: "id_movimiento", as: "cuotas" });
 Cuota.belongsTo(MovimientoFinanciero, { foreignKey: "id_movimiento", as: "movimiento" });
 
-// --- RELACIONES GASTOS RECURRENTES ---
+// Gastos recurrentes
 Abogado.hasMany(GastoRecurrente, { foreignKey: "id_abogado", as: "gastos_recurrentes" });
 GastoRecurrente.belongsTo(Abogado, { foreignKey: "id_abogado", as: "abogado" });
 
 GastoRecurrente.hasMany(MovimientoFinanciero, { foreignKey: "id_gasto_recurrente", as: "movimientos" });
 MovimientoFinanciero.belongsTo(GastoRecurrente, { foreignKey: "id_gasto_recurrente", as: "gasto_recurrente" });
 
-// --- RELACIONES DE TAREAS ---
+// --- Relaciones de tareas ---
 
-// Tareas vinculadas a Abogados (obligatorio)
 Abogado.hasMany(Tarea, { foreignKey: "id_abogado", as: "tareas" });
 Tarea.belongsTo(Abogado, { foreignKey: "id_abogado", as: "abogado" });
 
-// Tareas vinculadas a Casos (opcional)
 Caso.hasMany(Tarea, { foreignKey: "id_caso", as: "tareas" });
 Tarea.belongsTo(Caso, { foreignKey: "id_caso", as: "caso" });
+
+// --- Fase 2: relaciones nuevas ---
+
+// Etiquetas por abogado
+Abogado.hasMany(Etiqueta, { foreignKey: "id_abogado", as: "etiquetas" });
+Etiqueta.belongsTo(Abogado, { foreignKey: "id_abogado", as: "abogado" });
+
+// Caso <-> Etiqueta (many-to-many via EtiquetaCaso)
+Caso.belongsToMany(Etiqueta, { through: EtiquetaCaso, foreignKey: "id_caso", as: "etiquetas" });
+Etiqueta.belongsToMany(Caso, { through: EtiquetaCaso, foreignKey: "id_etiqueta", as: "casos" });
+
+// Historial de caso
+Caso.hasMany(HistorialCaso, { foreignKey: "id_caso", as: "historial" });
+HistorialCaso.belongsTo(Caso, { foreignKey: "id_caso", as: "caso" });
+HistorialCaso.belongsTo(Abogado, { foreignKey: "id_usuario", as: "usuario" });
 
 export {
   sequelize,
@@ -120,6 +137,10 @@ export {
   ConfiguracionEstudio,
   Tarea,
   GastoRecurrente,
+  EtapaLegal,
+  Etiqueta,
+  EtiquetaCaso,
+  HistorialCaso,
 };
 
 export default {
@@ -141,4 +162,8 @@ export default {
   ConfiguracionEstudio,
   Tarea,
   GastoRecurrente,
+  EtapaLegal,
+  Etiqueta,
+  EtiquetaCaso,
+  HistorialCaso,
 };

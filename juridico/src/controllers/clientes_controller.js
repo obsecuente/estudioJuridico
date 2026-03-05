@@ -113,3 +113,14 @@ export const eliminarCliente = async (req, res) => {
     });
   }
 };
+
+// Validar si el cliente puede abrir una carpeta
+export const validarAperturaCliente = async (req, res) => {
+  try {
+    const resultado = await clientesService.validarParaAperturaCarpeta(req.params.id);
+    res.json({ success: true, data: resultado });
+  } catch (error) {
+    console.error("Error al validar apertura:", error);
+    res.status(error.statusCode || 500).json({ success: false, error: error.message });
+  }
+};

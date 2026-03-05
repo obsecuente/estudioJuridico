@@ -6,6 +6,7 @@ import {
   obtenerClientes,
   obtenerClientePorId,
   buscarClientes,
+  validarAperturaCliente,
 } from "../controllers/clientes_controller.js";
 import { authMiddleware } from "../middleware/authMiddleware.js";
 import { verificarRol } from "../middleware/roleMiddleware.js";
@@ -21,6 +22,9 @@ router.get("/", obtenerClientes);
 
 // GET - Buscar clientes
 router.get("/search", buscarClientes);
+
+// GET - Validar si cliente puede abrir carpeta
+router.get("/:id/validar-apertura", validarAperturaCliente);
 
 // GET - Obtener un cliente por ID
 router.get("/:id", obtenerClientePorId);

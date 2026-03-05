@@ -1,4 +1,4 @@
-import { Cliente, Consulta, Caso, Abogado } from "../models/index.js";
+import { Cliente, Consulta, Caso, Abogado, MovimientoFinanciero, Cuota } from "../models/index.js";
 import { Op } from "sequelize";
 class AppError extends Error {
   constructor(message, statusCode = 500) {
@@ -9,45 +9,39 @@ class AppError extends Error {
 }
 
 export const crear = async (datosCliente) => {
-  const { nombre, apellido, telefono, email, consentimiento_datos } =
-    datosCliente;
+  const {
+    nombre, apellido, telefono, email, consentimiento_datos,
+    tipo_persona, dni, cuit, fecha_nacimiento, estado_civil, profesion,
+    domicilio_real, localidad, provincia, razon_social, domicilio_sede,
+    contacto_alternativo_nombre, contacto_alternativo_telefono,
+  } = datosCliente;
 
-  // 1. Normalización y limpieza de datos clave al inicio
+  // Normalizacion
   const nombreLimpio = nombre ? nombre.trim() : nombre;
   const apellidoLimpio = apellido ? apellido.trim() : apellido;
-  // Limpiamos email de espacios y lo pasamos a minúsculas para todas las validaciones
-  const emailNormalizado = email ? email.trim().toLowerCase() : email;
+  const emailNormalizado = email ? email.trim().toLowerCase() : null;
 
-  // 2. Validaciones de campos obligatorios (nombre, apellido, email y teléfono)
-  if (!nombreLimpio || !apellidoLimpio || !telefono || !emailNormalizado) {
-    throw new AppError(
-      "Nombre, Apellido, Email y Teléfono son obligatorios",
-      400
-    ); // <--- CORRECCIÓN DE MENSAJE
+  // Campos obligatorios: nombre, apellido, telefono (email ya NO es obligatorio)
+  if (!nombreLimpio || !apellidoLimpio || !telefono) {
+    throw new AppError("Nombre, Apellido y Teléfono son obligatorios", 400);
   }
 
-  // 3. Validación de formato de Email
-  // Nota: Usamos la validación regex del modelo Cliente si está definida,
-  // si no está en el modelo, descomentar la siguiente sección y usar emailRegex:
-  // if (!emailRegex.test(emailNormalizado)) {
-  //  throw new AppError("El formato del mail no es válido", 400);
-  // }
-
-  // 4. Verificación de duplicidad de Email
-  const existeEmail = await Cliente.findOne({
-    where: { email: emailNormalizado },
-  });
-  if (existeEmail) {
-    throw new AppError("Ya existe un cliente con este email", 409);
+  // Validar email solo si viene
+  if (emailNormalizado) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailNormalizado)) {
+      throw new AppError("El formato del email no es válido", 400);
+    }
+    const existeEmail = await Cliente.findOne({ where: { email: emailNormalizado } });
+    if (existeEmail) {
+      throw new AppError("Ya existe un cliente con este email", 409);
+    }
   }
 
-  // 5. Validación de formato de Teléfono (asumiendo que viene sin espacios)
+  // Validar telefono
   const telefonoValidation = /^\+[1-9]\d{7,14}$/;
   if (!telefonoValidation.test(telefono)) {
-    throw new AppError("El formato del numero de telefono no es válido", 400);
+    throw new AppError("El formato del numero de telefono no es válido (ej: +5492995001234)", 400);
   }
-
-  // 6. Verificación de duplicidad de Teléfono
   const existeTelefono = await Cliente.findOne({ where: { telefono } });
   if (existeTelefono) {
     throw new AppError("Ya existe un cliente con este número de teléfono", 409);
@@ -56,12 +50,25 @@ export const crear = async (datosCliente) => {
   // Creacion de cliente
   try {
     const nuevoCliente = await Cliente.create({
-      nombre: nombreLimpio, // Se usa la versión limpia
-      apellido: apellidoLimpio, // Se usa la versión limpia
+      nombre: nombreLimpio,
+      apellido: apellidoLimpio,
       telefono,
-      email: emailNormalizado, // <--- SE USA LA VERSIÓN LIMPIA Y EN MINÚSCULAS
+      email: emailNormalizado,
       fecha_registro: new Date(),
       consentimiento_datos: consentimiento_datos || false,
+      tipo_persona: tipo_persona || "fisica",
+      dni: dni || null,
+      cuit: cuit || null,
+      fecha_nacimiento: fecha_nacimiento || null,
+      estado_civil: estado_civil || null,
+      profesion: profesion || null,
+      domicilio_real: domicilio_real || null,
+      localidad: localidad || null,
+      provincia: provincia || "Neuquén",
+      razon_social: razon_social || null,
+      domicilio_sede: domicilio_sede || null,
+      contacto_alternativo_nombre: contacto_alternativo_nombre || null,
+      contacto_alternativo_telefono: contacto_alternativo_telefono || null,
     });
 
     return nuevoCliente;
@@ -70,10 +77,7 @@ export const crear = async (datosCliente) => {
       const mensajes = error.errors.map((e) => e.message).join(", ");
       throw new AppError(`Error de validación: ${mensajes}`, 400);
     }
-    throw new AppError(
-      "Error al crear el cliente en la base de datos [clientes_service.js]",
-      500
-    );
+    throw new AppError("Error al crear el cliente en la base de datos [clientes_service.js]", 500);
   }
 };
 export const obtenerTodos = async (opciones = {}) => {
@@ -154,7 +158,25 @@ export const obtenerPorId = async (id) => {
     throw new AppError("Cliente no encontrado", 404);
   }
 
-  return cliente;
+  // Total cobrado del cliente: movimientos cobrados sin cuotas
+  // + cuotas pagadas de movimientos del cliente
+  const movimientosCliente = await MovimientoFinanciero.findAll({
+    where: { id_cliente: id, tipo: "ingreso" },
+    include: [{ model: Cuota, as: "cuotas" }],
+  });
+
+  let totalCobradoCliente = 0;
+  for (const m of movimientosCliente) {
+    if (m.cuotas && m.cuotas.length > 0) {
+      totalCobradoCliente += m.cuotas
+        .filter(c => c.estado === "pagado")
+        .reduce((s, c) => s + parseFloat(c.monto_cuota || 0), 0);
+    } else if (m.estado === "cobrado") {
+      totalCobradoCliente += parseFloat(m.monto_ars || 0);
+    }
+  }
+
+  return { ...cliente.toJSON(), total_cobrado: totalCobradoCliente };
 };
 export const buscar = async (termino) => {
   /* ... código de buscar sin cambios ... */
@@ -255,36 +277,66 @@ export const eliminar = async (id) => {
   };
 };
 
-// 3. Implementación de la función existe
-export const existe = async (email) => {
-  // <--- NUEVA FUNCIÓN
-  /**
-   * Verifica si existe un cliente con el email proporcionado (case-insensitive y tolerante a espacios).
-   * @param {string} email - Email a verificar.
-   * @returns {Promise<boolean>}
-   */
+// Calcula 0-100 de completitud del perfil
+export const obtenerPorcentajeCompletitud = (cliente) => {
+  const tipo = cliente.tipo_persona || "fisica";
+  if (tipo === "juridica") {
+    const campos = ["cuit", "razon_social", "domicilio_sede", "localidad"];
+    const completos = campos.filter((c) => !!cliente[c]).length;
+    return Math.round((completos / campos.length) * 100);
+  }
+  const campos = ["dni", "domicilio_real", "fecha_nacimiento", "estado_civil", "profesion", "localidad"];
+  const completos = campos.filter((c) => !!cliente[c]).length;
+  return Math.round((completos / campos.length) * 100);
+};
 
+// Valida si el cliente tiene los datos mínimos para apertura de carpeta
+export const validarParaAperturaCarpeta = async (id) => {
+  const cliente = await Cliente.findByPk(id);
+  if (!cliente) throw new AppError("Cliente no encontrado", 404);
+
+  const tipo = cliente.tipo_persona || "fisica";
+  const faltantes = [];
+
+  if (tipo === "juridica") {
+    if (!cliente.cuit) faltantes.push("CUIT");
+    if (!cliente.razon_social) faltantes.push("Razón Social");
+    if (!cliente.domicilio_sede) faltantes.push("Domicilio de sede");
+  } else {
+    if (!cliente.dni) faltantes.push("DNI");
+    if (!cliente.domicilio_real) faltantes.push("Domicilio real");
+  }
+
+  return {
+    apto: faltantes.length === 0,
+    faltantes,
+    porcentaje_completitud: obtenerPorcentajeCompletitud(cliente.toJSON()),
+  };
+};
+
+
+// Verifica si existe un cliente con el email
+export const existe = async (email) => {
   if (!email) return false;
 
-  // Normalizar el email para la búsqueda
   const emailLimpio = email.trim().toLowerCase();
-
   const cliente = await Cliente.findOne({
-    // La búsqueda se hace directamente con el email limpio
     where: { email: emailLimpio },
-    attributes: ["id_cliente"], // Optimización: solo necesitamos el ID
+    attributes: ["id_cliente"],
   });
 
-  return !!cliente; // Retorna true si encuentra algo, false si es null
+  return !!cliente;
 };
 
 export default {
-  // <--- EXPORTACIÓN CORREGIDA
   crear,
   obtenerTodos,
   obtenerPorId,
   buscar,
   actualizar,
   eliminar,
-  existe, // <--- AÑADIR LA EXPORTACIÓN DE LA NUEVA FUNCIÓN
+  existe,
+  obtenerPorcentajeCompletitud,
+  validarParaAperturaCarpeta,
 };
+

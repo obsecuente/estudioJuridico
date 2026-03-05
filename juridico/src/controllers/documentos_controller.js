@@ -15,7 +15,7 @@ export const subirDocumento = async (req, res) => {
     const documentosCreados = [];
 
     for (const archivo of req.files) {
-      const documento = await documentosService.crear(req.body, archivo);
+      const documento = await documentosService.crear(req.body, archivo, req.user?.id_abogado || null);
       documentosCreados.push(documento);
     }
 

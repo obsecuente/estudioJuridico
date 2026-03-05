@@ -146,7 +146,7 @@ export const syncDatabase = async () => {
           console.log("   (Usá FORCE_SYNC=true para forzar sincronización) [database.js]");
 
           // Sincronizar modelos con columnas nuevas pendientes (lightweight)
-          const modelsToMigrate = ["Consulta"];
+          const modelsToMigrate = ["Consulta", "Cliente", "Caso"];
           for (const modelName of modelsToMigrate) {
             if (sequelize.models[modelName]) {
               try {
@@ -182,12 +182,16 @@ export const syncDatabase = async () => {
       "Auditoria",
       "GastoRecurrente",
       "CierreMensual",
+      "EtapaLegal",
+      "Etiqueta",
       // Nivel 2: dependen de Caso, Cliente, Abogado, GastoRecurrente
       "Evento",
       "Vencimiento",
       "Documento",
       "MovimientoFinanciero",
       "Tarea",
+      "EtiquetaCaso",
+      "HistorialCaso",
       // Nivel 3: dependen de tablas de nivel 2
       "ResumenIA",       // depende de Documento
       "Cuota",           // depende de MovimientoFinanciero

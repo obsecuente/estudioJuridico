@@ -1,6 +1,7 @@
 import { Documento, Caso, Cliente, Abogado } from "../models/index.js";
 import path from "path";
 import fs from "fs";
+import historialService from "./historial_service.js";
 
 class AppError extends Error {
   constructor(message, statusCode = 500) {
@@ -9,7 +10,7 @@ class AppError extends Error {
     this.name = "AppError";
   }
 }
-export const crear = async (datosDocumento, archivo) => {
+export const crear = async (datosDocumento, archivo, idUsuario = null) => {
   /**
    * Crea un registro de documento y guarda el archivo
    *
@@ -60,12 +61,33 @@ export const crear = async (datosDocumento, archivo) => {
     throw new AppError("Error al guardar el archivo", 500);
   }
 
+  // Calcular disponibilidad de IA
+  const LIMITE_IA_BYTES = 10 * 1024 * 1024;
+  const TIPOS_IA = ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
+  const tieneIa = archivo.size < LIMITE_IA_BYTES && TIPOS_IA.includes(archivo.mimetype);
+  const motivoNoIa = !tieneIa
+    ? (archivo.size >= LIMITE_IA_BYTES ? "Archivo pesado (+10MB)" : "Formato no compatible con IA")
+    : null;
+
   // Crear registro en la base de datos con la ruta final
   const nuevoDocumento = await Documento.create({
     nombre_archivo: archivo.filename,
     ruta: rutaFinal,
     id_caso,
+    tamanio_bytes: archivo.size || null,
+    tipo_mime: archivo.mimetype || null,
+    tiene_ia_disponible: tieneIa,
+    motivo_ia_no_disponible: motivoNoIa,
   });
+
+  // Disparar historial del caso
+  await historialService.crearEventoSistema(
+    id_caso,
+    "SISTEMA_DOCUMENTO",
+    `Se subio el documento: ${archivo.originalname || archivo.filename}`,
+    null,
+    idUsuario
+  );
 
   // Devolver documento con info del caso
   const documentoCompleto = await Documento.findByPk(

@@ -35,6 +35,25 @@ const Documento = sequelize.define(
       comment: "Ruta completa donde se almacena el archivo",
     },
 
+    // Fase 2: metadata de archivo
+    tamanio_bytes: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    tipo_mime: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+    },
+    tiene_ia_disponible: {
+      type: DataTypes.BOOLEAN,
+      allowNull: true,
+      defaultValue: false,
+    },
+    motivo_ia_no_disponible: {
+      type: DataTypes.STRING(200),
+      allowNull: true,
+    },
+
     // FOREIGN KEY hacia Caso
     id_caso: {
       type: DataTypes.INTEGER,

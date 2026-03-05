@@ -132,4 +132,8 @@ router.get("/feria-judicial", async (req, res) => {
   }
 });
 
+// Fase 2: POST /api/calculadora/contextual/:id_caso
+import { calcularContextual } from "../controllers/calculadora_contextual_controller.js";
+router.post("/contextual/:id_caso", calcularContextual);
+
 export default router;

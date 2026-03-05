@@ -69,7 +69,7 @@ export const obtenerDashboard = async (req, res) => {
 export const marcarCuotaPagada = async (req, res) => {
     try {
         const { id } = req.params;
-        const { fecha_pago } = req.body;
+        const { fecha_pago } = req.body || {};
 
         const cuota = await finanzasService.marcarCuotaPagada(id, fecha_pago);
 

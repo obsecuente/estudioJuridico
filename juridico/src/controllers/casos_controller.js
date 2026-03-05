@@ -113,7 +113,7 @@ export const cambiarEstadoCaso = async (req, res) => {
       });
     }
 
-    const caso = await casosService.cambiarEstado(req.params.id, estado);
+    const caso = await casosService.cambiarEstado(req.params.id, estado, req.user?.id_abogado || null);
 
     res.json({
       success: true,
@@ -131,7 +131,7 @@ export const cambiarEstadoCaso = async (req, res) => {
 };
 export const cerrarCaso = async (req, res) => {
   try {
-    const caso = await casosService.cerrarCaso(req.params.id);
+    const caso = await casosService.cerrarCaso(req.params.id, req.user?.id_abogado || null);
     res.json({
       success: true,
       message: "Caso cerrado exitosamente",

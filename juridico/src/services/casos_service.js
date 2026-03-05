@@ -1,6 +1,7 @@
 import { Caso, Cliente, Abogado, Documento } from "../models/index.js";
 import { Op } from "sequelize";
 import finanzasService from "./finanzas_service.js";
+import historialService from "./historial_service.js";
 
 class AppError extends Error {
   constructor(message, statusCode = 500) {
@@ -34,6 +35,19 @@ export const crear = async (datosCaso) => {
     estado,
     fecha_inicio,
     finanzas = {},
+    // Fase 2: campos procesales opcionales
+    instancia,
+    tipo_proceso,
+    jurisdiccion,
+    fuero,
+    numero_expediente,
+    // Contraparte
+    demandado_nombre,
+    demandado_dni_cuit,
+    demandado_domicilio,
+    demandado_tipo,
+    monto_reclamado,
+    objeto_del_juicio,
   } = datosCaso;
 
   // validar CAMPOS OBLIGATORIOS
@@ -78,6 +92,19 @@ export const crear = async (datosCaso) => {
       id_abogado,
       estado: estado || "abierto",
       fecha_inicio: fecha_inicio || new Date(),
+      // Fase 2: campos procesales
+      ...(instancia && { instancia }),
+      ...(tipo_proceso && { tipo_proceso }),
+      ...(jurisdiccion && { jurisdiccion }),
+      ...(fuero && { fuero }),
+      ...(numero_expediente && { numero_expediente }),
+      // Contraparte
+      ...(demandado_nombre && { demandado_nombre }),
+      ...(demandado_dni_cuit && { demandado_dni_cuit }),
+      ...(demandado_domicilio && { demandado_domicilio }),
+      ...(demandado_tipo && { demandado_tipo }),
+      ...(monto_reclamado && { monto_reclamado }),
+      ...(objeto_del_juicio && { objeto_del_juicio }),
     });
   } catch (error) {
     if (error.name === "SequelizeValidationError") {
@@ -193,7 +220,7 @@ export const obtenerTodos = async (opciones = {}) => {
     where,
     limit: parseInt(limit),
     offset: parseInt(offset),
-    order: [["fecha_inicio", "DESC"]],
+    order: [["fecha_inicio", "DESC"], ["id_caso", "DESC"]],
     include: [
       {
         model: Cliente,
@@ -315,8 +342,12 @@ export const actualizar = async (id, datosActualizacion) => {
    * @throws {AppError} Si el caso no existe o hay datos inválidos
    */
 
-  const { descripcion, estado, id_cliente, id_abogado, fecha_inicio } =
-    datosActualizacion;
+  const {
+    descripcion, estado, id_cliente, id_abogado, fecha_inicio,
+    instancia, tipo_proceso, jurisdiccion, fuero, numero_expediente,
+    demandado_nombre, demandado_dni_cuit, demandado_domicilio, demandado_tipo,
+    monto_reclamado, objeto_del_juicio
+  } = datosActualizacion;
 
   // Buscar el caso
   const caso = await Caso.findByPk(id);
@@ -364,6 +395,17 @@ export const actualizar = async (id, datosActualizacion) => {
     ...(id_cliente && { id_cliente }),
     ...(id_abogado && { id_abogado }),
     ...(fecha_inicio && { fecha_inicio }),
+    ...(instancia !== undefined && { instancia }),
+    ...(tipo_proceso !== undefined && { tipo_proceso }),
+    ...(jurisdiccion !== undefined && { jurisdiccion }),
+    ...(fuero !== undefined && { fuero }),
+    ...(numero_expediente !== undefined && { numero_expediente }),
+    ...(demandado_nombre !== undefined && { demandado_nombre }),
+    ...(demandado_dni_cuit !== undefined && { demandado_dni_cuit }),
+    ...(demandado_domicilio !== undefined && { demandado_domicilio }),
+    ...(demandado_tipo !== undefined && { demandado_tipo }),
+    ...(monto_reclamado !== undefined && { monto_reclamado }),
+    ...(objeto_del_juicio !== undefined && { objeto_del_juicio }),
   });
 
   // Devolver caso actualizado con relaciones
@@ -384,14 +426,9 @@ export const actualizar = async (id, datosActualizacion) => {
 
   return casoActualizado;
 };
-export const cambiarEstado = async (id_caso, nuevoEstado) => {
+export const cambiarEstado = async (id_caso, nuevoEstado, idUsuario = null) => {
   /**
-   * Cambia el estado de un caso (abierto ↔ cerrado)
-   *
-   * @param {number} id_caso - ID del caso
-   * @param {string} nuevoEstado - Nuevo estado (abierto/cerrado)
-   * @returns {Promise<Object>} Caso actualizado
-   * @throws {AppError} Si el caso no existe o el estado es inválido
+   * Cambia el estado de un caso (abierto <-> cerrado)
    */
 
   const estadosValidos = ["abierto", "cerrado"];
@@ -404,6 +441,7 @@ export const cambiarEstado = async (id_caso, nuevoEstado) => {
     throw new AppError("Caso no encontrado", 404);
   }
 
+  const estadoAnterior = caso.estado;
   await caso.update({ estado: nuevoEstado });
 
   // Devolver caso con relaciones
@@ -422,17 +460,19 @@ export const cambiarEstado = async (id_caso, nuevoEstado) => {
     ],
   });
 
+  // Disparar historial CAMBIO_ESTADO
+  await historialService.crearEventoSistema(
+    id_caso,
+    "CAMBIO_ESTADO",
+    `El caso cambio a estado: ${nuevoEstado}`,
+    { antes: estadoAnterior, despues: nuevoEstado },
+    idUsuario
+  );
+
   return casoActualizado;
 };
-export const cerrarCaso = async (id_caso) => {
-  /**
-   * Cierra un caso (helper para cambiarEstado)
-   *
-   * @param {number} id_caso - ID del caso
-   * @returns {Promise<Object>} Caso cerrado
-   */
-
-  return await cambiarEstado(id_caso, "cerrado");
+export const cerrarCaso = async (id_caso, idUsuario = null) => {
+  return await cambiarEstado(id_caso, "cerrado", idUsuario);
 };
 export const eliminar = async (id) => {
   /**

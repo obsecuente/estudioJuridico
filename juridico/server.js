@@ -27,6 +27,8 @@ import configuracionRoutes from "./src/routes/configuracion.routes.js";
 import tareasRoutes from "./src/routes/tareas.routes.js";
 import gastosRecurrentesRoutes from "./src/routes/gastos_recurrentes.routes.js";
 import cierresRoutes from "./src/routes/cierres.routes.js";
+import etiquetasRoutes from "./src/routes/etiquetas.routes.js";
+import etapasLegalesRoutes from "./src/routes/etapas_legales.routes.js";
 import gastosRecurrentesService from "./src/services/gastos_recurrentes_service.js";
 import { setupSwagger } from "./src/config/swagger.js";
 
@@ -93,6 +95,8 @@ app.use("/api/configuracion", configuracionRoutes);
 app.use("/api/cierres", cierresRoutes);
 app.use("/api/tareas", tareasRoutes);
 app.use("/api/finanzas/gastos-recurrentes", gastosRecurrentesRoutes);
+app.use("/api/etiquetas", etiquetasRoutes);
+app.use("/api/etapas-legales", etapasLegalesRoutes);
 
 // Swagger API Docs (antes de 404 handler)
 setupSwagger(app);
@@ -130,6 +134,7 @@ app.use((err, req, res, next) => {
 // Iniciar servidor
 import iniciarJobLimpieza from "./src/jobs/limpieza_diaria.js";
 import iniciarJobCierreMensual from "./src/jobs/cierre_mensual.js";
+import seedEtapasLegales from "./src/seeds/seed_etapas_legales.js";
 
 const startServer = async () => {
   try {
@@ -143,6 +148,16 @@ const startServer = async () => {
 
     logger.info("Sincronizando modelos..."); // NUEVO
     await syncDatabase();
+
+    // Seed de etapas legales + alter de Caso/Documento (Fase 2)
+    try {
+      const seedResult = await seedEtapasLegales();
+      if (seedResult.created > 0) {
+        logger.info(`Seed etapas legales: ${seedResult.created} creadas de ${seedResult.total}`);
+      }
+    } catch (err) {
+      logger.error("Error en seed etapas legales (no detiene arranque):", { error: err.message });
+    }
 
     // Generar movimientos mensuales de gastos recurrentes (antes de listen)
     try {

@@ -6,12 +6,12 @@ import { Abogado } from "./src/models/index.js";
 const nuevoUsuario = {
   nombre: "Lucrecio",
   apellido: "Roshi",
-  email: "lucrecio@roshi.com",
-  password: "abogadopremium123",
-  especialidad: "Todo y nada a la vez",
-  dni: "43372844",
-  telefono: "+542991457844",
-  rol: "admin", // Opciones: 'admin', 'abogado', 'asistente'
+  email: "abogado@rolabogado.com",
+  password: "abogado123",
+  especialidad: "administrar",
+  dni: "43372866",
+  telefono: "+542991457866",
+  rol: "abogado", // Opciones: 'admin', 'abogado', 'asistente'
 };
 
 async function crearUsuario() {
