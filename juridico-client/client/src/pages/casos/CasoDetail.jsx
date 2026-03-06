@@ -92,9 +92,9 @@ const CasoDetail = () => {
     setToast({ message, type });
   }, []);
 
-  const cargarData = useCallback(async () => {
+  const cargarData = useCallback(async (background = false) => {
     try {
-      setLoading(true);
+      if (!background) setLoading(true);
       setError(null);
       const res = await casosService.getDetalle360(id);
       setData(res.data);
@@ -102,7 +102,7 @@ const CasoDetail = () => {
       console.error("Error al cargar detalle 360:", err);
       setError(err.response?.data?.error || "Error al cargar el caso");
     } finally {
-      setLoading(false);
+      if (!background) setLoading(false);
     }
   }, [id]);
 
@@ -128,11 +128,11 @@ const CasoDetail = () => {
       } else if (deleteConfig.type === "CLOSE_CASE") {
         await api.patch(`/casos/${deleteConfig.id}/estado`, { estado: "cerrado" });
         showToast("Caso cerrado exitosamente", "success");
-        cargarData();
+        cargarData(true);
       } else if (deleteConfig.type === "REOPEN_CASE") {
         await api.patch(`/casos/${deleteConfig.id}/estado`, { estado: "abierto" });
         showToast("Caso reabierto exitosamente", "success");
-        cargarData();
+        cargarData(true);
       } else if (deleteConfig.type === "COBRAR_CUOTA") {
         await ejecutarCobrarCuota(deleteConfig.id);
       }
@@ -208,7 +208,7 @@ const CasoDetail = () => {
       setNotaTexto("");
       setNotaImportante(false);
       showToast("Nota guardada", "success");
-      cargarData();
+      cargarData(true);
     } catch {
       showToast("Error al guardar la nota", "error");
     } finally {
@@ -225,7 +225,7 @@ const CasoDetail = () => {
     try {
       await api.patch(`/finanzas/cuotas/${idCuota}`, { fecha_pago: new Date().toISOString() });
       showToast("Cuota cobrada", "success");
-      cargarData();
+      cargarData(true);
     } catch {
       showToast("Error al cobrar cuota", "error");
     }
@@ -235,7 +235,7 @@ const CasoDetail = () => {
     try {
       await casosService.asignarEtiqueta(id, idEtiqueta);
       setShowEtiquetaDropdown(false);
-      cargarData();
+      cargarData(true);
     } catch {
       showToast("Error al asignar etiqueta", "error");
     }
@@ -244,7 +244,7 @@ const CasoDetail = () => {
   const handleQuitarEtiqueta = async (idEtiqueta) => {
     try {
       await casosService.quitarEtiqueta(id, idEtiqueta);
-      cargarData();
+      cargarData(true);
     } catch {
       showToast("Error al quitar etiqueta", "error");
     }
@@ -257,7 +257,7 @@ const CasoDetail = () => {
       await casosService.asignarEtiqueta(id, res.data.id_etiqueta);
       setNuevaEtiquetaNombre("");
       setShowEtiquetaDropdown(false);
-      cargarData();
+      cargarData(true);
       cargarEtiquetas();
     } catch {
       showToast("Error al crear etiqueta", "error");
@@ -328,7 +328,7 @@ const CasoDetail = () => {
             </div>
             {caso.cliente?.perfil_completo && <span className="perfil-completo-chip">Perfil Completo</span>}
           </div>
-          <div className="vs-logo">VS</div>
+          <div className="vs-logo"></div>
           <div className="parte-card demandado" onClick={() => setShowDemandadoModal(true)}>
             <div className="parte-badge">Demandado (Contraparte)</div>
             <div className="parte-nombre">{caso.demandado_nombre || "A definir..."}</div>
@@ -390,15 +390,27 @@ const CasoDetail = () => {
           {/* 1. PARTES DEL JUICIO */}
           <div className="panel panel-info-legal">
             <div className="panel-title"><AbogadosIcon /> Partes del Juicio</div>
-            <div className="info-block">
+            <div className="info-block" style={{ borderBottom: "none", paddingBottom: 0 }}>
               <strong>Demandante / Actor:</strong>
               <p>{caso.cliente ? `${caso.cliente.nombre} ${caso.cliente.apellido}` : ""}</p>
-              <p className="text-muted">{caso.cliente?.domicilio_real || caso.cliente?.email || "Sin domicilio"}</p>
+              <p className="text-muted">{caso.cliente?.domicilio_real || caso.cliente?.email || "Sin domicilio principal"}</p>
+            </div>
+          </div>
+
+          {/* 1.5 DATOS DEL DEMANDADO */}
+          <div className="panel panel-info-legal">
+            <div className="panel-title"><AbogadosIcon /> Datos del Demandado</div>
+            <div className="info-block">
+              <strong>Nombre / Razón Social:</strong>
+              <p>{caso.demandado_nombre || "A definir..."}</p>
             </div>
             <div className="info-block">
-              <strong>Demandado:</strong>
-              <p>{caso.demandado_nombre || "No establecido"}</p>
-              <p className="text-muted">{caso.demandado_domicilio || "Sin domicilio notificado"}</p>
+              <strong>{caso.demandado_tipo === "persona_juridica" ? "CUIT:" : "DNI:"}</strong>
+              <p>{caso.demandado_dni_cuit || "No especificado"}</p>
+            </div>
+            <div className="info-block" style={{ borderBottom: "none", paddingBottom: 0 }}>
+              <strong>Domicilio Denunciado:</strong>
+              <p>{caso.demandado_domicilio || "Sin domicilio notificado"}</p>
             </div>
           </div>
 

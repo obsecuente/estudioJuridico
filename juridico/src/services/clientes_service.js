@@ -131,6 +131,13 @@ export const obtenerPorId = async (id) => {
   /* ... código de obtenerPorId sin cambios ... */
 
   const cliente = await Cliente.findByPk(id, {
+    attributes: [
+      "id_cliente", "nombre", "apellido", "email", "telefono", "fecha_registro",
+      "consentimiento_datos", "tipo_persona", "dni", "cuit", "domicilio_real",
+      "localidad", "provincia", "razon_social", "domicilio_sede",
+      "contacto_alternativo_nombre", "contacto_alternativo_telefono",
+      "estado_civil", "profesion"
+    ],
     include: [
       {
         model: Consulta,
@@ -206,8 +213,12 @@ export const buscar = async (termino) => {
 export const actualizar = async (id, datosActualizacion) => {
   /* ... código de actualizar sin cambios ... */
 
-  const { nombre, apellido, telefono, email, consentimiento_datos } =
-    datosActualizacion;
+  const {
+    nombre, apellido, telefono, email, consentimiento_datos,
+    tipo_persona, dni, cuit, domicilio_real, localidad, provincia,
+    razon_social, domicilio_sede, contacto_alternativo_nombre, contacto_alternativo_telefono,
+    estado_civil, profesion
+  } = datosActualizacion;
 
   // Buscar el cliente
   const cliente = await Cliente.findByPk(id);
@@ -244,6 +255,18 @@ export const actualizar = async (id, datosActualizacion) => {
     // Aseguramos que el email se guarda limpio y en minúsculas
     ...(email && { email: email.toLowerCase().trim() }),
     ...(consentimiento_datos !== undefined && { consentimiento_datos }),
+    ...(tipo_persona !== undefined && { tipo_persona }),
+    ...(dni !== undefined && { dni }),
+    ...(cuit !== undefined && { cuit }),
+    ...(domicilio_real !== undefined && { domicilio_real }),
+    ...(localidad !== undefined && { localidad }),
+    ...(provincia !== undefined && { provincia }),
+    ...(razon_social !== undefined && { razon_social }),
+    ...(domicilio_sede !== undefined && { domicilio_sede }),
+    ...(contacto_alternativo_nombre !== undefined && { contacto_alternativo_nombre }),
+    ...(contacto_alternativo_telefono !== undefined && { contacto_alternativo_telefono }),
+    ...(estado_civil !== undefined && { estado_civil }),
+    ...(profesion !== undefined && { profesion }),
   });
 
   return cliente;

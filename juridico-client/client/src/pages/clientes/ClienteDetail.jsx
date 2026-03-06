@@ -91,28 +91,50 @@ const ClienteDetail = () => {
   if (!cliente)
     return <div className="detail-container">Cliente no encontrado</div>;
 
+  const calcularPorcentaje = (c) => {
+    if (!c) return 0;
+    const campos = c.tipo_persona === "juridica"
+      ? ["cuit", "razon_social", "domicilio_sede", "email", "telefono"]
+      : ["dni", "domicilio_real", "estado_civil", "profesion", "email", "telefono"];
+    const completados = campos.filter(k => !!c[k]).length;
+    return Math.round((completados / campos.length) * 100);
+  };
+
+  const porcentajePerfil = calcularPorcentaje(cliente);
+
   return (
     <div className="detail-container">
       <div className="detail-header">
         <div>
-          <button className="back-button" onClick={() => navigate(-1)}>
-            ← Volver
-          </button>
-          <h1>
+          <BackButton to="/dashboard/clientes" text="Volver a clientes" onClick={() => navigate(-1)} />
+          <h1 style={{ marginTop: "10px" }}>
             {cliente.nombre} {cliente.apellido}
           </h1>
           <p>Expediente Digital Individual · ID #{cliente.id_cliente}</p>
-          <div className="perfil-progreso-container" style={{ marginTop: 12, maxWidth: 350 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#cbd5e1", marginBottom: 4 }}>
+
+          {/* Completitud del Perfil Destacada */}
+          <div className="perfil-progreso-container" style={{
+            marginTop: 20,
+            maxWidth: 400,
+            background: "#0f172a",
+            border: `1px solid ${porcentajePerfil === 100 ? "#34d399" : "#d4af37"}`,
+            borderRadius: "10px",
+            padding: "16px"
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: "#f8fafc", marginBottom: 8, fontWeight: 600 }}>
               <span>Completitud del perfil</span>
-              <span>{cliente.perfil_completo || 0}%</span>
+              <span style={{ color: porcentajePerfil === 100 ? "#34d399" : "#d4af37" }}>{porcentajePerfil}%</span>
             </div>
-            <div style={{ width: "100%", height: 6, backgroundColor: "rgba(255,255,255,0.1)", borderRadius: 3, overflow: "hidden" }}>
-              <div style={{ width: `${cliente.perfil_completo || 0}%`, height: "100%", backgroundColor: cliente.perfil_completo === 100 ? "#34d399" : "#fbbf24", transition: "width 0.5s ease" }}></div>
+            <div style={{ width: "100%", height: 8, backgroundColor: "#1e293b", borderRadius: 4, overflow: "hidden" }}>
+              <div style={{ width: `${porcentajePerfil}%`, height: "100%", backgroundColor: porcentajePerfil === 100 ? "#34d399" : "#d4af37", transition: "width 0.5s ease" }}></div>
             </div>
-            {cliente.perfil_completo < 100 && (
-              <p style={{ fontSize: 11, color: "#fbbf24", marginTop: 4, fontStyle: "italic" }}>
-                * Completar para apertura de juicios
+            {porcentajePerfil < 100 ? (
+              <p style={{ fontSize: 12, color: "#d4af37", marginTop: 10, marginBottom: 0 }}>
+                ⚠️ Faltan datos clave para iniciar trámites o expedientes.
+              </p>
+            ) : (
+              <p style={{ fontSize: 12, color: "#34d399", marginTop: 10, marginBottom: 0 }}>
+                ✓ Perfil completo y listo para operar.
               </p>
             )}
           </div>
@@ -139,23 +161,103 @@ const ClienteDetail = () => {
           <div className="card-header">
             <h2>Datos del Cliente</h2>
           </div>
-          <div className="card-body">
-            <div className="info-row">
-              <span className="info-label">Email</span>
-              <span className="info-value">
-                {cliente.email ? (
-                  <a href={`mailto:${cliente.email}`} style={{ color: "#34d399", textDecoration: "none" }}>{cliente.email}</a>
-                ) : "-"}
-              </span>
+
+          <div className="card-body" style={{ padding: "0" }}>
+
+            {/* SECCION 1: INFORMACION PRINCIPAL */}
+            <div style={{ padding: "20px", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+              <h3 style={{ fontSize: "12px", color: "#d4af37", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "16px" }}>Información Principal</h3>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+                <div className="info-row">
+                  <span className="info-label">Tipo de Persona</span>
+                  <span className="info-value" style={{ textTransform: "capitalize" }}>{cliente.tipo_persona?.replace("_", " ") || "Fisica"}</span>
+                </div>
+                {cliente.tipo_persona === "juridica" ? (
+                  <>
+                    <div className="info-row">
+                      <span className="info-label">Razón Social</span>
+                      <span className="info-value">{cliente.razon_social || "-"}</span>
+                    </div>
+                    <div className="info-row">
+                      <span className="info-label">CUIT</span>
+                      <span className="info-value">{cliente.cuit || "-"}</span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="info-row">
+                      <span className="info-label">DNI</span>
+                      <span className="info-value">{cliente.dni || "-"}</span>
+                    </div>
+                    <div className="info-row">
+                      <span className="info-label">Estado Civil</span>
+                      <span className="info-value" style={{ textTransform: "capitalize" }}>{cliente.estado_civil || "-"}</span>
+                    </div>
+                    <div className="info-row">
+                      <span className="info-label">Profesión</span>
+                      <span className="info-value">{cliente.profesion || "-"}</span>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
-            <div className="info-row">
-              <span className="info-label">Teléfono</span>
-              <span className="info-value">
-                {cliente.telefono ? (
-                  <a href={`tel:${cliente.telefono}`} style={{ color: "#34d399", textDecoration: "none" }}>{cliente.telefono}</a>
-                ) : "-"}
-              </span>
+
+            {/* SECCION 2: CONTACTO */}
+            <div style={{ padding: "20px", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+              <h3 style={{ fontSize: "12px", color: "#d4af37", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "16px" }}>Contacto</h3>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+                <div className="info-row">
+                  <span className="info-label">Email Principal</span>
+                  <span className="info-value">
+                    {cliente.email ? (
+                      <a href={`mailto:${cliente.email}`} style={{ color: "#34d399", textDecoration: "none" }}>{cliente.email}</a>
+                    ) : "-"}
+                  </span>
+                </div>
+                <div className="info-row">
+                  <span className="info-label">Teléfono Principal</span>
+                  <span className="info-value">
+                    {cliente.telefono ? (
+                      <a href={`tel:${cliente.telefono}`} style={{ color: "#34d399", textDecoration: "none" }}>{cliente.telefono}</a>
+                    ) : "-"}
+                  </span>
+                </div>
+                <div className="info-row">
+                  <span className="info-label">Contacto Alternativo</span>
+                  <span className="info-value">{cliente.contacto_alternativo_nombre || "-"}</span>
+                </div>
+                <div className="info-row">
+                  <span className="info-label">Teléfono Alternativo</span>
+                  <span className="info-value">
+                    {cliente.contacto_alternativo_telefono ? (
+                      <a href={`tel:${cliente.contacto_alternativo_telefono}`} style={{ color: "#34d399", textDecoration: "none" }}>{cliente.contacto_alternativo_telefono}</a>
+                    ) : "-"}
+                  </span>
+                </div>
+              </div>
             </div>
+
+            {/* SECCION 3: DOMICILIO */}
+            <div style={{ padding: "20px" }}>
+              <h3 style={{ fontSize: "12px", color: "#d4af37", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "16px" }}>Domicilio y Ubicación</h3>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+                <div className="info-row" style={{ gridColumn: "span 2" }}>
+                  <span className="info-label">{cliente.tipo_persona === "juridica" ? "Domicilio Sede" : "Domicilio Real"}</span>
+                  <span className="info-value">
+                    {cliente.tipo_persona === "juridica" ? (cliente.domicilio_sede || "-") : (cliente.domicilio_real || "-")}
+                  </span>
+                </div>
+                <div className="info-row">
+                  <span className="info-label">Localidad</span>
+                  <span className="info-value">{cliente.localidad || "-"}</span>
+                </div>
+                <div className="info-row">
+                  <span className="info-label">Provincia</span>
+                  <span className="info-value">{cliente.provincia || "-"}</span>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
 
