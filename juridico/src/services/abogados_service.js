@@ -283,7 +283,7 @@ export const actualizar = async (id, datosActualizacion) => {
     }
 
     const existeDNI = await Abogado.findOne({ where: { dni } });
-    if (existeDNI) {
+    if (existeDNI && existeDNI.id_abogado !== id) {
       throw new AppError("Ya existe un abogado con ese DNI", 409);
     }
   }
@@ -291,7 +291,7 @@ export const actualizar = async (id, datosActualizacion) => {
   // Verificar email único (si se quiere cambiar)
   if (email && email !== abogado.email) {
     const existeEmail = await Abogado.findOne({ where: { email } });
-    if (existeEmail) {
+    if (existeEmail && existeEmail.id_abogado !== id) {
       throw new AppError("Ya existe un abogado con ese email", 409);
     }
   }
@@ -302,8 +302,8 @@ export const actualizar = async (id, datosActualizacion) => {
     if (!telefonoRegex.test(telefono)) {
       throw new AppError("Formato de teléfono inválido", 400);
     }
-    const existeTelefono = await Cliente.findOne({ where: { telefono } });
-    if (existeTelefono) {
+    const existeTelefono = await Abogado.findOne({ where: { telefono } });
+    if (existeTelefono && existeTelefono.id_abogado !== id) {
       throw new AppError(
         "Ya existe un abogado con este número de teléfono",
         409
@@ -360,8 +360,7 @@ export const eliminar = async (id) => {
     // Usar singular o plural según la cantidad
     const textoCasos = tieneCasos === 1 ? "1 caso" : `${tieneCasos} casos`;
     throw new AppError(
-      `No se puede eliminar el abogado porque tiene ${textoCasos} asociado${
-        tieneCasos === 1 ? "" : "s"
+      `No se puede eliminar el abogado porque tiene ${textoCasos} asociado${tieneCasos === 1 ? "" : "s"
       }. Primero reasigná o cerrá los casos.`,
       409
     );
@@ -381,9 +380,8 @@ export const eliminar = async (id) => {
   const mensajeBase = "Abogado eliminado exitosamente";
   const mensajeConsultas =
     consultasDesasignadas[0] > 0
-      ? `. ${consultasDesasignadas[0]} consulta${
-          consultasDesasignadas[0] === 1 ? "" : "s"
-        } desasignada${consultasDesasignadas[0] === 1 ? "" : "s"}`
+      ? `. ${consultasDesasignadas[0]} consulta${consultasDesasignadas[0] === 1 ? "" : "s"
+      } desasignada${consultasDesasignadas[0] === 1 ? "" : "s"}`
       : "";
 
   return {

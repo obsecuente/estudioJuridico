@@ -15,7 +15,7 @@ import TipoPlazo from "../src/models/TipoPlazo.js";
 const setupCompleto = async () => {
   console.log("\n🚀 CONFIGURACIÓN AUTOMÁTICA - CALCULADORA DE PLAZOS");
   console.log("=".repeat(60));
-  
+
   try {
     // paso 1: conectar a la base de datos
     console.log("\n📡 PASO 1: Conectando a la base de datos...");
@@ -26,16 +26,16 @@ const setupCompleto = async () => {
     console.log("\n🗄️  PASO 2: Creando tablas...");
     await Feriado.sync({ force: false });
     console.log("   ✅ Tabla 'feriados' creada");
-    
+
     await FeriaJudicial.sync({ force: false });
     console.log("   ✅ Tabla 'feria_judicial' creada");
-    
+
     await TipoPlazo.sync({ force: false });
     console.log("   ✅ Tabla 'tipos_plazo' creada");
 
     // paso 3: cargar feriados nacionales 2026
     console.log("\n📅 PASO 3: Cargando feriados nacionales 2026...");
-    
+
     const feriadosNacionales = [
       { fecha: "2026-01-01", nombre: "Año Nuevo", tipo: "nacional", alcance: "ambos" },
       { fecha: "2026-02-16", nombre: "Carnaval", tipo: "nacional", alcance: "ambos" },
@@ -54,6 +54,10 @@ const setupCompleto = async () => {
       { fecha: "2026-11-23", nombre: "Día de la Soberanía Nacional", tipo: "nacional", alcance: "ambos" },
       { fecha: "2026-12-08", nombre: "Inmaculada Concepción de María", tipo: "nacional", alcance: "ambos" },
       { fecha: "2026-12-25", nombre: "Navidad", tipo: "nacional", alcance: "ambos" },
+      // feriados puente 2026
+      { fecha: "2026-03-23", nombre: "Feriado con fines turísticos", tipo: "nacional", alcance: "ambos" },
+      { fecha: "2026-07-10", nombre: "Feriado con fines turísticos", tipo: "nacional", alcance: "ambos" },
+      { fecha: "2026-12-07", nombre: "Feriado con fines turísticos", tipo: "nacional", alcance: "ambos" },
     ];
 
     for (const feriado of feriadosNacionales) {
@@ -66,7 +70,7 @@ const setupCompleto = async () => {
 
     // paso 4: cargar feriados provinciales neuquen
     console.log("\n📅 PASO 4: Cargando feriados provinciales Neuquén...");
-    
+
     const feriadosNeuquen = [
       { fecha: "2026-06-15", nombre: "Día de la Provincia de Neuquén", tipo: "neuquen", provincia: "neuquen", alcance: "judicial", observaciones: "Provincialización - 1955" },
       { fecha: "2026-06-23", nombre: "Wiñoy Xipantv - Año Nuevo Mapuche", tipo: "neuquen", provincia: "neuquen", alcance: "administrativo", observaciones: "Solo pueblos originarios" },
@@ -85,7 +89,7 @@ const setupCompleto = async () => {
 
     // paso 5: cargar feriados provinciales rio negro
     console.log("\n📅 PASO 5: Cargando feriados provinciales Río Negro...");
-    
+
     const feriadosRioNegro = [
       { fecha: "2026-06-15", nombre: "Día de la Provincia de Río Negro", tipo: "rio_negro", provincia: "rio_negro", alcance: "judicial", observaciones: "Provincialización - 1955" },
       { fecha: "2026-06-27", nombre: "Día del Empleado Público", tipo: "rio_negro", provincia: "rio_negro", alcance: "administrativo", observaciones: "No es día inhábil judicial" },
@@ -102,7 +106,7 @@ const setupCompleto = async () => {
 
     // paso 6: cargar feria judicial
     console.log("\n🌴 PASO 6: Cargando períodos de feria judicial 2026...");
-    
+
     const feriaJudicial = [
       { anio: 2026, periodo: "verano", fecha_inicio: "2026-01-01", fecha_fin: "2026-01-31", jurisdiccion: "todas", observaciones: "Todo enero" },
       { anio: 2026, periodo: "invierno", fecha_inicio: "2026-07-20", fecha_fin: "2026-07-31", jurisdiccion: "nacional", observaciones: "Fuero Nacional/Federal" },
@@ -120,7 +124,7 @@ const setupCompleto = async () => {
 
     // paso 7: cargar tipos de plazo
     console.log("\n⚖️  PASO 7: Cargando tipos de plazo procesales...");
-    
+
     const tiposPlazos = [
       // civil
       { codigo: "contestacion_demanda_civil", nombre: "Contestación de Demanda", dias_default: 15, tipo_dias: "habiles", fuero: "civil", base_legal: "Art. 338 CPCCN", descripcion: "Plazo para contestar demanda en proceso ordinario" },
@@ -130,16 +134,16 @@ const setupCompleto = async () => {
       { codigo: "alegatos_civil", nombre: "Alegatos", dias_default: 6, tipo_dias: "habiles", fuero: "civil", base_legal: "Art. 482 CPCCN", descripcion: "Plazo para alegatos post-prueba" },
       { codigo: "traslado_generico_civil", nombre: "Traslado Genérico", dias_default: 5, tipo_dias: "habiles", fuero: "civil", base_legal: "Art. 138 CPCCN", descripcion: "Plazo de traslado cuando no hay plazo específico" },
       { codigo: "recurso_extraordinario", nombre: "Recurso Extraordinario Federal", dias_default: 10, tipo_dias: "habiles", fuero: "civil", base_legal: "Ley 48", descripcion: "Recurso ante CSJN" },
-      
+
       // laboral
       { codigo: "contestacion_demanda_laboral", nombre: "Contestación de Demanda", dias_default: 10, tipo_dias: "habiles", fuero: "laboral", base_legal: "Ley 18.345", descripcion: "Plazo para contestar demanda laboral" },
       { codigo: "apelacion_laboral", nombre: "Apelación", dias_default: 5, tipo_dias: "habiles", fuero: "laboral", base_legal: "Ley 18.345", descripcion: "Plazo para apelar en fuero laboral" },
       { codigo: "expresion_agravios_laboral", nombre: "Expresión de Agravios", dias_default: 10, tipo_dias: "habiles", fuero: "laboral", base_legal: "Ley 18.345", descripcion: "Fundamentación de apelación laboral" },
-      
+
       // familia
       { codigo: "contestacion_familia", nombre: "Contestación de Demanda", dias_default: 15, tipo_dias: "habiles", fuero: "familia", base_legal: "Según jurisdicción", descripcion: "Plazo para contestar en fuero de familia" },
       { codigo: "apelacion_familia", nombre: "Apelación", dias_default: 5, tipo_dias: "habiles", fuero: "familia", base_legal: "Según jurisdicción", descripcion: "Plazo para apelar en familia" },
-      
+
       // genéricos
       { codigo: "prescripcion_2_años", nombre: "Prescripción - 2 años", dias_default: 730, tipo_dias: "corridos", fuero: "generico", base_legal: "Art. 2562 CCyC", descripcion: "Prescripción de acciones personales" },
       { codigo: "prescripcion_5_años", nombre: "Prescripción - 5 años", dias_default: 1825, tipo_dias: "corridos", fuero: "generico", base_legal: "Art. 2560 CCyC", descripcion: "Prescripción genérica de 5 años" },
@@ -157,7 +161,7 @@ const setupCompleto = async () => {
 
     // paso 8: verificación final
     console.log("\n🔍 PASO 8: Verificando que todo esté correcto...");
-    
+
     const totalFeriados = await Feriado.count();
     const totalFerias = await FeriaJudicial.count();
     const totalTipos = await TipoPlazo.count();

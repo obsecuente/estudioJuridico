@@ -128,7 +128,7 @@ const Cliente = sequelize.define(
     },
 
     // Virtual: calculado al leer, no persiste en DB
-    perfil_completo: {
+    perfil_completo_bool: {
       type: DataTypes.VIRTUAL,
       get() {
         const tipo = this.getDataValue("tipo_persona") || "fisica";
@@ -145,6 +145,18 @@ const Cliente = sequelize.define(
           this.getDataValue("fecha_nacimiento")
         );
       },
+    },
+    porcentaje_perfil: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        const tipo = this.getDataValue("tipo_persona") || "fisica";
+        const campos = tipo === "juridica"
+          ? ["cuit", "razon_social", "domicilio_sede", "localidad"]
+          : ["dni", "domicilio_real", "fecha_nacimiento", "estado_civil", "profesion", "localidad"];
+        const completos = campos.filter(c => !!this.getDataValue(c)).length;
+        if (campos.length === 0) return 0;
+        return Math.round((completos / campos.length) * 100);
+      }
     },
   },
   { tableName: "clientes", timestamps: false, freezeTableName: true }

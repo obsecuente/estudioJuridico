@@ -136,7 +136,7 @@ export const obtenerPorId = async (id) => {
       "consentimiento_datos", "tipo_persona", "dni", "cuit", "domicilio_real",
       "localidad", "provincia", "razon_social", "domicilio_sede",
       "contacto_alternativo_nombre", "contacto_alternativo_telefono",
-      "estado_civil", "profesion"
+      "estado_civil", "profesion", "fecha_nacimiento"
     ],
     include: [
       {
@@ -183,7 +183,12 @@ export const obtenerPorId = async (id) => {
     }
   }
 
-  return { ...cliente.toJSON(), total_cobrado: totalCobradoCliente };
+  return {
+    ...cliente.toJSON(),
+    total_cobrado: totalCobradoCliente,
+    porcentaje_perfil: cliente.porcentaje_perfil,
+    perfil_completo_bool: cliente.perfil_completo_bool
+  };
 };
 export const buscar = async (termino) => {
   /* ... código de buscar sin cambios ... */
@@ -215,7 +220,7 @@ export const actualizar = async (id, datosActualizacion) => {
 
   const {
     nombre, apellido, telefono, email, consentimiento_datos,
-    tipo_persona, dni, cuit, domicilio_real, localidad, provincia,
+    tipo_persona, dni, cuit, fecha_nacimiento, domicilio_real, localidad, provincia,
     razon_social, domicilio_sede, contacto_alternativo_nombre, contacto_alternativo_telefono,
     estado_civil, profesion
   } = datosActualizacion;
@@ -250,23 +255,24 @@ export const actualizar = async (id, datosActualizacion) => {
   // Actualizar solo campos proporcionados
   await cliente.update({
     ...(nombre && { nombre: nombre.trim() }),
-    ...(apellido && { apellido: apellido.trim() }),
+    ...(apellido !== undefined && apellido !== null && { apellido: apellido.trim() }),
     ...(telefono !== undefined && { telefono }),
-    // Aseguramos que el email se guarda limpio y en minúsculas
-    ...(email && { email: email.toLowerCase().trim() }),
+    ...(email !== undefined && { email: email ? email.toLowerCase().trim() : null }),
     ...(consentimiento_datos !== undefined && { consentimiento_datos }),
+    // Campos Fase 2 — todos opcionales
     ...(tipo_persona !== undefined && { tipo_persona }),
-    ...(dni !== undefined && { dni }),
-    ...(cuit !== undefined && { cuit }),
-    ...(domicilio_real !== undefined && { domicilio_real }),
-    ...(localidad !== undefined && { localidad }),
-    ...(provincia !== undefined && { provincia }),
-    ...(razon_social !== undefined && { razon_social }),
-    ...(domicilio_sede !== undefined && { domicilio_sede }),
-    ...(contacto_alternativo_nombre !== undefined && { contacto_alternativo_nombre }),
-    ...(contacto_alternativo_telefono !== undefined && { contacto_alternativo_telefono }),
-    ...(estado_civil !== undefined && { estado_civil }),
-    ...(profesion !== undefined && { profesion }),
+    ...(dni !== undefined && { dni: dni || null }),
+    ...(cuit !== undefined && { cuit: cuit || null }),
+    ...(fecha_nacimiento !== undefined && { fecha_nacimiento: fecha_nacimiento || null }),
+    ...(estado_civil !== undefined && { estado_civil: estado_civil || null }),
+    ...(profesion !== undefined && { profesion: profesion ? profesion.trim() : null }),
+    ...(domicilio_real !== undefined && { domicilio_real: domicilio_real ? domicilio_real.trim() : null }),
+    ...(localidad !== undefined && { localidad: localidad ? localidad.trim() : null }),
+    ...(provincia !== undefined && { provincia: provincia || null }),
+    ...(razon_social !== undefined && { razon_social: razon_social ? razon_social.trim() : null }),
+    ...(domicilio_sede !== undefined && { domicilio_sede: domicilio_sede ? domicilio_sede.trim() : null }),
+    ...(contacto_alternativo_nombre !== undefined && { contacto_alternativo_nombre: contacto_alternativo_nombre || null }),
+    ...(contacto_alternativo_telefono !== undefined && { contacto_alternativo_telefono: contacto_alternativo_telefono || null }),
   });
 
   return cliente;

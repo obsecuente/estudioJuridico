@@ -50,7 +50,7 @@ export const obtenerDetalle360 = async (idCaso) => {
                 attributes: [
                     "id_cliente", "nombre", "apellido", "telefono", "email",
                     "tipo_persona", "dni", "cuit", "domicilio_real", "razon_social",
-                    "localidad", "provincia", "perfil_completo",
+                    "localidad", "provincia", "fecha_nacimiento", "domicilio_sede",
                 ],
             },
             {

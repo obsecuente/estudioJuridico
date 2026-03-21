@@ -21,7 +21,7 @@ const PLAZOS_POR_PROCESO = {
         { nombre: "Ofrecimiento de Prueba", dias: 10, legal: "Art. 367 CPCCN" },
         { nombre: "Alegatos", dias: 6, legal: "Art. 482 CPCCN" },
     ],
-    Sumarisimo: [
+    Sumarísimo: [
         { nombre: "Contestacion de Demanda", dias: 5, legal: "Art. 498 CPCCN" },
     ],
     Laboral: [

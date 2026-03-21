@@ -35,6 +35,14 @@ const Feriado = sequelize.define(
       type: DataTypes.TEXT,
       allowNull: true,
     },
+    localidad: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+    },
+    provincia: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+    },
   },
   {
     tableName: "feriados",
@@ -45,7 +53,7 @@ const Feriado = sequelize.define(
     indexes: [
       { fields: ['fecha'] },
       { fields: ['tipo'] },
-      { unique: true, fields: ['fecha', 'tipo'] }
+      { unique: true, fields: ['fecha', 'tipo', 'localidad'] }
     ]
   }
 );

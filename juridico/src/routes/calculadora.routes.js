@@ -5,6 +5,9 @@ import {
   obtenerFeriadosMes,
   calcularDiasEntreFechas,
   calcularVencimiento,
+  esFeriado,
+  esDiaHabil,
+  estaEnFeriaJudicial,
 } from "../services/calculadora_service.js";
 import authMiddleware from "../middleware/authMiddleware.js";
 
@@ -22,6 +25,7 @@ router.post("/calcular-plazo", async (req, res) => {
       dias_plazo,
       jurisdiccion,
       incluir_plazo_gracia,
+      localidad,
     } = req.body;
 
     const resultado = await calcularVencimiento({
@@ -29,6 +33,7 @@ router.post("/calcular-plazo", async (req, res) => {
       dias_plazo,
       jurisdiccion,
       incluir_plazo_gracia,
+      localidad: localidad || null,
     });
 
     res.json(resultado);
@@ -129,6 +134,45 @@ router.get("/feria-judicial", async (req, res) => {
     res.status(500).json({
       error: "Error al obtener feria judicial",
     });
+  }
+});
+
+// GET /api/calculadora/verificar-fecha
+// verificar si una fecha es hábil (para alertas en Agenda)
+router.get("/verificar-fecha", async (req, res) => {
+  try {
+    const { fecha, jurisdiccion = "nacional" } = req.query;
+    if (!fecha) {
+      return res.status(400).json({ error: "La fecha es obligatoria" });
+    }
+
+    const fechaObj = new Date(fecha + "T00:00:00");
+    const esHabil = await esDiaHabil(fechaObj, jurisdiccion);
+    let motivo = null;
+    let esFeriaJudicial = false;
+
+    if (!esHabil) {
+      const dia = fechaObj.getDay();
+      if (dia === 0 || dia === 6) {
+        motivo = dia === 0 ? "Domingo" : "Sábado";
+      } else {
+        const feriadoEnc = await esFeriado(fechaObj, jurisdiccion, false);
+        if (feriadoEnc) {
+          motivo = `Feriado: ${feriadoEnc.nombre}`;
+        } else {
+          const feriaEnc = await estaEnFeriaJudicial(fechaObj, jurisdiccion);
+          if (feriaEnc) {
+            motivo = `Feria judicial (${feriaEnc.periodo})`;
+            esFeriaJudicial = true;
+          }
+        }
+      }
+    }
+
+    res.json({ es_habil: esHabil, motivo, es_feria_judicial: esFeriaJudicial });
+  } catch (error) {
+    console.error("Error al verificar fecha:", error);
+    res.status(500).json({ error: "Error al verificar la fecha" });
   }
 });
 

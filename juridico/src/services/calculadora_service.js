@@ -17,10 +17,11 @@ const esFinDeSemana = (fecha) => {
 };
 
 // verificar si una fecha es feriado
-const esFeriado = async (fecha, jurisdiccion, soloJudicial = true) => {
+export const esFeriado = async (fecha, jurisdiccion, soloJudicial = true, localidad = null) => {
   const fechaStr = fecha.toISOString().split("T")[0];
   const alcances = soloJudicial ? ["judicial", "ambos"] : ["judicial", "ambos", "administrativo"];
 
+  // buscar feriado nacional o provincial
   const feriado = await Feriado.findOne({
     where: {
       fecha: fechaStr,
@@ -34,11 +35,25 @@ const esFeriado = async (fecha, jurisdiccion, soloJudicial = true) => {
     },
   });
 
-  return feriado;
+  if (feriado) return feriado;
+
+  // buscar feriado local si viene localidad
+  if (localidad) {
+    const feriadoLocal = await Feriado.findOne({
+      where: {
+        fecha: fechaStr,
+        localidad,
+        alcance: { [Op.in]: alcances },
+      },
+    });
+    if (feriadoLocal) return feriadoLocal;
+  }
+
+  return null;
 };
 
 // verificar si una fecha está en feria judicial
-const estaEnFeriaJudicial = async (fecha, jurisdiccion) => {
+export const estaEnFeriaJudicial = async (fecha, jurisdiccion) => {
   const fechaStr = fecha.toISOString().split("T")[0];
   const anio = fecha.getFullYear();
 
@@ -55,10 +70,10 @@ const estaEnFeriaJudicial = async (fecha, jurisdiccion) => {
 };
 
 // verificar si un día es hábil judicial
-const esDiaHabil = async (fecha, jurisdiccion) => {
+export const esDiaHabil = async (fecha, jurisdiccion, localidad = null) => {
   if (esFinDeSemana(fecha)) return false;
 
-  const feriadoEncontrado = await esFeriado(fecha, jurisdiccion);
+  const feriadoEncontrado = await esFeriado(fecha, jurisdiccion, true, localidad);
   if (feriadoEncontrado) return false;
 
   const feriaEncontrada = await estaEnFeriaJudicial(fecha, jurisdiccion);
@@ -72,6 +87,7 @@ export const calcularVencimiento = async ({
   dias_plazo,
   jurisdiccion = "nacional",
   incluir_plazo_gracia = false,
+  localidad = null,
 }) => {
   // validaciones
   if (!fecha_notificacion) {
@@ -122,7 +138,7 @@ export const calcularVencimiento = async ({
     }
     // verificar feriado
     else {
-      const feriadoEnc = await esFeriado(fechaActual, jurisdiccion);
+      const feriadoEnc = await esFeriado(fechaActual, jurisdiccion, true, localidad);
       if (feriadoEnc) {
         diasExcluidos.feriados++;
         esHabil = false;
@@ -176,7 +192,7 @@ export const calcularVencimiento = async ({
 
   // verificar si el vencimiento cayó en día inhábil y prorrogar
   let fechaVencimiento = new Date(fechaActual);
-  while (!(await esDiaHabil(fechaVencimiento, jurisdiccion))) {
+  while (!(await esDiaHabil(fechaVencimiento, jurisdiccion, localidad))) {
     const fechaVencStr = fechaVencimiento.toISOString().split("T")[0];
     let razon = "";
 
@@ -184,7 +200,7 @@ export const calcularVencimiento = async ({
       razon = "Fin de semana - se prorroga";
       diasExcluidos.fines_de_semana++;
     } else {
-      const feriadoEnc = await esFeriado(fechaVencimiento, jurisdiccion);
+      const feriadoEnc = await esFeriado(fechaVencimiento, jurisdiccion, true, localidad);
       if (feriadoEnc) {
         razon = `Feriado: ${feriadoEnc.nombre} - se prorroga`;
         diasExcluidos.feriados++;
@@ -241,10 +257,15 @@ export const calcularVencimiento = async ({
     calendario,
   };
 
-  // si se solicita plazo de gracia (solo nacional)
-  if (incluir_plazo_gracia && jurisdiccion === "nacional") {
+  // si se solicita plazo de gracia (nacional y rio_negro — Art. 124 CPCCN)
+  if (incluir_plazo_gracia && (jurisdiccion === "nacional" || jurisdiccion === "rio_negro")) {
     const fechaConGracia = new Date(fechaVencimiento);
     fechaConGracia.setDate(fechaConGracia.getDate() + 1);
+
+    // avanzar hasta día hábil si cae en finde o feriado
+    while (!(await esDiaHabil(fechaConGracia, jurisdiccion, localidad))) {
+      fechaConGracia.setDate(fechaConGracia.getDate() + 1);
+    }
 
     resultado.plazo_gracia = {
       activo: true,
@@ -438,4 +459,7 @@ export default {
   calcularVencimiento,
   obtenerFeriadosMes,
   calcularDiasEntreFechas,
+  esFeriado,
+  esDiaHabil,
+  estaEnFeriaJudicial,
 };
