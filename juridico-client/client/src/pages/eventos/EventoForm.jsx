@@ -1,6 +1,7 @@
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext, useRef } from "react";
 import api from "../../services/api";
 import eventosService from "../../services/eventos.service";
+import calculadoraService from "../../services/calculadora.service";
 import ModalFrame from "../../components/common/ModalFrame";
 import CustomSelect from "../../components/common/CustomSelect";
 import { AuthContext } from "../../context/AuthContext";
@@ -26,6 +27,31 @@ const EventoForm = ({ evento, onClose, showToast }) => {
   const [clientes, setClientes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const debounceRef = useRef(null);
+
+  // Alerta de feriado al seleccionar fecha (Corrección 4)
+  useEffect(() => {
+    if (!formData.fecha_inicio) return;
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const data = await calculadoraService.verificarFecha(
+          formData.fecha_inicio,
+          formData.jurisdiccion || "nacional"
+        );
+        if (!data.es_habil && data.motivo) {
+          if (data.es_feria_judicial) {
+            showToast(`\u26A0\uFE0F ${data.motivo} \u2014 El tribunal no tiene actividad en este per\u00EDodo`, "warning");
+          } else {
+            showToast(`\u26A0\uFE0F ${data.motivo} \u2014 Pod\u00E9s igualmente agendar, pero tribunales no funcionan ese d\u00EDa`, "warning");
+          }
+        }
+      } catch (err) {
+        // silencioso, no bloquea
+      }
+    }, 400);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [formData.fecha_inicio, formData.jurisdiccion]);
 
   useEffect(() => {
     cargarSelects();

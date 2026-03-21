@@ -326,7 +326,7 @@ const CasoDetail = () => {
             <div className="parte-doc">
               {caso.cliente?.tipo_persona === "juridica" ? `CUIT: ${caso.cliente?.cuit || "—"}` : `DNI: ${caso.cliente?.dni || "—"}`}
             </div>
-            {caso.cliente?.perfil_completo && <span className="perfil-completo-chip">Perfil Completo</span>}
+            {caso.cliente?.perfil_completo_bool && <span className="perfil-completo-chip">Perfil Completo</span>}
           </div>
           <div className="vs-logo"></div>
           <div className="parte-card demandado" onClick={() => setShowDemandadoModal(true)}>

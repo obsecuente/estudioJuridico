@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { AlarmIcon, CalendarIcon, CheckIcon } from "../common/Icons";
 import "./InfoDiasHabiles.css";
 
 const InfoDiasHabiles = ({ fechaSeleccionada, jurisdiccion = "neuquen" }) => {
@@ -94,7 +95,7 @@ const InfoDiasHabiles = ({ fechaSeleccionada, jurisdiccion = "neuquen" }) => {
   if (error) {
     return (
       <div className="info-dias-container error">
-        <span>⚠️ {error}</span>
+        <span><AlarmIcon /> {error}</span>
       </div>
     );
   }
@@ -104,11 +105,11 @@ const InfoDiasHabiles = ({ fechaSeleccionada, jurisdiccion = "neuquen" }) => {
     <div className="info-dias-container">
       {info.fecha_fin_es_habil ? (
         <div className="info-habil">
-          <span className="badge badge-success">✅ Día hábil</span>
+          <span className="badge badge-success">Día hábil</span>
         </div>
       ) : (
         <div className="info-inhabill">
-          <span className="badge badge-warning">⚠️ {info.razon_inhabill}</span>
+          <span className="badge badge-warning"><AlarmIcon /> {info.razon_inhabill}</span>
           {info.sugerencias_fechas_habiles.length > 0 && (
             <div className="sugerencias">
               <p>Fechas hábiles cercanas:</p>
@@ -152,7 +153,7 @@ const InfoDiasHabiles = ({ fechaSeleccionada, jurisdiccion = "neuquen" }) => {
 
         {feriadosMes.length > 0 && (
           <div className="info-feriados">
-            <span className="info-label">📅 Feriados del mes ({feriadosMes.length}):</span>
+            <span className="info-label"><CalendarIcon /> Feriados del mes ({feriadosMes.length}):</span>
             <ul className="feriados-lista">
               {feriadosMes.map((feriado) => {
                 const esSeleccionado = feriado.fecha === fechaSeleccionada;

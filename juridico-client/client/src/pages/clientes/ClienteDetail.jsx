@@ -91,16 +91,7 @@ const ClienteDetail = () => {
   if (!cliente)
     return <div className="detail-container">Cliente no encontrado</div>;
 
-  const calcularPorcentaje = (c) => {
-    if (!c) return 0;
-    const campos = c.tipo_persona === "juridica"
-      ? ["cuit", "razon_social", "domicilio_sede", "email", "telefono"]
-      : ["dni", "domicilio_real", "estado_civil", "profesion", "email", "telefono"];
-    const completados = campos.filter(k => !!c[k]).length;
-    return Math.round((completados / campos.length) * 100);
-  };
-
-  const porcentajePerfil = calcularPorcentaje(cliente);
+  const porcentajePerfil = cliente.porcentaje_perfil || 0;
 
   return (
     <div className="detail-container">

@@ -214,8 +214,11 @@ const CasosList = () => {
                   "No disponible"
                 )}
               </td>
-              <td className="demandado-cell">
-                {caso.demandado_nombre || <span className="text-muted">A definir</span>}
+              <td>
+                {caso.demandado_nombre
+                  ? <span className="demandado-cell">{caso.demandado_nombre}</span>
+                  : <span style={{ color: "rgba(255,255,255,0.3)", fontSize: 12 }}>Sin cargar</span>
+                }
               </td>
               <td className="descripcion-cell">
                 {caso.descripcion?.substring(0, 45)}...

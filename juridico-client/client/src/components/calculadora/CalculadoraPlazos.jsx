@@ -2,6 +2,7 @@ import { useState } from "react";
 import calculadoraService from "../../services/calculadora.service";
 import ResultadoCalculadora from "./ResultadoCalculadora";
 import CustomSelect from "../common/CustomSelect";
+import { CalculatorIcon, PencilIcon, CheckIcon, Xicon } from "../common/Icons";
 import "./CalculadoraPlazos.css";
 
 const CalculadoraPlazos = ({ onResultado }) => {
@@ -12,11 +13,13 @@ const CalculadoraPlazos = ({ onResultado }) => {
     dias_plazo: 15,
     jurisdiccion: "neuquen",
     incluir_plazo_gracia: false,
+    localidad: "",
   });
 
   const [resultado, setResultado] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [diasCustom, setDiasCustom] = useState(null); // override de días por dictatoria
 
   const tiposPlazo = {
     civil: [
@@ -77,6 +80,14 @@ const CalculadoraPlazos = ({ onResultado }) => {
         tipo_plazo: value,
         dias_plazo: tipoSeleccionado.dias,
       });
+      setDiasCustom(null); // resetear override al cambiar tipo
+    } else if (name === "jurisdiccion") {
+      setFormData({
+        ...formData,
+        jurisdiccion: value,
+        localidad: "",
+        incluir_plazo_gracia: false,
+      });
     } else {
       setFormData({
         ...formData,
@@ -102,9 +113,10 @@ const CalculadoraPlazos = ({ onResultado }) => {
     try {
       const data = await calculadoraService.calcularPlazo({
         fecha_notificacion: formData.fecha_notificacion,
-        dias_plazo: formData.dias_plazo,
+        dias_plazo: diasCustom || formData.dias_plazo,
         jurisdiccion: formData.jurisdiccion,
-        incluir_plazo_gracia: formData.incluir_plazo_gracia,
+        incluir_plazo_gracia: ocultarPlazoGracia ? false : formData.incluir_plazo_gracia,
+        localidad: formData.localidad || null,
       });
 
       setResultado(data);
@@ -125,8 +137,35 @@ const CalculadoraPlazos = ({ onResultado }) => {
       dias_plazo: 15,
       jurisdiccion: "neuquen",
       incluir_plazo_gracia: false,
+      localidad: "",
     });
   };
+
+  // opciones de ciudad por jurisdiccion
+  const ciudadesPorJurisdiccion = {
+    neuquen: [
+      { value: "neuquen_capital", label: "Neuquén Capital" },
+      { value: "zapala", label: "Zapala" },
+    ],
+    rio_negro: [
+      { value: "general_roca", label: "General Roca" },
+      { value: "viedma", label: "Viedma" },
+      { value: "bariloche", label: "Bariloche" },
+      { value: "cipolletti", label: "Cipolletti" },
+    ],
+  };
+
+  const mostrarCiudad = formData.jurisdiccion === "neuquen" || formData.jurisdiccion === "rio_negro";
+
+  // Ley 3551 — ocultar plazo de gracia para Neuquen post agosto 2026
+  const ocultarPlazoGracia =
+    formData.jurisdiccion === "neuquen" &&
+    formData.fecha_notificacion >= "2026-08-01";
+
+  // mostrar checkbox de plazo de gracia solo para nacional y rio_negro (y no Ley 3551)
+  const mostrarCheckboxGracia =
+    (formData.jurisdiccion === "nacional" || formData.jurisdiccion === "rio_negro") ||
+    (formData.jurisdiccion === "neuquen" && !ocultarPlazoGracia);
 
   const tipoActual = tiposPlazo[formData.fuero].find(t => t.codigo === formData.tipo_plazo);
 
@@ -143,7 +182,7 @@ const CalculadoraPlazos = ({ onResultado }) => {
   return (
     <div className="calculadora-container glass-card">
       <div className="calculadora-header">
-        <h1>⚖️ Calculadora de Plazos</h1>
+        <h1><CalculatorIcon /> Calculadora de Plazos</h1>
         <p>Determinación automática de vencimientos judiciales</p>
       </div>
 
@@ -199,9 +238,52 @@ const CalculadoraPlazos = ({ onResultado }) => {
               onChange={(val) => handleChange({ target: { name: 'tipo_plazo', value: val } })}
             />
             {tipoActual && (
-              <div className="plazo-legal-info">
-                <span><span className="gold-text">{tipoActual.dias}</span> días hábiles</span>
-                <span className="legal-citation">{tipoActual.legal}</span>
+              <div className="plazo-legal-info" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                {diasCustom ? (
+                  <>
+                    <span>
+                      <span className="gold-text" style={{ textDecoration: 'line-through', opacity: 0.5 }}>{tipoActual.dias}</span>
+                      {' \u2192 '}
+                      <input
+                        type="number"
+                        value={diasCustom}
+                        onChange={e => setDiasCustom(parseInt(e.target.value) || "")}
+                        min="1"
+                        style={{ width: '50px', background: 'rgba(245,158,11,0.15)', border: '1px solid rgba(245,158,11,0.4)', borderRadius: '4px', color: '#f59e0b', textAlign: 'center', padding: '2px 4px', fontWeight: 'bold', fontSize: '0.95em' }}
+                      />
+                      {' días hábiles (dictatoria)'}
+                    </span>
+                    <span className="legal-citation">{tipoActual.legal}</span>
+                    <button
+                      type="submit"
+                      title="Confirmar y calcular"
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2em', padding: '2px 4px', color: '#10b981' }}
+                    >
+                      <CheckIcon />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setDiasCustom(null); setTimeout(() => document.querySelector('.calculadora-form-premium')?.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true })), 50); }}
+                      title="Cancelar y volver a días predeterminados"
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.1em', padding: '2px 4px', color: '#ef4444', opacity: 0.8 }}
+                    >
+                      <Xicon />
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <span><span className="gold-text">{tipoActual.dias}</span> días hábiles</span>
+                    <span className="legal-citation">{tipoActual.legal}</span>
+                    <button
+                      type="button"
+                      onClick={() => setDiasCustom(tipoActual.dias)}
+                      title="Editar días (dictatoria del juez)"
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1em', padding: '2px 4px', color: '#64748b', opacity: 0.8 }}
+                    >
+                      <PencilIcon />
+                    </button>
+                  </>
+                )}
               </div>
             )}
           </div>
@@ -233,7 +315,28 @@ const CalculadoraPlazos = ({ onResultado }) => {
             </div>
           </div>
 
-          {formData.jurisdiccion === "nacional" && (
+          {mostrarCiudad && (
+            <div className="form-group">
+              <label>Ciudad (opcional — aplica feriados locales)</label>
+              <CustomSelect
+                name="localidad"
+                value={formData.localidad}
+                options={[
+                  { value: "", label: "Sin especificar" },
+                  ...(ciudadesPorJurisdiccion[formData.jurisdiccion] || []),
+                ]}
+                onChange={(val) => setFormData({ ...formData, localidad: val })}
+              />
+            </div>
+          )}
+
+          {ocultarPlazoGracia && (
+            <p className="nota-ley-3551" style={{ color: '#f59e0b', fontSize: '0.82em', margin: '6px 0 0', fontStyle: 'italic' }}>
+              Neuquén: Nuevo Código Adversarial (Ley 3551) — Plazo de gracia no aplica
+            </p>
+          )}
+
+          {mostrarCheckboxGracia && !ocultarPlazoGracia && (
             <div className="form-group checkbox-premium">
               <label className="checkbox-premium-label">
                 <input
@@ -257,8 +360,8 @@ const CalculadoraPlazos = ({ onResultado }) => {
             {loading ? "PROCESANDO..." : "CALCULAR VENCIMIENTO"}
           </button>
         </div>
-      </form>
-    </div>
+      </form >
+    </div >
   );
 };
 

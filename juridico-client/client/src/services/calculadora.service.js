@@ -28,6 +28,14 @@ const calculadoraService = {
     });
     return response.data;
   },
+
+  // verificar si una fecha es habil (para alertas en agenda)
+  verificarFecha: async (fecha, jurisdiccion = "nacional") => {
+    const response = await api.get("/calculadora/verificar-fecha", {
+      params: { fecha, jurisdiccion },
+    });
+    return response.data;
+  },
 };
 
 export default calculadoraService;

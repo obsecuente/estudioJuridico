@@ -215,33 +215,11 @@
 }
 
 .premium-checkbox {
-  appearance: none;
-  -webkit-appearance: none;
-  width: 18px;
-  height: 18px;
-  border: 1.5px solid #d4af37;
-  border-radius: 4px;
-  background: rgba(0, 0, 0, 0.3);
+  width: 16px;
+  height: 16px;
   cursor: pointer;
-  position: relative;
-  transition: all 0.2s;
-  flex-shrink: 0;
-}
-
-.premium-checkbox:checked {
-  background: #d4af37;
-  border-color: #d4af37;
-}
-
-.premium-checkbox:checked::after {
-  content: "✓";
-  position: absolute;
-  color: #0f172a;
-  font-size: 14px;
-  font-weight: 900;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
+  accent-color: #d4af37;
+  margin: 0;
 }
 
 .label-text {
