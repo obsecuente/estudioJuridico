@@ -2,6 +2,7 @@ import { useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import { MenuIcon } from "../common/Icons";
+import GlobalSearch from "../common/GlobalSearch";
 import "./Topbar.css";
 
 const Topbar = ({ onToggleMenu }) => {
@@ -33,6 +34,8 @@ const Topbar = ({ onToggleMenu }) => {
           </button>
           <h1 className="topbar-title">Panel de Control</h1>
         </div>
+
+        <GlobalSearch />
 
         <div className="topbar-right">
           <div className="user-info">

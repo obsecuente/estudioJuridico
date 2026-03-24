@@ -29,7 +29,9 @@ import gastosRecurrentesRoutes from "./src/routes/gastos_recurrentes.routes.js";
 import cierresRoutes from "./src/routes/cierres.routes.js";
 import etiquetasRoutes from "./src/routes/etiquetas.routes.js";
 import etapasLegalesRoutes from "./src/routes/etapas_legales.routes.js";
+import busquedaRoutes from "./src/routes/busqueda.routes.js";
 import gastosRecurrentesService from "./src/services/gastos_recurrentes_service.js";
+import notificacionesService from "./src/services/notificaciones.service.js";
 import { setupSwagger } from "./src/config/swagger.js";
 
 // Inicializar Express
@@ -97,6 +99,7 @@ app.use("/api/tareas", tareasRoutes);
 app.use("/api/finanzas/gastos-recurrentes", gastosRecurrentesRoutes);
 app.use("/api/etiquetas", etiquetasRoutes);
 app.use("/api/etapas-legales", etapasLegalesRoutes);
+app.use("/api/buscar", busquedaRoutes);
 
 // Swagger API Docs (antes de 404 handler)
 setupSwagger(app);
@@ -171,6 +174,9 @@ const startServer = async () => {
       logger.info(`Servidor corriendo en http://localhost:${PORT}`); // NUEVO
       logger.info(`Entorno: ${process.env.NODE_ENV || "development"}`); // NUEVO
       logger.info(`Base de datos: ${process.env.DB_NAME}`); // NUEVO
+
+      // Iniciar cron de notificaciones por email
+      notificacionesService.iniciarCronNotificaciones();
     });
   } catch (error) {
     logger.error("Error al iniciar el servidor", {

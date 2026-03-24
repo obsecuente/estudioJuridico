@@ -89,3 +89,23 @@ export const preguntarDocumento = async (req, res) => {
     });
   }
 };
+
+// Chat general con IA
+export const chatGeneral = async (req, res) => {
+  try {
+    const { mensajes } = req.body;
+
+    if (!mensajes || !Array.isArray(mensajes) || mensajes.length === 0) {
+      return res.status(400).json({ mensaje: "Se requiere un array de mensajes" });
+    }
+
+    const resultado = await IAService.chatGeneral(mensajes);
+    res.status(200).json(resultado);
+  } catch (error) {
+    console.error("Error en chat general:", error);
+    res.status(500).json({
+      mensaje: "Error al procesar la conversación",
+      error: error.message,
+    });
+  }
+};

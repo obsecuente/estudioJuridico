@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../../services/api";
 import casosService from "../../services/casos.service";
+import tareasService from "../../services/tareas.service";
 import CasoForm from "./CasoForm";
 import EditarEtapaModal from "./EditarEtapaModal";
 import EditarDemandadoModal from "./EditarDemandadoModal";
@@ -51,7 +52,7 @@ const tiempoRelativo = (fecha) => {
   return f.toLocaleDateString("es-AR", { day: "numeric", month: "short" });
 };
 
-// Icono por tipo de evento
+// Icono y color por tipo de evento
 const iconoPorTipo = {
   NOTA_MANUAL: <PencilIcon />,
   SISTEMA_DOCUMENTO: <DocumentosIcon />,
@@ -60,6 +61,23 @@ const iconoPorTipo = {
   CAMBIO_ESTADO: <AbogadosIcon />,
   CAMBIO_ETAPA: <FinanzasIcon />,
 };
+
+const colorPorTipo = {
+  NOTA_MANUAL: { bg: "rgba(212, 175, 55, 0.12)", border: "rgba(212, 175, 55, 0.5)", icon: "#d4af37", label: "Nota" },
+  SISTEMA_DOCUMENTO: { bg: "rgba(96, 165, 250, 0.12)", border: "rgba(96, 165, 250, 0.5)", icon: "#60a5fa", label: "Documento" },
+  SISTEMA_FINANZAS: { bg: "rgba(52, 211, 153, 0.12)", border: "rgba(52, 211, 153, 0.5)", icon: "#34d399", label: "Finanzas" },
+  SISTEMA_VENCIMIENTO: { bg: "rgba(251, 191, 36, 0.12)", border: "rgba(251, 191, 36, 0.5)", icon: "#fbbf24", label: "Vencimiento" },
+  CAMBIO_ESTADO: { bg: "rgba(168, 85, 247, 0.12)", border: "rgba(168, 85, 247, 0.5)", icon: "#a855f7", label: "Estado" },
+  CAMBIO_ETAPA: { bg: "rgba(251, 146, 60, 0.12)", border: "rgba(251, 146, 60, 0.5)", icon: "#fb923c", label: "Etapa" },
+};
+
+const FILTROS_TIMELINE = [
+  { key: "todos", label: "Todo" },
+  { key: "notas", label: "Notas", tipos: ["NOTA_MANUAL"] },
+  { key: "finanzas", label: "Finanzas", tipos: ["SISTEMA_FINANZAS"] },
+  { key: "documentos", label: "Docs", tipos: ["SISTEMA_DOCUMENTO"] },
+  { key: "sistema", label: "Sistema", tipos: ["SISTEMA_VENCIMIENTO", "CAMBIO_ESTADO", "CAMBIO_ETAPA"] },
+];
 
 const CasoDetail = () => {
   const { id } = useParams();
@@ -86,7 +104,13 @@ const CasoDetail = () => {
   const [nuevaEtiquetaNombre, setNuevaEtiquetaNombre] = useState("");
 
   const [mostrarTodasCuotas, setMostrarTodasCuotas] = useState(false);
-  const [mostrarTodoHistorial, setMostrarTodoHistorial] = useState(false);
+  const [paginaHistorial, setPaginaHistorial] = useState(1);
+  const [filtroTimeline, setFiltroTimeline] = useState("todos");
+  const [nuevaTarea, setNuevaTarea] = useState("");
+  const [creandoTarea, setCreandoTarea] = useState(false);
+  const [ocrLoading, setOcrLoading] = useState(null);
+  const [docSearch, setDocSearch] = useState("");
+  const [docSearchResults, setDocSearchResults] = useState(null);
 
   const showToast = useCallback((message, type = "success") => {
     setToast({ message, type });
@@ -270,6 +294,180 @@ const CasoDetail = () => {
     return new Date(f).toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit" });
   };
 
+  // ═══ TAREAS DEL CASO ═══
+  const handleCompletarTarea = async (idTarea, completada) => {
+    try {
+      await tareasService.marcarCompletada(idTarea, !completada);
+      cargarData(true);
+    } catch {
+      showToast("Error al actualizar tarea", "error");
+    }
+  };
+
+  const handleCrearTareaCaso = async () => {
+    if (!nuevaTarea.trim()) return;
+    setCreandoTarea(true);
+    try {
+      await tareasService.crear({
+        titulo: nuevaTarea.trim(),
+        id_caso: parseInt(id),
+        prioridad: "normal",
+      });
+      setNuevaTarea("");
+      cargarData(true);
+      showToast("Tarea creada", "success");
+    } catch {
+      showToast("Error al crear tarea", "error");
+    } finally {
+      setCreandoTarea(false);
+    }
+  };
+
+  // ═══ OCR ═══
+  const handleOCR = async (idDocumento) => {
+    setOcrLoading(idDocumento);
+    try {
+      const res = await api.post(`/documentos/${idDocumento}/ocr`);
+      showToast(`Texto extraído: ${res.data.caracteres_extraidos} caracteres`, "success");
+    } catch (err) {
+      showToast("Error al extraer texto", "error");
+    } finally {
+      setOcrLoading(null);
+    }
+  };
+
+  const handleDocSearch = async () => {
+    if (!docSearch.trim() || docSearch.trim().length < 2) return;
+    try {
+      const res = await api.get(`/documentos/caso/${id}/buscar?q=${encodeURIComponent(docSearch)}`);
+      setDocSearchResults(res.data.resultados);
+    } catch {
+      showToast("Error al buscar en documentos", "error");
+    }
+  };
+
+  // ═══ EXPORTAR RESUMEN DEL CASO (Bypass de Conectividad) ═══
+  const handleExportarResumen = () => {
+    if (!data) return;
+    const { caso, historial, resumen_financiero, vencimientos_proximos, eventos_proximos, etapa_legal_info } = data;
+    const ahora = new Date().toLocaleString("es-AR");
+    const ultimos10 = (historial || []).slice(0, 10);
+
+    // Construir sección de clasificación procesal
+    const tieneProcesal = caso.instancia || caso.tipo_proceso || caso.jurisdiccion || caso.fuero || caso.numero_expediente || etapa_legal_info;
+    const seccionProcesal = tieneProcesal ? `
+<h2>Clasificación Procesal</h2>
+<div class="grid">
+  ${caso.numero_expediente ? `<div class="card"><div class="card-title">Nº Expediente</div><div class="card-value">${caso.numero_expediente}</div></div>` : ""}
+  ${caso.instancia ? `<div class="card"><div class="card-title">Instancia</div><div class="card-value">${caso.instancia}</div></div>` : ""}
+  ${caso.tipo_proceso ? `<div class="card"><div class="card-title">Tipo de Proceso</div><div class="card-value">${caso.tipo_proceso}</div></div>` : ""}
+  ${caso.jurisdiccion ? `<div class="card"><div class="card-title">Jurisdicción</div><div class="card-value">${caso.jurisdiccion.replace("_", " ")}</div></div>` : ""}
+  ${caso.fuero ? `<div class="card"><div class="card-title">Fuero</div><div class="card-value" style="text-transform:capitalize">${caso.fuero}</div></div>` : ""}
+</div>
+${etapa_legal_info ? `<div class="card" style="margin-top:10px;border-left:3px solid #d4af37">
+  <div class="card-title">Etapa Procesal Actual</div>
+  <div class="card-value">Etapa ${etapa_legal_info.numero_etapa}: ${etapa_legal_info.descripcion}</div>
+</div>` : ""}` : "";
+
+    const html = `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Caso #${caso.id_caso} — ${caso.descripcion}</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; max-width: 820px; margin: 0 auto; padding: 30px 24px; background: #0f172a; color: #e2e8f0; }
+  h1 { border-bottom: 3px solid #d4af37; padding-bottom: 12px; font-size: 20px; color: #f1f5f9; margin-bottom: 4px; }
+  h2 { color: #d4af37; font-size: 14px; margin-top: 28px; border-bottom: 1px solid #1e293b; padding-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; }
+  .meta { color: #94a3b8; font-size: 12px; margin-bottom: 24px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 12px 0; }
+  .card { border: 1px solid #1e293b; border-radius: 10px; padding: 16px; background: #1a1f2b; }
+  .card-title { font-size: 10px; text-transform: uppercase; color: #d4af37; font-weight: 700; letter-spacing: 0.8px; }
+  .card-value { font-size: 15px; font-weight: 600; margin-top: 6px; color: #f1f5f9; }
+  .card-sub { font-size: 12px; color: #94a3b8; margin-top: 3px; }
+  .kpi-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 14px 0; }
+  .kpi { text-align: center; padding: 14px; border-radius: 10px; background: #1a1f2b; border: 1px solid #1e293b; }
+  .kpi-num { font-size: 18px; font-weight: 800; font-family: 'JetBrains Mono', 'Roboto Mono', monospace; }
+  .kpi-label { font-size: 10px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+  .verde { color: #10b981; } .rojo { color: #ef4444; } .dorado { color: #d4af37; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 10px; }
+  th { text-align: left; background: #1a1f2b; padding: 10px; font-size: 10px; text-transform: uppercase; color: #d4af37; letter-spacing: 0.5px; border-bottom: 2px solid #1e293b; }
+  td { padding: 10px; border-bottom: 1px solid #1e293b; color: #cbd5e1; }
+  tr:hover td { background: rgba(212, 175, 55, 0.03); }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; }
+  .badge-abierto { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+  .badge-cerrado { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+  .footer { margin-top: 30px; padding-top: 14px; border-top: 2px solid #d4af37; font-size: 11px; color: #475569; text-align: center; }
+  .print-bar { display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 20px; }
+  .print-bar button { padding: 10px 24px; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit; }
+  .btn-print { background: #d4af37; color: #0f172a; }
+  .btn-print:hover { background: #f1c40f; }
+  @media print { .print-bar { display: none !important; } body { background: white; color: #1a1a2e; } .card, .kpi { background: #f8f9fa; border-color: #ddd; } .card-title, h2, th { color: #8b7025; } .card-value, .kpi-num { color: #1a1a2e; } td, .card-sub { color: #333; } th { background: #f0f0f0; border-color: #ddd; } td { border-color: #eee; } .footer { border-color: #d4af37; color: #999; } h1 { color: #1a1a2e; } .meta { color: #666; } }
+</style>
+</head>
+<body>
+<div class="print-bar">
+  <button class="btn-print" onclick="window.print()">🖨️ Imprimir / Guardar PDF</button>
+</div>
+<h1>⚖️ Caso #${caso.id_caso} — ${caso.descripcion}</h1>
+<div class="meta">Exportado el ${ahora} · Estado: <span class="badge badge-${caso.estado}">${caso.estado?.toUpperCase()}</span></div>
+
+<h2>Partes del Juicio</h2>
+<div class="grid">
+  <div class="card">
+    <div class="card-title">Demandante (Cliente)</div>
+    <div class="card-value">${caso.cliente ? `${caso.cliente.nombre} ${caso.cliente.apellido}` : "No definido"}</div>
+    <div class="card-sub">${caso.cliente?.tipo_persona === "juridica" ? `CUIT: ${caso.cliente?.cuit || "—"}` : `DNI: ${caso.cliente?.dni || "—"}`}</div>
+    <div class="card-sub">${caso.cliente?.domicilio_real || caso.cliente?.email || ""}</div>
+  </div>
+  <div class="card">
+    <div class="card-title">Demandado (Contraparte)</div>
+    <div class="card-value">${caso.demandado_nombre || "A definir"}</div>
+    <div class="card-sub">${caso.demandado_tipo === "persona_juridica" ? "CUIT" : "DNI"}: ${caso.demandado_dni_cuit || "—"}</div>
+    <div class="card-sub">${caso.demandado_domicilio || "Sin domicilio"}</div>
+  </div>
+</div>
+
+${caso.objeto_del_juicio ? `<div class="card"><div class="card-title">Objeto del Juicio</div><div class="card-value">${caso.objeto_del_juicio}</div></div>` : ""}
+${caso.monto_reclamado ? `<div class="card" style="margin-top:10px"><div class="card-title">Monto Reclamado</div><div class="card-value">$${parseFloat(caso.monto_reclamado).toLocaleString("es-AR")}</div></div>` : ""}
+
+${seccionProcesal}
+
+<h2>Estado Financiero</h2>
+<div class="kpi-row">
+  <div class="kpi"><div class="kpi-num verde">$${parseFloat(resumen_financiero?.total_cobrado_ars || 0).toLocaleString("es-AR")}</div><div class="kpi-label">Cobrado</div></div>
+  <div class="kpi"><div class="kpi-num rojo">$${parseFloat(resumen_financiero?.total_pendiente_ars || 0).toLocaleString("es-AR")}</div><div class="kpi-label">Pendiente</div></div>
+  <div class="kpi"><div class="kpi-num dorado">${(resumen_financiero?.cuotas_pendientes || []).length}</div><div class="kpi-label">Cuotas Pendientes</div></div>
+</div>
+
+${(vencimientos_proximos && vencimientos_proximos.length > 0) ? `
+<h2>Vencimientos Próximos</h2>
+<table><tr><th>Título</th><th>Fecha</th><th>Prioridad</th></tr>
+${vencimientos_proximos.map(v => `<tr><td>${v.titulo}</td><td>${new Date(v.fecha_limite).toLocaleDateString("es-AR")}</td><td>${v.prioridad || "normal"}</td></tr>`).join("")}
+</table>` : ""}
+
+${(eventos_proximos && eventos_proximos.length > 0) ? `
+<h2>Próximos Eventos</h2>
+<table><tr><th>Evento</th><th>Fecha</th><th>Hora</th></tr>
+${eventos_proximos.map(e => `<tr><td>${e.titulo}</td><td>${new Date(e.fecha_inicio).toLocaleDateString("es-AR")}</td><td>${e.hora_inicio ? e.hora_inicio.slice(0,5) : "—"}</td></tr>`).join("")}
+</table>` : ""}
+
+<h2>Últimos ${ultimos10.length} Hitos del Historial</h2>
+<table><tr><th>Fecha</th><th>Tipo</th><th>Descripción</th></tr>
+${ultimos10.map(h => `<tr><td>${new Date(h.fecha_registro).toLocaleDateString("es-AR")}</td><td>${h.tipo_evento.replace("SISTEMA_", "").replace("_", " ")}</td><td>${h.descripcion}</td></tr>`).join("")}
+</table>
+
+<div class="footer">Documento generado por Sistema Jurídico · ${ahora}</div>
+</body>
+</html>`;
+
+    const ventana = window.open("", "_blank");
+    ventana.document.write(html);
+    ventana.document.close();
+    showToast("Resumen abierto — usá el botón Imprimir para guardar como PDF", "success");
+  };
+
   if (loading) {
     return (
       <div className="detail-container">
@@ -288,7 +486,7 @@ const CasoDetail = () => {
 
   if (!data) return null;
 
-  const { caso, historial, documentos, vencimientos_proximos, eventos_proximos, resumen_financiero, etapa_legal_info } = data;
+  const { caso, historial, documentos, vencimientos_proximos, eventos_proximos, resumen_financiero, etapa_legal_info, tareas_caso } = data;
   const estadoBadge = caso.estado === "abierto" ? { text: "Abierto", cls: "badge-abierto" } : { text: "Cerrado", cls: "badge-cerrado" };
 
   const cuotasVisibles = mostrarTodasCuotas
@@ -308,6 +506,9 @@ const CasoDetail = () => {
             </button>
             <button className="btn-action-header btn-edit" onClick={() => setShowDemandadoModal(true)}>
               <AbogadosIcon /> Demandado
+            </button>
+            <button className="btn-action-header btn-exportar" onClick={handleExportarResumen} title="Exportar resumen offline">
+              <DownLoadIcon /> Exportar
             </button>
             {caso.estado === "abierto" ? (
               <button className="btn-action-header btn-cerrar-caso" onClick={handleCerrarCaso}>Cerrar Caso</button>
@@ -433,6 +634,35 @@ const CasoDetail = () => {
               <span><DocumentosIcon /> Documentos ({documentos?.length || 0})</span>
               <button className="btn-small-panel" onClick={() => setShowUploadModal(true)}><UploadIcon /> Subir</button>
             </div>
+
+            {/* Búsqueda dentro de documentos */}
+            <div className="doc-search-bar">
+              <input
+                type="text"
+                className="doc-search-input"
+                placeholder="Buscar dentro de documentos..."
+                value={docSearch}
+                onChange={(e) => setDocSearch(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleDocSearch()}
+              />
+              <button className="doc-search-btn" onClick={handleDocSearch} disabled={docSearch.trim().length < 2}>🔍</button>
+            </div>
+
+            {docSearchResults && docSearchResults.length > 0 && (
+              <div className="doc-search-results">
+                <div className="doc-search-label">Resultados en documentos:</div>
+                {docSearchResults.map((r) => (
+                  <div key={r.id_documento} className="doc-search-result-item">
+                    <span className="doc-search-name">{r.nombre_archivo}</span>
+                    <span className="doc-search-snippet">{r.snippet}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {docSearchResults && docSearchResults.length === 0 && (
+              <div className="panel-empty" style={{ fontSize: '12px', padding: '8px' }}>Sin coincidencias en documentos</div>
+            )}
+
             {documentos && documentos.length > 0 ? (
               <div className="docs-list">
                 {documentos.map((doc) => (
@@ -442,6 +672,9 @@ const CasoDetail = () => {
                       <span className="doc-name">{doc.nombre_archivo}</span>
                     </div>
                     <div className="doc-actions">
+                      <button className="item-action-btn" onClick={() => handleOCR(doc.id_documento)} title="Extraer texto (OCR)" disabled={ocrLoading === doc.id_documento}>
+                        {ocrLoading === doc.id_documento ? <SpinnerIcon /> : "📝"}
+                      </button>
                       <button className="item-action-btn" onClick={() => handleVerDocumento(doc)} title="Ver"><EyeIcon /></button>
                       <button className="item-action-btn" onClick={() => handleDescargarDocumento(doc)} title="Descargar"><DownLoadIcon /></button>
                     </div>
@@ -524,6 +757,47 @@ const CasoDetail = () => {
             )}
           </div>
 
+          {/* 7. TAREAS DEL CASO */}
+          <div className="panel panel-tareas-caso">
+            <div className="panel-title"><CalendarIcon /> Tareas del Caso</div>
+            <div className="tarea-caso-form">
+              <input
+                type="text"
+                className="tarea-caso-input"
+                placeholder="Nueva tarea para este caso..."
+                value={nuevaTarea}
+                onChange={(e) => setNuevaTarea(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleCrearTareaCaso()}
+              />
+              <button className="tarea-caso-btn" onClick={handleCrearTareaCaso} disabled={creandoTarea || !nuevaTarea.trim()}>+</button>
+            </div>
+            {tareas_caso && tareas_caso.length > 0 ? (
+              <div className="tareas-caso-list">
+                {tareas_caso.map((t) => (
+                  <div key={t.id_tarea} className={`tarea-caso-item ${t.completada ? "tarea-done" : ""}`}>
+                    <button
+                      className={`tarea-check ${t.completada ? "checked" : ""}`}
+                      onClick={() => handleCompletarTarea(t.id_tarea, t.completada)}
+                    >
+                      {t.completada ? "✓" : ""}
+                    </button>
+                    <div className="tarea-caso-info">
+                      <span className="tarea-caso-titulo">{t.titulo}</span>
+                      {t.fecha_limite && (
+                        <span className={`tarea-caso-fecha ${new Date(t.fecha_limite) < new Date() && !t.completada ? "tarea-vencida" : ""}`}>
+                          {formatFechaCorta(t.fecha_limite)}
+                        </span>
+                      )}
+                    </div>
+                    {t.prioridad === "urgente" && <span className="tarea-prioridad-badge">!</span>}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="panel-empty">Sin tareas asignadas a este caso</div>
+            )}
+          </div>
+
         </div>
 
         {/* Columna derecha: Historial */}
@@ -544,28 +818,91 @@ const CasoDetail = () => {
               </div>
             </div>
 
+            {/* Filtros del timeline */}
+            <div className="timeline-filters">
+              {FILTROS_TIMELINE.map((f) => (
+                <button
+                  key={f.key}
+                  className={`timeline-filter-btn ${filtroTimeline === f.key ? "active" : ""}`}
+                  onClick={() => { setFiltroTimeline(f.key); setPaginaHistorial(1); }}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+
             <div className="timeline">
-              {historial && historial.length > 0 ? (
-                <>
-                  {(mostrarTodoHistorial ? historial : historial.slice(0, 5)).map((ev) => (
-                    <div key={ev.id_historial} className={`timeline-event ${ev.es_importante ? "evento-importante" : ""}`}>
-                      <div className="timeline-icon">{iconoPorTipo[ev.tipo_evento] || <PencilIcon />}</div>
-                      <div className="timeline-content">
-                        <p className="timeline-desc">{ev.descripcion}</p>
-                        <div className="timeline-meta">
-                          <span className="timeline-time">{tiempoRelativo(ev.fecha_registro)}</span>
-                          {ev.usuario && <span className="timeline-user">{ev.usuario.nombre} {ev.usuario.apellido}</span>}
+              {historial && historial.length > 0 ? (() => {
+                const ITEMS_POR_PAGINA = 10;
+                const filtroActivo = FILTROS_TIMELINE.find((f) => f.key === filtroTimeline);
+                const historialFiltrado = filtroTimeline === "todos"
+                  ? historial
+                  : historial.filter((ev) => filtroActivo?.tipos?.includes(ev.tipo_evento));
+                const totalPaginas = Math.ceil(historialFiltrado.length / ITEMS_POR_PAGINA);
+                const inicio = (paginaHistorial - 1) * ITEMS_POR_PAGINA;
+                const historialVisible = historialFiltrado.slice(inicio, inicio + ITEMS_POR_PAGINA);
+
+                return historialFiltrado.length > 0 ? (
+                  <>
+                    {historialVisible.map((ev) => {
+                      const tipoColor = colorPorTipo[ev.tipo_evento] || colorPorTipo.NOTA_MANUAL;
+                      return (
+                        <div key={ev.id_historial} className={`timeline-event ${ev.es_importante ? "evento-importante" : ""}`}>
+                          <div
+                            className="timeline-icon"
+                            style={!ev.es_importante ? {
+                              background: tipoColor.bg,
+                              borderColor: tipoColor.border,
+                            } : undefined}
+                          >
+                            <span style={!ev.es_importante ? { color: tipoColor.icon } : undefined}>
+                              {iconoPorTipo[ev.tipo_evento] || <PencilIcon />}
+                            </span>
+                          </div>
+                          <div className="timeline-content">
+                            <div className="timeline-header">
+                              <span className="timeline-type-badge" style={{ color: tipoColor.icon, background: tipoColor.bg }}>
+                                {tipoColor.label}
+                              </span>
+                              {ev.es_importante && <span className="timeline-important-badge">⚠️ Importante</span>}
+                            </div>
+                            <p className="timeline-desc">{ev.descripcion}</p>
+                            <div className="timeline-meta">
+                              <span className="timeline-time">{tiempoRelativo(ev.fecha_registro)}</span>
+                              {ev.usuario && <span className="timeline-user">{ev.usuario.nombre} {ev.usuario.apellido}</span>}
+                            </div>
+                          </div>
                         </div>
+                      );
+                    })}
+                    {totalPaginas > 1 && (
+                      <div className="timeline-pagination">
+                        <button
+                          className="pagination-btn pagination-arrow"
+                          disabled={paginaHistorial <= 1}
+                          onClick={() => setPaginaHistorial(p => p - 1)}
+                        >◀</button>
+                        {Array.from({ length: totalPaginas }, (_, i) => i + 1).map((num) => (
+                          <button
+                            key={num}
+                            className={`pagination-btn ${paginaHistorial === num ? "pagination-active" : ""}`}
+                            onClick={() => setPaginaHistorial(num)}
+                          >
+                            {num}
+                          </button>
+                        ))}
+                        <button
+                          className="pagination-btn pagination-arrow"
+                          disabled={paginaHistorial >= totalPaginas}
+                          onClick={() => setPaginaHistorial(p => p + 1)}
+                        >▶</button>
                       </div>
-                    </div>
-                  ))}
-                  {historial.length > 5 && (
-                    <button className="btn-ver-mas-cuotas" onClick={() => setMostrarTodoHistorial(!mostrarTodoHistorial)}>
-                      {mostrarTodoHistorial ? "Ver menos" : `Ver todo el historial (${historial.length})`}
-                    </button>
-                  )}
-                </>
-              ) : (
+                    )}
+                  </>
+                ) : (
+                  <div className="panel-empty">No hay eventos de este tipo</div>
+                );
+              })() : (
                 <div className="panel-empty">Aun no hay actividad registrada</div>
               )}
             </div>

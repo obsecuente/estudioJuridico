@@ -54,6 +54,12 @@ const Documento = sequelize.define(
       allowNull: true,
     },
 
+    // Texto extraído del documento (OCR para imágenes, parsing para PDF/DOCX)
+    texto_extraido: {
+      type: DataTypes.TEXT("long"),
+      allowNull: true,
+    },
+
     // FOREIGN KEY hacia Caso
     id_caso: {
       type: DataTypes.INTEGER,

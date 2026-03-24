@@ -10,6 +10,7 @@ import {
     AddIcon,
     ArrowRightIcon,
     FinanzasIcon,
+    WarningIcon,
 } from "./Icons";
 import "./FinanzasWidget.css";
 
@@ -190,6 +191,9 @@ const FinanzasWidget = ({ showToast }) => {
     const percibido = dashboard?.caja?.percibido || 0;
     const egresos = dashboard?.caja?.egresos || 0;
     const pendiente = dashboard?.cartera?.total_pendiente_actualizado || 0;
+    const cuotasVencidas = dashboard?.indicadores?.cuotas_vencidas || 0;
+    const cuotasProximas = dashboard?.indicadores?.cuotas_proximas || 0;
+    const gastosFijosProximos = dashboard?.gastos_fijos_proximos || [];
 
     // Balance bar: verde (ingresos) vs rojo (egresos)
     const totalFlow = percibido + egresos;
@@ -264,6 +268,36 @@ const FinanzasWidget = ({ showToast }) => {
                     <span className="finw-bar-label-out">Egresos {(100 - ingresoPercent).toFixed(0)}%</span>
                 </div>
             </div>
+
+            {/* Alertas de cuotas vencidas y próximas */}
+            {(cuotasVencidas > 0 || cuotasProximas > 0 || gastosFijosProximos.length > 0) && (
+                <div className="finw-alerts">
+                    {cuotasVencidas > 0 && (
+                        <div className="finw-alert finw-alert-danger">
+                            <span className="finw-alert-icon"> <WarningIcon /> </span>
+                            <span className="finw-alert-text">
+                                <strong>{cuotasVencidas} cuota{cuotasVencidas > 1 ? "s" : ""} vencida{cuotasVencidas > 1 ? "s" : ""}</strong> — hay cobros en mora pendientes de gestionar
+                            </span>
+                        </div>
+                    )}
+                    {cuotasProximas > 0 && (
+                        <div className="finw-alert finw-alert-warn">
+                            <span className="finw-alert-icon">🔔</span>
+                            <span className="finw-alert-text">
+                                <strong>{cuotasProximas} cuota{cuotasProximas > 1 ? "s" : ""}</strong> vence{cuotasProximas > 1 ? "n" : ""} en los próximos 7 días
+                            </span>
+                        </div>
+                    )}
+                    {gastosFijosProximos.length > 0 && (
+                        <div className="finw-alert finw-alert-info">
+                            <span className="finw-alert-icon">📋</span>
+                            <span className="finw-alert-text">
+                                <strong>{gastosFijosProximos.length} gasto{gastosFijosProximos.length > 1 ? "s" : ""} fijo{gastosFijosProximos.length > 1 ? "s" : ""}</strong> próximo{gastosFijosProximos.length > 1 ? "s" : ""} a vencer
+                            </span>
+                        </div>
+                    )}
+                </div>
+            )}
 
             {/* Action buttons */}
             <div className="finw-actions">

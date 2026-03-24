@@ -1,0 +1,235 @@
+/* ═══════════════════════════════════════════════════
+   GLOBAL SEARCH — Buscador Maestro en Topbar
+   Estética: Navy + Dorado · Consistente con la app
+   ═══════════════════════════════════════════════════ */
+
+.gs-wrapper {
+    position: relative;
+    flex: 1;
+    max-width: 480px;
+}
+
+/* Input */
+.gs-input-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 0 14px;
+    height: 40px;
+    transition: all 0.25s ease;
+}
+
+.gs-input-container:focus-within,
+.gs-input-container.gs-open {
+    background: rgba(0, 0, 0, 0.5);
+    border-color: rgba(212, 175, 55, 0.5);
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+}
+
+.gs-search-icon {
+    width: 16px;
+    height: 16px;
+    color: #94a3b8;
+    flex-shrink: 0;
+}
+
+.gs-input {
+    flex: 1;
+    background: none;
+    border: none;
+    color: #f1f5f9;
+    font-size: 13px;
+    font-family: inherit;
+    outline: none;
+}
+
+.gs-input::placeholder {
+    color: #64748b;
+}
+
+/* Dropdown */
+.gs-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    background: #1e293b;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    max-height: 420px;
+    overflow-y: auto;
+    animation: gsSlideDown 0.2s ease;
+}
+
+@keyframes gsSlideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Scrollbar */
+.gs-dropdown::-webkit-scrollbar {
+    width: 4px;
+}
+.gs-dropdown::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 4px;
+}
+
+/* Loading */
+.gs-loading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 20px;
+    color: #94a3b8;
+    font-size: 13px;
+}
+
+.gs-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(212, 175, 55, 0.2);
+    border-top-color: #d4af37;
+    border-radius: 50%;
+    animation: gsSpin 0.6s linear infinite;
+}
+
+@keyframes gsSpin {
+    to { transform: rotate(360deg); }
+}
+
+/* No results */
+.gs-no-results {
+    padding: 24px 20px;
+    text-align: center;
+    color: #64748b;
+    font-size: 13px;
+}
+
+/* Groups */
+.gs-group {
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.gs-group:last-child {
+    border-bottom: none;
+}
+
+.gs-group-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #64748b;
+    padding: 8px 16px 4px;
+}
+
+/* Result items */
+.gs-result-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 10px 16px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    text-align: left;
+    font-family: inherit;
+}
+
+.gs-result-item:hover {
+    background: rgba(212, 175, 55, 0.06);
+}
+
+.gs-result-main {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    overflow: hidden;
+    flex: 1;
+}
+
+.gs-result-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #f1f5f9;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.gs-result-sub {
+    font-size: 11px;
+    color: #64748b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.gs-result-arrow {
+    color: #475569;
+    font-size: 14px;
+    flex-shrink: 0;
+    margin-left: 8px;
+}
+
+/* Badges */
+.gs-result-badge {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 4px;
+    flex-shrink: 0;
+    margin-left: 8px;
+}
+
+.gs-badge-open {
+    background: rgba(52, 211, 153, 0.15);
+    color: #34d399;
+}
+
+.gs-badge-closed {
+    background: rgba(248, 113, 113, 0.15);
+    color: #f87171;
+}
+
+.gs-badge-pending {
+    background: rgba(251, 191, 36, 0.15);
+    color: #fbbf24;
+}
+
+.gs-badge-done {
+    background: rgba(96, 165, 250, 0.15);
+    color: #60a5fa;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .gs-wrapper {
+        max-width: 100%;
+    }
+
+    .gs-shortcut {
+        display: none;
+    }
+
+    .gs-dropdown {
+        left: -40px;
+        right: -40px;
+    }
+}

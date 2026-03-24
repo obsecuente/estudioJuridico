@@ -610,6 +610,46 @@ ${texto}`;
     await resumen.destroy();
     return { mensaje: "Resumen eliminado" };
   }
+  /**
+   * Chat general con IA — Conversación libre sin documento
+   * Usa Groq como proveedor gratuito.
+   * ─────────────────────────────────────────────────
+   * PARA CAMBIAR DE PROVEEDOR:
+   *   1. Reemplazar 'groq-sdk' por el SDK del nuevo proveedor (e.g. OpenAI, Anthropic)
+   *   2. Actualizar la variable de entorno GROQ_API_KEY → OPENAI_API_KEY (etc.)
+   *   3. Ajustar el nombre del modelo en `model: "..."` abajo.
+   *   4. Los mensajes siguen el formato OpenAI-compatible [{ role, content }]
+   * ─────────────────────────────────────────────────
+   */
+  async chatGeneral(mensajes) {
+    try {
+      const completion = await groq.chat.completions.create({
+        model: "llama-3.3-70b-versatile",
+        messages: [
+          {
+            role: "system",
+            content: `Sos un asistente legal argentino especializado en derecho procesal, civil, laboral y de familia. 
+Respondé en español rioplatense. Sé conciso y práctico. 
+Si te preguntan sobre plazos, citá artículos del CPCC si aplica.
+Siempre aclará que tu respuesta es orientativa y no reemplaza el criterio profesional del abogado.
+Si te preguntan algo fuera del ámbito legal, respondé brevemente y redirigí al tema jurídico.`,
+          },
+          ...mensajes,
+        ],
+        temperature: 0.4,
+        max_tokens: 1024,
+      });
+
+      return {
+        respuesta: completion.choices[0]?.message?.content || "Sin respuesta.",
+        modelo: completion.model,
+        tokens: completion.usage?.total_tokens || 0,
+      };
+    } catch (error) {
+      console.error("Error chat general IA:", error);
+      throw new Error(`Error de IA: ${error.message}`);
+    }
+  }
 }
 
 export default new IAService();

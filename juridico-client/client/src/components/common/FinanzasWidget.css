@@ -166,6 +166,68 @@
     color: #ef4444;
 }
 
+/* ═══ ALERT BANNERS ═══ */
+.finw-alerts {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 0 20px 12px;
+}
+
+.finw-alert {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    animation: finwSlideDown 0.3s ease;
+}
+
+.finw-alert-icon {
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.finw-alert-text {
+    color: #e2e8f0;
+    line-height: 1.4;
+}
+
+.finw-alert-text strong {
+    font-weight: 700;
+}
+
+.finw-alert-danger {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    border-left: 3px solid #ef4444;
+}
+
+.finw-alert-danger .finw-alert-text strong {
+    color: #f87171;
+}
+
+.finw-alert-warn {
+    background: rgba(251, 191, 36, 0.08);
+    border: 1px solid rgba(251, 191, 36, 0.2);
+    border-left: 3px solid #fbbf24;
+}
+
+.finw-alert-warn .finw-alert-text strong {
+    color: #fbbf24;
+}
+
+.finw-alert-info {
+    background: rgba(96, 165, 250, 0.08);
+    border: 1px solid rgba(96, 165, 250, 0.2);
+    border-left: 3px solid #60a5fa;
+}
+
+.finw-alert-info .finw-alert-text strong {
+    color: #60a5fa;
+}
+
 /* ═══ ACTION BUTTONS ═══ */
 .finw-actions {
     display: flex;

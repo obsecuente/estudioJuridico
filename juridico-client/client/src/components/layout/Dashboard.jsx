@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Outlet } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar.jsx";
+import ChatIA from "../common/ChatIA";
 import "./Dashboard.css";
 
 const Dashboard = () => {
@@ -16,6 +17,7 @@ const Dashboard = () => {
           <Outlet />
         </main>
       </div>
+      <ChatIA />
     </div>
   );
 };

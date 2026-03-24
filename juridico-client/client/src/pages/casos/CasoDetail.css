@@ -74,6 +74,15 @@
   background: rgba(248, 113, 113, 0.1);
 }
 
+.btn-exportar {
+  color: #d4af37;
+  border-color: rgba(212, 175, 55, 0.3);
+}
+
+.btn-exportar:hover {
+  background: rgba(212, 175, 55, 0.1);
+}
+
 .btn-delete {
   color: #f87171;
   border-color: rgba(248, 113, 113, 0.3);
@@ -847,6 +856,351 @@
 .panel-historial .panel-title {
   text-align: center;
   justify-content: center;
+}
+
+/* Timeline Filter Tabs */
+.timeline-filters {
+  display: flex;
+  gap: 4px;
+  background: #0b1120;
+  border-radius: 8px;
+  padding: 4px;
+  border: 1px solid #1e293b;
+}
+
+.timeline-filter-btn {
+  flex: 1;
+  padding: 7px 10px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.timeline-filter-btn:hover {
+  color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.timeline-filter-btn.active {
+  background: rgba(212, 175, 55, 0.12);
+  color: #d4af37;
+}
+
+/* Timeline type badge + header */
+.timeline-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.timeline-type-badge {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.timeline-important-badge {
+  font-size: 10px;
+  font-weight: 700;
+  color: #f87171;
+}
+
+/* Icon span wrapper */
+.timeline-icon span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.timeline-icon span svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* ═══ DOCUMENT SEARCH ═══ */
+.doc-search-bar {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.doc-search-input {
+  flex: 1;
+  padding: 7px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.03);
+  color: #f1f5f9;
+  font-size: 12px;
+  font-family: inherit;
+  outline: none;
+}
+
+.doc-search-input:focus {
+  border-color: rgba(96, 165, 250, 0.4);
+}
+
+.doc-search-input::placeholder {
+  color: #475569;
+}
+
+.doc-search-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid rgba(96, 165, 250, 0.2);
+  background: transparent;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.doc-search-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.doc-search-results {
+  margin-bottom: 10px;
+  border: 1px solid rgba(96, 165, 250, 0.15);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.doc-search-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: #60a5fa;
+  padding: 6px 10px;
+  background: rgba(96, 165, 250, 0.06);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.doc-search-result-item {
+  padding: 8px 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.doc-search-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: #f1f5f9;
+}
+
+.doc-search-snippet {
+  font-size: 11px;
+  color: #94a3b8;
+  line-height: 1.4;
+}
+
+/* ═══ TAREAS DEL CASO ═══ */
+.panel-tareas-caso {
+  border-left-color: #60a5fa;
+}
+
+.tarea-caso-form {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.tarea-caso-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  color: #f1f5f9;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.tarea-caso-input:focus {
+  border-color: rgba(96, 165, 250, 0.5);
+}
+
+.tarea-caso-input::placeholder {
+  color: #475569;
+}
+
+.tarea-caso-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid rgba(96, 165, 250, 0.3);
+  background: rgba(96, 165, 250, 0.1);
+  color: #60a5fa;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tarea-caso-btn:hover:not(:disabled) {
+  background: rgba(96, 165, 250, 0.2);
+}
+
+.tarea-caso-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.tareas-caso-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tarea-caso-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+
+.tarea-caso-item:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.tarea-check {
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  background: transparent;
+  color: transparent;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.tarea-check:hover {
+  border-color: #60a5fa;
+}
+
+.tarea-check.checked {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: #10b981;
+  color: #10b981;
+}
+
+.tarea-caso-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.tarea-caso-titulo {
+  font-size: 13px;
+  color: #e2e8f0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tarea-done .tarea-caso-titulo {
+  text-decoration: line-through;
+  color: #475569;
+}
+
+.tarea-caso-fecha {
+  font-size: 10px;
+  color: #64748b;
+}
+
+.tarea-caso-fecha.tarea-vencida {
+  color: #f87171;
+  font-weight: 700;
+}
+
+.tarea-prioridad-badge {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  font-size: 12px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Timeline Pagination */
+.timeline-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px solid #1e293b;
+}
+
+.pagination-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: rgba(212, 175, 55, 0.1);
+  border-color: rgba(212, 175, 55, 0.3);
+  color: #d4af37;
+}
+
+.pagination-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.pagination-active {
+  background: rgba(212, 175, 55, 0.15);
+  border-color: #d4af37;
+  color: #d4af37;
+}
+
+.pagination-arrow {
+  font-size: 10px;
 }
 
 /* cliente-stat-bar (usado en ClienteDetail) */

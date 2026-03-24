@@ -73,4 +73,29 @@ router.delete("/:id", audit("ELIMINAR", "documento"), eliminarDocumento);
 
 router.put("/:id", audit("ACTUALIZAR", "documento"), actualizarNombreDocumento);
 
+// OCR — Extraer texto de un documento (imagen/PDF/DOCX)
+router.post("/:id/ocr", async (req, res) => {
+    try {
+        const { default: ocrService } = await import("../services/ocr.service.js");
+        const resultado = await ocrService.procesarDocumento(req.params.id);
+        res.json(resultado);
+    } catch (error) {
+        console.error("Error en OCR:", error);
+        res.status(500).json({ mensaje: error.message });
+    }
+});
+
+// Buscar texto dentro de documentos de un caso
+router.get("/caso/:id_caso/buscar", async (req, res) => {
+    try {
+        const { default: ocrService } = await import("../services/ocr.service.js");
+        const { q, limit } = req.query;
+        const resultados = await ocrService.buscarEnDocumentos(req.params.id_caso, q, parseInt(limit) || 10);
+        res.json({ resultados, total: resultados.length });
+    } catch (error) {
+        console.error("Error en búsqueda de documentos:", error);
+        res.status(500).json({ mensaje: error.message });
+    }
+});
+
 export default router;

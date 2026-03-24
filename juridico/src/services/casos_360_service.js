@@ -4,6 +4,7 @@ import {
     MovimientoFinanciero, Cuota, Etiqueta, HistorialCaso, EtapaLegal,
 } from "../models/index.js";
 import Evento from "../models/Evento.js";
+import Tarea from "../models/Tarea.js";
 import { Op } from "sequelize";
 
 class AppError extends Error {
@@ -220,6 +221,15 @@ export const obtenerDetalle360 = async (idCaso) => {
         limit: 5,
     });
 
+    // 8. Tareas del caso
+    const tareas_caso = await Tarea.findAll({
+        where: {
+            id_caso: idCaso,
+        },
+        order: [["completada", "ASC"], ["fecha_limite", "ASC"]],
+        limit: 20,
+    });
+
     return {
         caso,
         historial,
@@ -233,6 +243,7 @@ export const obtenerDetalle360 = async (idCaso) => {
             movimientos_recientes: movimientosRecientes,
         },
         etapa_legal_info,
+        tareas_caso,
     };
 };
 

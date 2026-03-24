@@ -3,7 +3,8 @@ import {
   resumirDocumento,
   obtenerResumen,
   eliminarResumen,
-  preguntarDocumento, // Importar
+  preguntarDocumento,
+  chatGeneral,
 } from "../controllers/ia.controller.js";
 import authMiddleware from "../middleware/authMiddleware.js";
 
@@ -23,5 +24,8 @@ router.get("/resumen/:id", obtenerResumen);
 
 // DELETE /api/ia/resumen/:id - Eliminar resumen
 router.delete("/resumen/:id", eliminarResumen);
+
+// POST /api/ia/chat - Chat general con IA
+router.post("/chat", chatGeneral);
 
 export default router;
