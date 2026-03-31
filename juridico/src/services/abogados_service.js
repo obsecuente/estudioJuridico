@@ -1,4 +1,5 @@
 import { Abogado, Caso, Consulta } from "../models/index.js";
+import { hashPassword } from "../utils/hash.js";
 import { Op } from "sequelize";
 
 class AppError extends Error {
@@ -24,7 +25,7 @@ export const crear = async (datosAbogado) => {
    * @throws {AppError} Si faltan datos obligatorios o hay duplicados
    */
 
-  const { nombre, apellido, email, especialidad, telefono, dni, rol } =
+  const { nombre, apellido, email, especialidad, telefono, dni, rol, password } =
     datosAbogado;
 
   if (!dni || !telefono) {
@@ -80,6 +81,9 @@ export const crear = async (datosAbogado) => {
   let nuevoAbogado;
 
   try {
+    const passwordToHash = password && password.trim() ? password.trim() : dni.trim();
+    const defaultPasswordHashed = await hashPassword(passwordToHash);
+
     nuevoAbogado = await Abogado.create({
       dni: dni.trim(),
       telefono,
@@ -88,6 +92,7 @@ export const crear = async (datosAbogado) => {
       email: email ? email.toLowerCase().trim() : null,
       especialidad: especialidad?.trim() || null,
       rol: rol || "abogado",
+      password: defaultPasswordHashed,
     });
   } catch (error) {
     if (error.name === "SequelizeValidationError") {

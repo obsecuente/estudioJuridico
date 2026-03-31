@@ -8,6 +8,7 @@ import { testConnection, syncDatabase } from "./src/config/database.js";
 import logger from "./src/config/logger.js"; // NUEVO
 import httpLogger from "./src/middleware/loggerMiddleware.js"; // NUEVO
 import iaRoutes from "./src/routes/ia.routes.js";
+import chatIaRoutes from "./src/routes/chat_ia.routes.js";
 import eventosRoutes from "./src/routes/eventos.routes.js";
 import vencimientosRoutes from "./src/routes/vencimientos.routes.js";
 import calculadoraRoutes from "./src/routes/calculadora.routes.js";
@@ -82,6 +83,7 @@ app.use("/api/", limiter);
 
 // Rutas
 app.use("/api/ia", iaRoutes);
+app.use("/api/ia", chatIaRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/clientes", clientesRoutes);
 app.use("/api/consultas", consultasRoutes);
@@ -110,6 +112,17 @@ app.get("/health", (req, res) => {
     status: "OK",
     timestamp: new Date().toISOString(),
   });
+});
+
+// Ruta para forzar envío de emails (pruebas)
+app.get("/api/test-email", async (req, res) => {
+  try {
+    await notificacionesService.ejecutarResumenDiario();
+    res.json({ mensaje: "Emails de resumen diario forzados exitosamente (revisa tu bandeja de entrada o la consola)." });
+  } catch (error) {
+    logger.error("Error forzando emails", { error: error.message });
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // Manejo de errores

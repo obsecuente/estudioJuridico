@@ -15,6 +15,7 @@ const AbogadoForm = ({ abogado, onClose, showToast }) => {
     apellido: "",
     email: "",
     password: "",
+    confirmPassword: "",
     especialidad: "",
     rol: "abogado", // Default para nuevos
   });
@@ -30,6 +31,7 @@ const AbogadoForm = ({ abogado, onClose, showToast }) => {
         apellido: abogado.apellido || "",
         email: abogado.email || "",
         password: "", // NUNCA cargar la contraseña existente
+        confirmPassword: "",
         especialidad: abogado.especialidad || "",
         rol: abogado.rol || "abogado",
       });
@@ -64,11 +66,21 @@ const AbogadoForm = ({ abogado, onClose, showToast }) => {
       newErrors.dni = "DNI debe tener 7 u 8 dígitos."; // Validación DNI
 
     // Contraseña: Solo obligatoria en creación
-    if (!isEditing && !formData.password.trim())
+    if (!isEditing && !formData.password.trim()) {
       newErrors.password = "La contraseña es obligatoria";
+    }
+
     // Opcional: Validación de longitud de contraseña
-    if (formData.password.trim() && formData.password.length < 6)
+    if (formData.password.trim() && formData.password.length < 6) {
       newErrors.password = "La contraseña debe tener al menos 6 caracteres";
+    }
+
+    // Confirmación de contraseña
+    if (formData.password || formData.confirmPassword) {
+      if (formData.password !== formData.confirmPassword) {
+        newErrors.confirmPassword = "Las contraseñas no coinciden";
+      }
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -241,6 +253,23 @@ const AbogadoForm = ({ abogado, onClose, showToast }) => {
             />
             {errors.password && (
               <span className="error-text">{errors.password}</span>
+            )}
+          </div>
+          <div className="form-group">
+            <label htmlFor="confirmPassword">
+              Confirmar Contraseña
+            </label>
+            <input
+              type="password"
+              id="confirmPassword"
+              name="confirmPassword"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              disabled={loading}
+              className={errors.confirmPassword ? "input-error" : ""}
+            />
+            {errors.confirmPassword && (
+              <span className="error-text">{errors.confirmPassword}</span>
             )}
           </div>
         </div>

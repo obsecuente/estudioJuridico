@@ -224,12 +224,33 @@ const Home = () => {
       await finanzasService.marcarPagado(gastoPayConfirm.id);
       setGastoPayConfirm({ open: false, id: null, nombre: "", monto: 0 });
       showToast("Gasto marcado como pagado", "success");
-      // Refresh
-      const vencRes = await vencimientosService.getProximos(10);
-      setProximosVencimientos(vencRes.data || []);
+      cargarWidgets();
+      window.dispatchEvent(new CustomEvent("vencimiento-updated"));
     } catch (err) {
       console.error("Error al marcar gasto pagado:", err);
       showToast("Error al marcar como pagado", "error");
+    }
+  };
+
+  const completarVencimiento = async (venc) => {
+    try {
+      // Si es gasto fijo, se abre modal
+      if (venc.es_gasto_fijo) {
+        setGastoPayConfirm({
+          open: true,
+          id: venc.id_movimiento,
+          nombre: venc.titulo,
+          monto: venc.monto_ars,
+        });
+        return;
+      }
+      await vencimientosService.marcarCumplido(venc.id_vencimiento);
+      showToast("Vencimiento marcado como cumplido", "success");
+      cargarWidgets();
+      window.dispatchEvent(new CustomEvent("vencimiento-updated"));
+    } catch (err) {
+      console.error("Error al completar:", err);
+      showToast("Error al completar vencimiento", "error");
     }
   };
 
@@ -305,6 +326,11 @@ const Home = () => {
             ) : (
               proximosVencimientos.map((venc) => (
                 <div key={venc.id_vencimiento} className={`midia-tarea ${venc.es_gasto_fijo ? 'midia-gasto-fijo' : ''}`}>
+                  <div
+                    className="midia-checkbox"
+                    onClick={() => completarVencimiento(venc)}
+                    title="Marcar como cumplido"
+                  />
                   <div className="midia-prioridad-indicator">
                     {venc.es_gasto_fijo ? (
                       <span style={{ fontSize: '1.1rem' }}><DineroIcon /></span>

@@ -23,17 +23,6 @@ const ETAPAS = [
 ];
 
 export const seedEtapasLegales = async () => {
-    // Sincronizar tablas nuevas de Fase 2 (por si syncDatabase las salteo)
-    const { Etiqueta, EtiquetaCaso, HistorialCaso } = await import("../models/index.js");
-    await EtapaLegal.sync({ alter: true });
-    await Etiqueta.sync({ alter: true });
-    await EtiquetaCaso.sync({ alter: true });
-    await HistorialCaso.sync({ alter: true });
-
-    // Hacer alter de Caso y Documento una sola vez (campos nuevos Fase 2)
-    await Caso.sync({ alter: true });
-    await Documento.sync({ alter: true });
-
     let created = 0;
     for (const etapa of ETAPAS) {
         const [, wasCreated] = await EtapaLegal.findOrCreate({

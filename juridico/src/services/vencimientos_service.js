@@ -327,12 +327,9 @@ export const obtenerProximosPorAbogado = async (id_abogado, dias = 7) => {
     where: {
       id_abogado,
       fecha_limite: {
-        [Op.between]: [
-          hoy.toISOString().split("T")[0],
-          fechaLimite.toISOString().split("T")[0],
-        ],
+        [Op.lte]: fechaLimite.toISOString().split("T")[0],
       },
-      estado: "pendiente",
+      estado: { [Op.in]: ["pendiente", "vencido"] },
     },
     include: [
       {

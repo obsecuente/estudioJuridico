@@ -26,7 +26,7 @@ const ChatIA = () => {
         setLoading(true);
 
         try {
-            const res = await api.post("/ia/chat", { mensajes: nuevosMensajes });
+            const res = await api.post("/ia/chat-general", { mensajes: nuevosMensajes });
             setMensajes([...nuevosMensajes, { role: "assistant", content: res.data.respuesta }]);
         } catch (err) {
             setMensajes([
@@ -80,8 +80,8 @@ const ChatIA = () => {
                         ))}
                         {loading && (
                             <div className="chat-msg chat-msg-assistant">
-                                <div className="chat-bubble chat-typing">
-                                    <span></span><span></span><span></span>
+                                <div className="chat-bubble chat-typing-text">
+                                    <i>Analizando información del estudio...</i>
                                 </div>
                             </div>
                         )}
