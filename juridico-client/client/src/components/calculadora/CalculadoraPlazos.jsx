@@ -2,7 +2,7 @@ import { useState } from "react";
 import calculadoraService from "../../services/calculadora.service";
 import ResultadoCalculadora from "./ResultadoCalculadora";
 import CustomSelect from "../common/CustomSelect";
-import { CalculatorIcon, PencilIcon, CheckIcon, Xicon } from "../common/Icons";
+import { CalculatorIcon, CheckIcon, Xicon } from "../common/Icons";
 import "./CalculadoraPlazos.css";
 
 const CalculadoraPlazos = ({ onResultado }) => {
@@ -99,11 +99,27 @@ const CalculadoraPlazos = ({ onResultado }) => {
     setError(null);
   };
 
+  // Scroll a error y hacer pulsar el campo faltante
+  const mostrarError = (msg) => {
+    setError(msg);
+    // Scroll al error y agitar el campo de fecha
+    setTimeout(() => {
+      const errorEl = document.querySelector('.error-alert');
+      if (errorEl) errorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // Shake en el campo de fecha
+      const dateInput = document.querySelector('input[name="fecha_notificacion"]');
+      if (dateInput) {
+        dateInput.classList.add('input-shake');
+        setTimeout(() => dateInput.classList.remove('input-shake'), 600);
+      }
+    }, 50);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!formData.fecha_notificacion) {
-      setError("Debes ingresar la fecha de notificación");
+      mostrarError("⚠️ Completá la fecha de notificación para poder calcular el vencimiento");
       return;
     }
 
@@ -122,7 +138,8 @@ const CalculadoraPlazos = ({ onResultado }) => {
       setResultado(data);
     } catch (err) {
       console.error("Error al calcular plazo:", err);
-      setError(err.response?.data?.error || "Error al calcular el plazo");
+      const msg = err.response?.data?.error || "Error al calcular el plazo. Verificá los datos ingresados.";
+      mostrarError(msg);
     } finally {
       setLoading(false);
     }
@@ -243,29 +260,30 @@ const CalculadoraPlazos = ({ onResultado }) => {
                   <>
                     <span>
                       <span className="gold-text" style={{ textDecoration: 'line-through', opacity: 0.5 }}>{tipoActual.dias}</span>
-                      {' \u2192 '}
+                      {' → '}
                       <input
                         type="number"
                         value={diasCustom}
                         onChange={e => setDiasCustom(parseInt(e.target.value) || "")}
                         min="1"
-                        style={{ width: '50px', background: 'rgba(245,158,11,0.15)', border: '1px solid rgba(245,158,11,0.4)', borderRadius: '4px', color: '#f59e0b', textAlign: 'center', padding: '2px 4px', fontWeight: 'bold', fontSize: '0.95em' }}
+                        className="dias-custom-input"
+                        autoFocus
                       />
-                      {' días hábiles (dictatoria)'}
+                      {' días hábiles'}
                     </span>
                     <span className="legal-citation">{tipoActual.legal}</span>
                     <button
                       type="submit"
                       title="Confirmar y calcular"
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2em', padding: '2px 4px', color: '#10b981' }}
+                      className="btn-custom-dias-action btn-check"
                     >
                       <CheckIcon />
                     </button>
                     <button
                       type="button"
-                      onClick={() => { setDiasCustom(null); setTimeout(() => document.querySelector('.calculadora-form-premium')?.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true })), 50); }}
+                      onClick={() => setDiasCustom(null)}
                       title="Cancelar y volver a días predeterminados"
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.1em', padding: '2px 4px', color: '#ef4444', opacity: 0.8 }}
+                      className="btn-custom-dias-action btn-cancel"
                     >
                       <Xicon />
                     </button>
@@ -277,10 +295,9 @@ const CalculadoraPlazos = ({ onResultado }) => {
                     <button
                       type="button"
                       onClick={() => setDiasCustom(tipoActual.dias)}
-                      title="Editar días (dictatoria del juez)"
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1em', padding: '2px 4px', color: '#64748b', opacity: 0.8 }}
+                      className="btn-plazo-custom"
                     >
-                      <PencilIcon />
+                      Plazo personalizado
                     </button>
                   </>
                 )}
@@ -344,9 +361,8 @@ const CalculadoraPlazos = ({ onResultado }) => {
                   name="incluir_plazo_gracia"
                   checked={formData.incluir_plazo_gracia}
                   onChange={handleChange}
-                  className="premium-checkbox"
+                  className="calc-custom-checkbox"
                 />
-                <span className="checkbox-custom"></span>
                 <span className="label-text">Habilitar plazo de gracia (2 primeras horas)</span>
               </label>
             </div>

@@ -34,12 +34,13 @@
 .ia-icon-pulse {
   font-size: 20px;
   animation: pulse-ia 2s infinite;
+  will-change: transform, opacity;
 }
 
 @keyframes pulse-ia {
-  0% { transform: scale(1); filter: drop-shadow(0 0 0px #f1c40f); }
-  50% { transform: scale(1.1); filter: drop-shadow(0 0 10px #f1c40f); }
-  100% { transform: scale(1); filter: drop-shadow(0 0 0px #f1c40f); }
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.12); opacity: 0.75; }
+  100% { transform: scale(1); opacity: 1; }
 }
 
 .header-ia-info h3 {
@@ -63,7 +64,7 @@
   font-weight: 700;
   font-size: 13px;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: transform 0.2s, opacity 0.2s, background-color 0.2s;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -78,7 +79,6 @@
 .btn-ia-primary:hover {
   background: #fff;
   transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(241, 196, 15, 0.4);
 }
 
 .btn-ia-secondary {
@@ -185,7 +185,7 @@
   border: none;
   cursor: pointer;
   font-size: 18px;
-  transition: all 0.3s;
+  transition: transform 0.2s, opacity 0.2s, background-color 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -338,7 +338,7 @@
   border-radius: 12px;
   color: #fff;
   font-size: 14px;
-  transition: all 0.3s;
+  transition: border-color 0.2s, background-color 0.2s;
 }
 
 /* Responsividad para IA */

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo, memo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../../services/api";
 import casosService from "../../services/casos.service";
@@ -79,6 +79,251 @@ const FILTROS_TIMELINE = [
   { key: "sistema", label: "Sistema", tipos: ["SISTEMA_VENCIMIENTO", "CAMBIO_ESTADO", "CAMBIO_ETAPA"] },
 ];
 
+// ═══════════════════════════════════════════════════════════════
+// SUB-COMPONENTES MEMOIZADOS — Evitan re-renders cruzados
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * DocumentosPanel — Aislado del historial y finanzas.
+ * Cambiar docPage solo re-renderiza este bloque.
+ */
+const DocumentosPanel = memo(function DocumentosPanel({
+  documentos, docPage, setDocPage, docSearch, setDocSearch,
+  docSearchResults, onSearch, onVerDoc, onDescargarDoc,
+  onOCR, ocrLoading, onUpload, getFileIcon
+}) {
+  const DOCS_POR_PAGINA = 3;
+  const docsOrdenados = useMemo(
+    () => [...(documentos || [])].sort((a, b) => b.id_documento - a.id_documento),
+    [documentos]
+  );
+  const totalDocsPaginas = Math.ceil(docsOrdenados.length / DOCS_POR_PAGINA);
+  const inicio = (docPage - 1) * DOCS_POR_PAGINA;
+  const docsVisibles = docsOrdenados.slice(inicio, inicio + DOCS_POR_PAGINA);
+
+  return (
+    <div className="panel panel-docs">
+      <div className="panel-title">
+        <span><DocumentosIcon /> Documentos ({documentos?.length || 0})</span>
+        <button className="btn-small-panel" onClick={onUpload}><UploadIcon /> Subir</button>
+      </div>
+
+      <div className="doc-search-bar">
+        <input
+          type="text"
+          className="doc-search-input"
+          placeholder="Buscar dentro de documentos..."
+          value={docSearch}
+          onChange={(e) => { setDocSearch(e.target.value); setDocPage(1); }}
+          onKeyDown={(e) => e.key === "Enter" && onSearch()}
+        />
+        <button className="doc-search-btn" onClick={onSearch} disabled={docSearch.trim().length < 2}>🔍</button>
+      </div>
+
+      {docSearchResults && docSearchResults.length > 0 && (
+        <div className="doc-search-results">
+          <div className="doc-search-label">Resultados en documentos:</div>
+          {docSearchResults.map((r) => (
+            <div key={r.id_documento} className="doc-search-result-item">
+              <span className="doc-search-name">{r.nombre_archivo}</span>
+              <span className="doc-search-snippet">{r.snippet}</span>
+            </div>
+          ))}
+        </div>
+      )}
+      {docSearchResults && docSearchResults.length === 0 && (
+        <div className="panel-empty" style={{ fontSize: '12px', padding: '8px' }}>Sin coincidencias en documentos</div>
+      )}
+
+      {docsOrdenados.length > 0 ? (
+        <>
+          <div className="docs-list">
+            {docsVisibles.map((doc) => (
+              <div key={doc.id_documento} className="doc-item">
+                <div className="doc-info" onClick={() => onVerDoc(doc)}>
+                  <span className="doc-icon">{getFileIcon(doc.nombre_archivo)}</span>
+                  <span className="doc-name">{doc.nombre_archivo}</span>
+                </div>
+                <div className="doc-actions">
+                  <button className="item-action-btn" onClick={() => onOCR(doc.id_documento)} title="Extraer texto (OCR)" disabled={ocrLoading === doc.id_documento}>
+                    {ocrLoading === doc.id_documento ? <SpinnerIcon /> : "📝"}
+                  </button>
+                  <button className="item-action-btn" onClick={() => onVerDoc(doc)} title="Ver"><EyeIcon /></button>
+                  <button className="item-action-btn" onClick={() => onDescargarDoc(doc)} title="Descargar"><DownLoadIcon /></button>
+                </div>
+              </div>
+            ))}
+          </div>
+          {totalDocsPaginas > 1 && (
+            <div className="doc-pagination">
+              <button className="doc-pag-btn" disabled={docPage <= 1} onClick={() => setDocPage(p => p - 1)} title="Página anterior">← Anterior</button>
+              <span className="doc-pag-info">{docPage} / {totalDocsPaginas}</span>
+              <button className="doc-pag-btn" disabled={docPage >= totalDocsPaginas} onClick={() => setDocPage(p => p + 1)} title="Página siguiente">Siguiente →</button>
+            </div>
+          )}
+        </>
+      ) : (
+        <div className="panel-empty">Sin documentos</div>
+      )}
+    </div>
+  );
+});
+
+/**
+ * FinanzasPanel — Aislado de documentos y historial.
+ */
+const FinanzasPanel = memo(function FinanzasPanel({
+  resumenFinanciero, mostrarTodasCuotas, setMostrarTodasCuotas,
+  onCobrarCuota, formatMoney
+}) {
+  const cuotasPendientes = resumenFinanciero.cuotas_pendientes || [];
+  const totalCuotas = cuotasPendientes.length;
+  const cuotasVisibles = mostrarTodasCuotas ? cuotasPendientes : cuotasPendientes.slice(0, 3);
+  const formatFechaCorta = (f) => {
+    if (!f) return "-";
+    return new Date(f).toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit" });
+  };
+
+  return (
+    <div className="panel panel-finanzas">
+      <div className="panel-title"><DineroIcon /> Finanzas</div>
+      <div className="panel-kpi">
+        <span className="kpi-label">Pendiente de Cobro</span>
+        <span className="kpi-value kpi-pendiente">{formatMoney(resumenFinanciero.total_pendiente_ars)}</span>
+      </div>
+      <div className="panel-kpi panel-kpi-cobrado">
+        <span className="kpi-label">Cobrado del Caso</span>
+        <span className="kpi-value kpi-cobrado">{formatMoney(resumenFinanciero.total_cobrado_ars)}</span>
+      </div>
+
+      {totalCuotas > 0 && (
+        <div className="cuotas-list">
+          <div className="section-label">Proximas Cuotas ({totalCuotas})</div>
+          {cuotasVisibles.map((c) => (
+            <div key={c.id_cuota} className="cuota-item">
+              <div className="cuota-info">
+                <span className="cuota-num">C{c.numero_cuota}</span>
+                <span className="cuota-fecha">{formatFechaCorta(c.fecha_vencimiento)}</span>
+                <span className="cuota-monto">{formatMoney(c.monto_cuota)}</span>
+              </div>
+              <button className="btn-cobrar" onClick={() => onCobrarCuota(c.id_cuota, c.numero_cuota)}>Cobrar</button>
+            </div>
+          ))}
+          {totalCuotas > 3 && (
+            <button className="btn-ver-mas-cuotas" onClick={() => setMostrarTodasCuotas(!mostrarTodasCuotas)}>
+              {mostrarTodasCuotas ? "Ver menos" : `Ver todas (${totalCuotas})`}
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+});
+
+/**
+ * HistorialPanel — Aislado de documentos y finanzas.
+ * El panel más pesado (~50+ nodos DOM con iconos y badges).
+ */
+const HistorialPanel = memo(function HistorialPanel({
+  historial, filtroTimeline, setFiltroTimeline,
+  paginaHistorial, setPaginaHistorial,
+  notaTexto, setNotaTexto, notaImportante, setNotaImportante,
+  guardandoNota, onGuardarNota
+}) {
+  const filtroActivo = FILTROS_TIMELINE.find((f) => f.key === filtroTimeline);
+  const historialFiltrado = filtroTimeline === "todos"
+    ? historial
+    : (historial || []).filter((ev) => filtroActivo?.tipos?.includes(ev.tipo_evento));
+  const ITEMS_POR_PAGINA = 10;
+  const totalPaginas = Math.ceil((historialFiltrado || []).length / ITEMS_POR_PAGINA);
+  const inicioH = (paginaHistorial - 1) * ITEMS_POR_PAGINA;
+  const historialVisible = (historialFiltrado || []).slice(inicioH, inicioH + ITEMS_POR_PAGINA);
+
+  return (
+    <div className="panel panel-historial">
+      <div className="panel-title"><PencilIcon /> Historial del Caso</div>
+
+      <div className="nota-form">
+        <textarea className="nota-textarea" placeholder="Anotar novedad del caso..." value={notaTexto} onChange={(e) => setNotaTexto(e.target.value)} rows={3} />
+        <div className="nota-actions">
+          <label className="nota-importante-check">
+            <input type="checkbox" checked={notaImportante} onChange={(e) => setNotaImportante(e.target.checked)} className="custom-check" />
+            <span className="check-label">Marcar como importante</span>
+          </label>
+          <button className="btn-guardar-nota" onClick={onGuardarNota} disabled={guardandoNota || !notaTexto.trim()}>
+            {guardandoNota ? <SpinnerIcon /> : <SaveIcon />} Guardar
+          </button>
+        </div>
+      </div>
+
+      <div className="timeline-filters">
+        {FILTROS_TIMELINE.map((f) => (
+          <button
+            key={f.key}
+            className={`timeline-filter-btn ${filtroTimeline === f.key ? "active" : ""}`}
+            onClick={() => { setFiltroTimeline(f.key); setPaginaHistorial(1); }}
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="timeline">
+        {historial && historial.length > 0 ? (
+          historialFiltrado.length > 0 ? (
+            <>
+              {historialVisible.map((ev) => {
+                const tipoColor = colorPorTipo[ev.tipo_evento] || colorPorTipo.NOTA_MANUAL;
+                return (
+                  <div key={ev.id_historial} className={`timeline-event ${ev.es_importante ? "evento-importante" : ""}`}>
+                    <div
+                      className="timeline-icon"
+                      style={!ev.es_importante ? {
+                        background: tipoColor.bg,
+                        borderColor: tipoColor.border,
+                      } : undefined}
+                    >
+                      <span style={!ev.es_importante ? { color: tipoColor.icon } : undefined}>
+                        {iconoPorTipo[ev.tipo_evento] || <PencilIcon />}
+                      </span>
+                    </div>
+                    <div className="timeline-content">
+                      <div className="timeline-header">
+                        <span className="timeline-type-badge" style={{ color: tipoColor.icon, background: tipoColor.bg }}>
+                          {tipoColor.label}
+                        </span>
+                        {ev.es_importante && <span className="timeline-important-badge">⚠️ Importante</span>}
+                      </div>
+                      <p className="timeline-desc">{ev.descripcion}</p>
+                      <div className="timeline-meta">
+                        <span className="timeline-time">{tiempoRelativo(ev.fecha_registro)}</span>
+                        {ev.usuario && <span className="timeline-user">{ev.usuario.nombre} {ev.usuario.apellido}</span>}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+              {totalPaginas > 1 && (
+                <div className="timeline-pagination">
+                  <button className="pagination-btn pagination-arrow" disabled={paginaHistorial <= 1} onClick={() => setPaginaHistorial(p => p - 1)}>◀</button>
+                  {Array.from({ length: totalPaginas }, (_, i) => i + 1).map((num) => (
+                    <button key={num} className={`pagination-btn ${paginaHistorial === num ? "pagination-active" : ""}`} onClick={() => setPaginaHistorial(num)}>{num}</button>
+                  ))}
+                  <button className="pagination-btn pagination-arrow" disabled={paginaHistorial >= totalPaginas} onClick={() => setPaginaHistorial(p => p + 1)}>▶</button>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="panel-empty">No hay eventos de este tipo</div>
+          )
+        ) : (
+          <div className="panel-empty">Aun no hay actividad registrada</div>
+        )}
+      </div>
+    </div>
+  );
+});
+
 const CasoDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -111,6 +356,7 @@ const CasoDetail = () => {
   const [ocrLoading, setOcrLoading] = useState(null);
   const [docSearch, setDocSearch] = useState("");
   const [docSearchResults, setDocSearchResults] = useState(null);
+  const [docPage, setDocPage] = useState(1); // paginación de documentos (3 por página)
 
   const showToast = useCallback((message, type = "success") => {
     setToast({ message, type });
@@ -181,7 +427,7 @@ const CasoDetail = () => {
     return <IconComponent />;
   };
 
-  const handleVerDocumento = async (documento) => {
+  const handleVerDocumento = useCallback(async (documento) => {
     try {
       showToast("Generando vista previa...", "info");
       const response = await api.get(`/documentos/${documento.id_documento}/descargar`, { responseType: "blob" });
@@ -206,9 +452,9 @@ const CasoDetail = () => {
     } catch {
       showToast("Error de conexion con el servidor", "error");
     }
-  };
+  }, [showToast]);
 
-  const handleDescargarDocumento = async (documento) => {
+  const handleDescargarDocumento = useCallback(async (documento) => {
     try {
       const response = await api.get(`/documentos/${documento.id_documento}/descargar`, { responseType: "blob" });
       const url = window.URL.createObjectURL(new Blob([response.data]));
@@ -222,9 +468,9 @@ const CasoDetail = () => {
     } catch {
       showToast("Error al descargar el documento", "error");
     }
-  };
+  }, [showToast]);
 
-  const handleGuardarNota = async () => {
+  const handleGuardarNota = useCallback(async () => {
     if (!notaTexto.trim()) return;
     setGuardandoNota(true);
     try {
@@ -238,12 +484,12 @@ const CasoDetail = () => {
     } finally {
       setGuardandoNota(false);
     }
-  };
+  }, [id, notaTexto, notaImportante, showToast, cargarData]);
 
-  const handleCobrarCuota = (idCuota, numeroCuota) => {
+  const handleCobrarCuota = useCallback((idCuota, numeroCuota) => {
     setDeleteConfig({ type: "COBRAR_CUOTA", id: idCuota, numeroCuota });
     setShowDeleteModal(true);
-  };
+  }, []);
 
   const ejecutarCobrarCuota = async (idCuota) => {
     try {
@@ -295,14 +541,14 @@ const CasoDetail = () => {
   };
 
   // ═══ TAREAS DEL CASO ═══
-  const handleCompletarTarea = async (idTarea, completada) => {
+  const handleCompletarTarea = useCallback(async (idTarea, completada) => {
     try {
       await tareasService.marcarCompletada(idTarea, !completada);
       cargarData(true);
     } catch {
       showToast("Error al actualizar tarea", "error");
     }
-  };
+  }, [cargarData, showToast]);
 
   const handleCrearTareaCaso = async () => {
     if (!nuevaTarea.trim()) return;
@@ -324,7 +570,7 @@ const CasoDetail = () => {
   };
 
   // ═══ OCR ═══
-  const handleOCR = async (idDocumento) => {
+  const handleOCR = useCallback(async (idDocumento) => {
     setOcrLoading(idDocumento);
     try {
       const res = await api.post(`/documentos/${idDocumento}/ocr`);
@@ -334,9 +580,9 @@ const CasoDetail = () => {
     } finally {
       setOcrLoading(null);
     }
-  };
+  }, [showToast]);
 
-  const handleDocSearch = async () => {
+  const handleDocSearch = useCallback(async () => {
     if (!docSearch.trim() || docSearch.trim().length < 2) return;
     try {
       const res = await api.get(`/documentos/caso/${id}/buscar?q=${encodeURIComponent(docSearch)}`);
@@ -344,7 +590,7 @@ const CasoDetail = () => {
     } catch {
       showToast("Error al buscar en documentos", "error");
     }
-  };
+  }, [docSearch, id, showToast]);
 
   // ═══ EXPORTAR RESUMEN DEL CASO (Bypass de Conectividad) ═══
   const handleExportarResumen = () => {
@@ -489,10 +735,7 @@ ${ultimos10.map(h => `<tr><td>${new Date(h.fecha_registro).toLocaleDateString("e
   const { caso, historial, documentos, vencimientos_proximos, eventos_proximos, resumen_financiero, etapa_legal_info, tareas_caso } = data;
   const estadoBadge = caso.estado === "abierto" ? { text: "Abierto", cls: "badge-abierto" } : { text: "Cerrado", cls: "badge-cerrado" };
 
-  const cuotasVisibles = mostrarTodasCuotas
-    ? (resumen_financiero.cuotas_pendientes || [])
-    : (resumen_financiero.cuotas_pendientes || []).slice(0, 3);
-  const totalCuotas = (resumen_financiero.cuotas_pendientes || []).length;
+
 
   return (
     <div className="detail-container caso-360">
@@ -628,63 +871,22 @@ ${ultimos10.map(h => `<tr><td>${new Date(h.fecha_registro).toLocaleDateString("e
             </div>
           </div>
 
-          {/* 3. DOCUMENTOS */}
-          <div className="panel panel-docs">
-            <div className="panel-title">
-              <span><DocumentosIcon /> Documentos ({documentos?.length || 0})</span>
-              <button className="btn-small-panel" onClick={() => setShowUploadModal(true)}><UploadIcon /> Subir</button>
-            </div>
-
-            {/* Búsqueda dentro de documentos */}
-            <div className="doc-search-bar">
-              <input
-                type="text"
-                className="doc-search-input"
-                placeholder="Buscar dentro de documentos..."
-                value={docSearch}
-                onChange={(e) => setDocSearch(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleDocSearch()}
-              />
-              <button className="doc-search-btn" onClick={handleDocSearch} disabled={docSearch.trim().length < 2}>🔍</button>
-            </div>
-
-            {docSearchResults && docSearchResults.length > 0 && (
-              <div className="doc-search-results">
-                <div className="doc-search-label">Resultados en documentos:</div>
-                {docSearchResults.map((r) => (
-                  <div key={r.id_documento} className="doc-search-result-item">
-                    <span className="doc-search-name">{r.nombre_archivo}</span>
-                    <span className="doc-search-snippet">{r.snippet}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-            {docSearchResults && docSearchResults.length === 0 && (
-              <div className="panel-empty" style={{ fontSize: '12px', padding: '8px' }}>Sin coincidencias en documentos</div>
-            )}
-
-            {documentos && documentos.length > 0 ? (
-              <div className="docs-list">
-                {documentos.map((doc) => (
-                  <div key={doc.id_documento} className="doc-item">
-                    <div className="doc-info" onClick={() => handleVerDocumento(doc)}>
-                      <span className="doc-icon">{getFileIcon(doc.nombre_archivo)}</span>
-                      <span className="doc-name">{doc.nombre_archivo}</span>
-                    </div>
-                    <div className="doc-actions">
-                      <button className="item-action-btn" onClick={() => handleOCR(doc.id_documento)} title="Extraer texto (OCR)" disabled={ocrLoading === doc.id_documento}>
-                        {ocrLoading === doc.id_documento ? <SpinnerIcon /> : "📝"}
-                      </button>
-                      <button className="item-action-btn" onClick={() => handleVerDocumento(doc)} title="Ver"><EyeIcon /></button>
-                      <button className="item-action-btn" onClick={() => handleDescargarDocumento(doc)} title="Descargar"><DownLoadIcon /></button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="panel-empty">Sin documentos</div>
-            )}
-          </div>
+          {/* 3. DOCUMENTOS — Memoizado */}
+          <DocumentosPanel
+            documentos={documentos}
+            docPage={docPage}
+            setDocPage={setDocPage}
+            docSearch={docSearch}
+            setDocSearch={setDocSearch}
+            docSearchResults={docSearchResults}
+            onSearch={handleDocSearch}
+            onVerDoc={handleVerDocumento}
+            onDescargarDoc={handleDescargarDocumento}
+            onOCR={handleOCR}
+            ocrLoading={ocrLoading}
+            onUpload={() => setShowUploadModal(true)}
+            getFileIcon={getFileIcon}
+          />
 
           {/* 4. AGENDA */}
           <div className="panel panel-agenda">
@@ -723,39 +925,14 @@ ${ultimos10.map(h => `<tr><td>${new Date(h.fecha_registro).toLocaleDateString("e
             )}
           </div>
 
-          {/* 6. FINANZAS */}
-          <div className="panel panel-finanzas">
-            <div className="panel-title"><DineroIcon /> Finanzas</div>
-            <div className="panel-kpi">
-              <span className="kpi-label">Pendiente de Cobro</span>
-              <span className="kpi-value kpi-pendiente">{formatMoney(resumen_financiero.total_pendiente_ars)}</span>
-            </div>
-            <div className="panel-kpi panel-kpi-cobrado">
-              <span className="kpi-label">Cobrado del Caso</span>
-              <span className="kpi-value kpi-cobrado">{formatMoney(resumen_financiero.total_cobrado_ars)}</span>
-            </div>
-
-            {totalCuotas > 0 && (
-              <div className="cuotas-list">
-                <div className="section-label">Proximas Cuotas ({totalCuotas})</div>
-                {cuotasVisibles.map((c) => (
-                  <div key={c.id_cuota} className="cuota-item">
-                    <div className="cuota-info">
-                      <span className="cuota-num">C{c.numero_cuota}</span>
-                      <span className="cuota-fecha">{formatFechaCorta(c.fecha_vencimiento)}</span>
-                      <span className="cuota-monto">{formatMoney(c.monto_cuota)}</span>
-                    </div>
-                    <button className="btn-cobrar" onClick={() => handleCobrarCuota(c.id_cuota, c.numero_cuota)}>Cobrar</button>
-                  </div>
-                ))}
-                {totalCuotas > 3 && (
-                  <button className="btn-ver-mas-cuotas" onClick={() => setMostrarTodasCuotas(!mostrarTodasCuotas)}>
-                    {mostrarTodasCuotas ? "Ver menos" : `Ver todas (${totalCuotas})`}
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
+          {/* 6. FINANZAS — Memoizado */}
+          <FinanzasPanel
+            resumenFinanciero={resumen_financiero}
+            mostrarTodasCuotas={mostrarTodasCuotas}
+            setMostrarTodasCuotas={setMostrarTodasCuotas}
+            onCobrarCuota={handleCobrarCuota}
+            formatMoney={formatMoney}
+          />
 
           {/* 7. TAREAS DEL CASO */}
           <div className="panel panel-tareas-caso">
@@ -800,113 +977,21 @@ ${ultimos10.map(h => `<tr><td>${new Date(h.fecha_registro).toLocaleDateString("e
 
         </div>
 
-        {/* Columna derecha: Historial */}
+        {/* Columna derecha: Historial — Memoizado */}
         <div className="col-derecha">
-          <div className="panel panel-historial">
-            <div className="panel-title"><PencilIcon /> Historial del Caso</div>
-
-            <div className="nota-form">
-              <textarea className="nota-textarea" placeholder="Anotar novedad del caso..." value={notaTexto} onChange={(e) => setNotaTexto(e.target.value)} rows={3} />
-              <div className="nota-actions">
-                <label className="nota-importante-check">
-                  <input type="checkbox" checked={notaImportante} onChange={(e) => setNotaImportante(e.target.checked)} className="custom-check" />
-                  <span className="check-label">Marcar como importante</span>
-                </label>
-                <button className="btn-guardar-nota" onClick={handleGuardarNota} disabled={guardandoNota || !notaTexto.trim()}>
-                  {guardandoNota ? <SpinnerIcon /> : <SaveIcon />} Guardar
-                </button>
-              </div>
-            </div>
-
-            {/* Filtros del timeline */}
-            <div className="timeline-filters">
-              {FILTROS_TIMELINE.map((f) => (
-                <button
-                  key={f.key}
-                  className={`timeline-filter-btn ${filtroTimeline === f.key ? "active" : ""}`}
-                  onClick={() => { setFiltroTimeline(f.key); setPaginaHistorial(1); }}
-                >
-                  {f.label}
-                </button>
-              ))}
-            </div>
-
-            <div className="timeline">
-              {historial && historial.length > 0 ? (() => {
-                const ITEMS_POR_PAGINA = 10;
-                const filtroActivo = FILTROS_TIMELINE.find((f) => f.key === filtroTimeline);
-                const historialFiltrado = filtroTimeline === "todos"
-                  ? historial
-                  : historial.filter((ev) => filtroActivo?.tipos?.includes(ev.tipo_evento));
-                const totalPaginas = Math.ceil(historialFiltrado.length / ITEMS_POR_PAGINA);
-                const inicio = (paginaHistorial - 1) * ITEMS_POR_PAGINA;
-                const historialVisible = historialFiltrado.slice(inicio, inicio + ITEMS_POR_PAGINA);
-
-                return historialFiltrado.length > 0 ? (
-                  <>
-                    {historialVisible.map((ev) => {
-                      const tipoColor = colorPorTipo[ev.tipo_evento] || colorPorTipo.NOTA_MANUAL;
-                      return (
-                        <div key={ev.id_historial} className={`timeline-event ${ev.es_importante ? "evento-importante" : ""}`}>
-                          <div
-                            className="timeline-icon"
-                            style={!ev.es_importante ? {
-                              background: tipoColor.bg,
-                              borderColor: tipoColor.border,
-                            } : undefined}
-                          >
-                            <span style={!ev.es_importante ? { color: tipoColor.icon } : undefined}>
-                              {iconoPorTipo[ev.tipo_evento] || <PencilIcon />}
-                            </span>
-                          </div>
-                          <div className="timeline-content">
-                            <div className="timeline-header">
-                              <span className="timeline-type-badge" style={{ color: tipoColor.icon, background: tipoColor.bg }}>
-                                {tipoColor.label}
-                              </span>
-                              {ev.es_importante && <span className="timeline-important-badge">⚠️ Importante</span>}
-                            </div>
-                            <p className="timeline-desc">{ev.descripcion}</p>
-                            <div className="timeline-meta">
-                              <span className="timeline-time">{tiempoRelativo(ev.fecha_registro)}</span>
-                              {ev.usuario && <span className="timeline-user">{ev.usuario.nombre} {ev.usuario.apellido}</span>}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                    {totalPaginas > 1 && (
-                      <div className="timeline-pagination">
-                        <button
-                          className="pagination-btn pagination-arrow"
-                          disabled={paginaHistorial <= 1}
-                          onClick={() => setPaginaHistorial(p => p - 1)}
-                        >◀</button>
-                        {Array.from({ length: totalPaginas }, (_, i) => i + 1).map((num) => (
-                          <button
-                            key={num}
-                            className={`pagination-btn ${paginaHistorial === num ? "pagination-active" : ""}`}
-                            onClick={() => setPaginaHistorial(num)}
-                          >
-                            {num}
-                          </button>
-                        ))}
-                        <button
-                          className="pagination-btn pagination-arrow"
-                          disabled={paginaHistorial >= totalPaginas}
-                          onClick={() => setPaginaHistorial(p => p + 1)}
-                        >▶</button>
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <div className="panel-empty">No hay eventos de este tipo</div>
-                );
-              })() : (
-                <div className="panel-empty">Aun no hay actividad registrada</div>
-              )}
-            </div>
-          </div>
+          <HistorialPanel
+            historial={historial}
+            filtroTimeline={filtroTimeline}
+            setFiltroTimeline={setFiltroTimeline}
+            paginaHistorial={paginaHistorial}
+            setPaginaHistorial={setPaginaHistorial}
+            notaTexto={notaTexto}
+            setNotaTexto={setNotaTexto}
+            notaImportante={notaImportante}
+            setNotaImportante={setNotaImportante}
+            guardandoNota={guardandoNota}
+            onGuardarNota={handleGuardarNota}
+          />
         </div>
       </div>
 

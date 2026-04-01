@@ -109,3 +109,8 @@ select option {
   height: 18px;
   fill: currentColor;
 }
+
+/* Spinner global para lazy loading */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

@@ -53,10 +53,41 @@ export const esFeriado = async (fecha, jurisdiccion, soloJudicial = true, locali
 };
 
 // verificar si una fecha está en feria judicial
+// Contempla: (1) Feria de Verano = todo enero por convención + registro en BD
+//            (2) Feria de Invierno = registros en tabla feria_judicial para la jurisdicción
 export const estaEnFeriaJudicial = async (fecha, jurisdiccion) => {
   const fechaStr = fecha.toISOString().split("T")[0];
   const anio = fecha.getFullYear();
+  const mes = fecha.getMonth(); // 0 = enero
 
+  // Feria de Verano: todo enero es inhábil (Art. 2 Ac. 15/00 CSJN y normativa provincial)
+  // Se verifica primero en BD (puede tener registro), y si no, se aplica la regla fija
+  if (mes === 0) {
+    // Buscar registro en BD primero (el setup_calculadora carga feria de verano)
+    const feriabd = await FeriaJudicial.findOne({
+      where: {
+        anio,
+        periodo: "verano",
+        fecha_inicio: { [Op.lte]: fechaStr },
+        fecha_fin: { [Op.gte]: fechaStr },
+        [Op.or]: [{ jurisdiccion }, { jurisdiccion: "todas" }],
+      },
+    });
+    if (feriabd) return feriabd;
+
+    // Fallback: si no hay registro en BD, se aplica la regla fija de enero completo
+    return {
+      id_feria: null,
+      anio,
+      periodo: "verano",
+      fecha_inicio: `${anio}-01-01`,
+      fecha_fin: `${anio}-01-31`,
+      jurisdiccion: "todas",
+      observaciones: "Feria de verano (enero completo) — regla fija",
+    };
+  }
+
+  // Feria de Invierno y cualquier otra: consulta normal a la tabla
   const feria = await FeriaJudicial.findOne({
     where: {
       anio,
@@ -67,6 +98,34 @@ export const estaEnFeriaJudicial = async (fecha, jurisdiccion) => {
   });
 
   return feria;
+};
+
+// Saltar al primer día hábil después de la feria de verano (1° Feb o siguiente hábil)
+// Retorna la nueva fechaActual ya avanzada, más los items de calendario generados
+const saltarFeriaVerano = async (fechaActual, jurisdiccion, localidad, calendario, diasExcluidos) => {
+  const anio = fechaActual.getFullYear();
+  const inicio = new Date(fechaActual);
+  // Ir al 1 de febrero del mismo año
+  const primerFeb = new Date(Date.UTC(anio, 1, 1)); // 1° Feb UTC
+
+  // Registrar en el calendario el bloque de Feria de Verano que se saltó
+  calendario.push({
+    fecha: `${inicio.toISOString().split("T")[0]} → ${anio}-01-31`,
+    tipo: "feria_verano",
+    es_habil: false,
+    descripcion: `Feria Judicial de Verano (enero ${anio}) — plazo suspendido`,
+  });
+  diasExcluidos.feria_judicial += Math.max(
+    0,
+    Math.round((primerFeb - inicio) / (1000 * 60 * 60 * 24))
+  );
+
+  // Avanzar al primer día hábil de febrero
+  let nuevaFecha = new Date(primerFeb);
+  while (!(await esDiaHabil(nuevaFecha, jurisdiccion, localidad))) {
+    nuevaFecha.setUTCDate(nuevaFecha.getUTCDate() + 1);
+  }
+  return nuevaFecha;
 };
 
 // verificar si un día es hábil judicial
@@ -126,6 +185,21 @@ export const calcularVencimiento = async ({
 
   // contar días hábiles
   while (diasHabilesContados < dias_plazo) {
+    // ── OPTIMIZACIÓN: Salto de Feria de Verano (todo enero) ──────────────────
+    // Si la fechaActual cae en enero, saltamos directamente al 1° Feb
+    // en lugar de iterar día a día por todo el mes.
+    if (fechaActual.getMonth() === 0) {
+      fechaActual = await saltarFeriaVerano(
+        fechaActual,
+        jurisdiccion,
+        localidad,
+        calendario,
+        diasExcluidos
+      );
+      continue; // re-evaluar la nueva fechaActual
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
     const fechaStr = fechaActual.toISOString().split("T")[0];
     let esHabil = true;
     let razon = "";
@@ -149,13 +223,13 @@ export const calcularVencimiento = async ({
           tipo: feriadoEnc.tipo,
         });
       }
-      // verificar feria judicial
+      // verificar feria judicial (Invierno y cualquier otra registrada en BD)
       else {
         const feriaEnc = await estaEnFeriaJudicial(fechaActual, jurisdiccion);
         if (feriaEnc) {
           diasExcluidos.feria_judicial++;
           esHabil = false;
-          razon = `Feria judicial (${feriaEnc.periodo})`;
+          razon = `Feria judicial: ${feriaEnc.periodo} (${feriaEnc.observaciones || feriaEnc.jurisdiccion})`;
         }
       }
     }

@@ -342,23 +342,27 @@
     height: 14px;
 }
 
-/* URGENTE - Plazo de Gracia (rojo pulsante) */
+/* URGENTE - Plazo de Gracia (rojo pulsante — composited) */
 .midia-section-urgente {
     background: rgba(220, 38, 38, 0.15);
     color: #fca5a5;
-    animation: pulseRed 2s ease-in-out infinite;
+    position: relative;
+    overflow: hidden;
 }
 
-@keyframes pulseRed {
+.midia-section-urgente::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(220, 38, 38, 0.12);
+    animation: pulseOpacity 2s ease-in-out infinite;
+    will-change: opacity;
+    pointer-events: none;
+}
 
-    0%,
-    100% {
-        background: rgba(220, 38, 38, 0.15);
-    }
-
-    50% {
-        background: rgba(220, 38, 38, 0.25);
-    }
+@keyframes pulseOpacity {
+    0%, 100% { opacity: 0; }
+    50% { opacity: 1; }
 }
 
 /* VENCE HOY (naranja) */
@@ -418,23 +422,22 @@
     border-left-color: #64748b;
 }
 
-/* Plazo de gracia: rojo furioso */
+/* Plazo de gracia: rojo furioso — composited */
 .midia-tarea.plazo-gracia {
     border-left-color: #dc2626;
     background: rgba(220, 38, 38, 0.08);
-    animation: pulseRedBg 2s ease-in-out infinite;
+    position: relative;
+    overflow: hidden;
 }
 
-@keyframes pulseRedBg {
-
-    0%,
-    100% {
-        background: rgba(220, 38, 38, 0.06);
-    }
-
-    50% {
-        background: rgba(220, 38, 38, 0.12);
-    }
+.midia-tarea.plazo-gracia::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(220, 38, 38, 0.06);
+    animation: pulseOpacity 2s ease-in-out infinite;
+    will-change: opacity;
+    pointer-events: none;
 }
 
 /* Evento del día */

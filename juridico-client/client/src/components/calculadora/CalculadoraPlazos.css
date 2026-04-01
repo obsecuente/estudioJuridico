@@ -192,7 +192,6 @@
 .checkbox-premium {
   margin-top: 15px;
   display: inline-block;
-  /* Ya no es una franja completa */
 }
 
 .checkbox-premium-label {
@@ -202,7 +201,6 @@
   cursor: pointer;
   user-select: none;
   background: rgba(212, 175, 55, 0.05);
-  /* Sutil fondo dorado */
   padding: 8px 12px;
   border-radius: 6px;
   border: 1px solid rgba(212, 175, 55, 0.2);
@@ -214,12 +212,45 @@
   border-color: #d4af37;
 }
 
-.premium-checkbox {
+/* Custom checkbox — patrón consistente con finanzas */
+.calc-custom-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
   width: 16px;
   height: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.05);
   cursor: pointer;
-  accent-color: #d4af37;
+  display: grid;
+  place-content: center;
   margin: 0;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.calc-custom-checkbox::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  transform: scale(0);
+  transition: 0.12s transform ease-in-out;
+  background-color: #0f172a;
+  transform-origin: center;
+  clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+}
+
+.calc-custom-checkbox:checked {
+  background-color: #d4af37;
+  border-color: #d4af37;
+}
+
+.calc-custom-checkbox:checked::before {
+  transform: scale(1);
+}
+
+.calc-custom-checkbox:hover {
+  border-color: rgba(212, 175, 55, 0.6);
 }
 
 .label-text {
@@ -228,11 +259,86 @@
   font-weight: 500 !important;
 }
 
-.checkbox-premium-label:hover .premium-checkbox {
-  border-color: #d4af37;
-  box-shadow: 0 0 8px rgba(212, 175, 55, 0.2);
+/* Botón "Plazo personalizado" — visible y claro */
+.btn-plazo-custom {
+  padding: 4px 10px;
+  border-radius: 5px;
+  border: 1px dashed rgba(245, 158, 11, 0.4);
+  background: rgba(245, 158, 11, 0.08);
+  color: #f59e0b;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
 }
 
+.btn-plazo-custom:hover {
+  background: rgba(245, 158, 11, 0.18);
+  border-color: #f59e0b;
+  border-style: solid;
+}
+
+/* Input de días personalizados */
+.dias-custom-input {
+  width: 50px;
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  border-radius: 4px;
+  color: #f59e0b;
+  text-align: center;
+  padding: 2px 4px;
+  font-weight: bold;
+  font-size: 0.95em;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.dias-custom-input:focus {
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.15);
+}
+
+/* Botones check/cancel en modo custom */
+.btn-custom-dias-action {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.btn-custom-dias-action svg {
+  width: 16px;
+  height: 16px;
+}
+
+.btn-custom-dias-action.btn-check {
+  color: #10b981;
+}
+
+.btn-custom-dias-action.btn-check:hover {
+  background: rgba(16, 185, 129, 0.15);
+}
+
+.btn-custom-dias-action.btn-cancel {
+  color: #ef4444;
+  opacity: 0.8;
+}
+
+.btn-custom-dias-action.btn-cancel:hover {
+  background: rgba(239, 68, 68, 0.15);
+  opacity: 1;
+}
+
+/* Error alert con animación */
 .error-alert {
   padding: 14px;
   background: rgba(239, 68, 68, 0.1);
@@ -241,6 +347,29 @@
   color: #f87171;
   font-size: 14px;
   margin-top: 10px;
+  animation: errorPulse 0.4s ease;
+}
+
+@keyframes errorPulse {
+  0% { transform: scale(0.97); opacity: 0.5; }
+  50% { transform: scale(1.01); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Shake animation para inputs con error */
+@keyframes inputShake {
+  0%, 100% { transform: translateX(0); }
+  15% { transform: translateX(-6px); }
+  30% { transform: translateX(5px); }
+  45% { transform: translateX(-4px); }
+  60% { transform: translateX(3px); }
+  75% { transform: translateX(-2px); }
+}
+
+.input-shake {
+  animation: inputShake 0.5s ease;
+  border-color: #f87171 !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
 }
 
 .form-actions-premium {

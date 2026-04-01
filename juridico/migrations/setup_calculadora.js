@@ -54,10 +54,10 @@ const setupCompleto = async () => {
       { fecha: "2026-11-23", nombre: "Día de la Soberanía Nacional", tipo: "nacional", alcance: "ambos" },
       { fecha: "2026-12-08", nombre: "Inmaculada Concepción de María", tipo: "nacional", alcance: "ambos" },
       { fecha: "2026-12-25", nombre: "Navidad", tipo: "nacional", alcance: "ambos" },
-      // feriados puente 2026
-      { fecha: "2026-03-23", nombre: "Feriado con fines turísticos", tipo: "nacional", alcance: "ambos" },
-      { fecha: "2026-07-10", nombre: "Feriado con fines turísticos", tipo: "nacional", alcance: "ambos" },
-      { fecha: "2026-12-07", nombre: "Feriado con fines turísticos", tipo: "nacional", alcance: "ambos" },
+      // feriados puente 2026 (No laborables con fines turísticos — Decreto Nacional)
+      { fecha: "2026-03-23", nombre: "Puente turístico — Día de la Memoria", tipo: "nacional", alcance: "ambos", observaciones: "Lunes 23/03/2026 — Decreto Gobierno Nacional" },
+      { fecha: "2026-07-10", nombre: "Puente turístico — Día de la Independencia", tipo: "nacional", alcance: "ambos", observaciones: "Viernes 10/07/2026 — Decreto Gobierno Nacional" },
+      { fecha: "2026-12-07", nombre: "Puente turístico — Inmaculada Concepción", tipo: "nacional", alcance: "ambos", observaciones: "Lunes 07/12/2026 — Decreto Gobierno Nacional" },
     ];
 
     for (const feriado of feriadosNacionales) {
