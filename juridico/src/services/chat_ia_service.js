@@ -152,6 +152,42 @@ const TOOL_DEFINITIONS = [
       },
     },
   },
+  {
+    type: "function",
+    function: {
+      name: "obtener_vencimientos_proximos",
+      description:
+        "Obtiene los próximos vencimientos procesales pendientes (plazos de contestación, apelación, etc.) del abogado autenticado. Ordenados por fecha ascendente. Usala cuando pregunten por plazos, vencimientos, qué vence pronto o deadlines.",
+      parameters: {
+        type: "object",
+        properties: {
+          dias: {
+            type: "number",
+            description: "Cantidad de días hacia adelante para buscar vencimientos. Default: 30",
+          },
+        },
+        required: [],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "obtener_eventos_proximos",
+      description:
+        "Obtiene los próximos eventos/audiencias/reuniones pendientes del abogado autenticado. Ordenados por fecha ascendente. Usala cuando pregunten por audiencias, reuniones, agenda o eventos próximos.",
+      parameters: {
+        type: "object",
+        properties: {
+          dias: {
+            type: "number",
+            description: "Cantidad de días hacia adelante para buscar eventos. Default: 30",
+          },
+        },
+        required: [],
+      },
+    },
+  },
 ];
 
 // ═══════════════════════════════════════════════════════════════
@@ -417,6 +453,75 @@ const TOOL_EXECUTORS = {
       proximos_eventos: eventos.map((e) => ({
         titulo: e.titulo,
         fecha: e.fecha_inicio,
+      })),
+    };
+  },
+
+  /**
+   * Obtiene vencimientos próximos del abogado.
+   */
+  obtener_vencimientos_proximos: async ({ dias = 30 }, id_abogado) => {
+    const hasta = new Date();
+    hasta.setDate(hasta.getDate() + dias);
+
+    const vencimientos = await Vencimiento.findAll({
+      where: {
+        id_abogado,
+        estado: "pendiente",
+        fecha_limite: { [Op.between]: [new Date(), hasta] },
+      },
+      include: [
+        { model: Caso, as: "caso", attributes: ["id_caso", "descripcion"] },
+      ],
+      order: [["fecha_limite", "ASC"]],
+      limit: 20,
+    });
+
+    return {
+      total: vencimientos.length,
+      periodo: `Próximos ${dias} días`,
+      vencimientos: vencimientos.map((v) => ({
+        id_vencimiento: v.id_vencimiento,
+        titulo: v.titulo,
+        tipo: v.tipo_vencimiento,
+        prioridad: v.prioridad,
+        fecha_limite: v.fecha_limite,
+        caso: v.caso ? `#${v.caso.id_caso} - ${v.caso.descripcion}` : "Sin caso",
+      })),
+    };
+  },
+
+  /**
+   * Obtiene eventos próximos del abogado.
+   */
+  obtener_eventos_proximos: async ({ dias = 30 }, id_abogado) => {
+    const hasta = new Date();
+    hasta.setDate(hasta.getDate() + dias);
+
+    const eventos = await Evento.findAll({
+      where: {
+        id_abogado,
+        estado: "pendiente",
+        fecha_inicio: { [Op.between]: [new Date(), hasta] },
+      },
+      include: [
+        { model: Caso, as: "caso", attributes: ["id_caso", "descripcion"] },
+      ],
+      order: [["fecha_inicio", "ASC"]],
+      limit: 20,
+    });
+
+    return {
+      total: eventos.length,
+      periodo: `Próximos ${dias} días`,
+      eventos: eventos.map((e) => ({
+        id_evento: e.id_evento,
+        titulo: e.titulo,
+        tipo: e.tipo,
+        fecha: e.fecha_inicio,
+        hora: e.hora_inicio ? e.hora_inicio.substring(0, 5) : null,
+        ubicacion: e.ubicacion,
+        caso: e.caso ? `#${e.caso.id_caso} - ${e.caso.descripcion}` : "Sin caso",
       })),
     };
   },

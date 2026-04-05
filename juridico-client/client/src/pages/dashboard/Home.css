@@ -341,3 +341,21 @@
   background: rgba(16, 185, 129, 0.3);
   transform: translateY(-1px);
 }
+
+/* Hint de "ver más" en widgets */
+.midia-ver-mas-hint {
+  display: block;
+  text-align: center;
+  padding: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #94a3b8;
+  text-decoration: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  margin-top: 4px;
+  transition: color 0.2s;
+}
+
+.midia-ver-mas-hint:hover {
+  color: #d4af37;
+}

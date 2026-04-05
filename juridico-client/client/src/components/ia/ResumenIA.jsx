@@ -14,6 +14,7 @@ import {
   DocumentosIcon,
   SpinnerIcon
 } from "../common/Icons";
+import DeleteModal from "../common/DeleteModal";
 
 function ResumenIA({ idDocumento }) {
   const [resumen, setResumen] = useState(null);
@@ -24,6 +25,7 @@ function ResumenIA({ idDocumento }) {
   const [pregunta, setPregunta] = useState("");
   const [mensajes, setMensajes] = useState([]);
   const [enviandoPregunta, setEnviandoPregunta] = useState(false);
+  const [showRegenerarModal, setShowRegenerarModal] = useState(false);
   const chatEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -43,7 +45,7 @@ function ResumenIA({ idDocumento }) {
         setExpandido(true);
       }
     } catch (error) {
-      console.log("No hay resumen previo");
+      // No prior summary exists — that's normal
     }
   }, [idDocumento]);
 
@@ -87,9 +89,12 @@ function ResumenIA({ idDocumento }) {
   };
 
   const handleRegenerar = () => {
-    if (window.confirm("¿Estás seguro de regenerar el resumen? Esto consumirá tokens de IA.")) {
-      generarResumen(true);
-    }
+    setShowRegenerarModal(true);
+  };
+
+  const confirmarRegenerar = () => {
+    setShowRegenerarModal(false);
+    generarResumen(true);
   };
 
   // Función Pro para renderizar con iconos reales
@@ -222,6 +227,23 @@ function ResumenIA({ idDocumento }) {
           </div>
         </div>
       )}
+
+      {/* Info banner */}
+      {!expandido && !resumen && (
+        <p style={{ fontSize: 12, color: '#94a3b8', textAlign: 'center', padding: '8px 16px', margin: 0 }}>
+          🤖 La IA analiza y resume el contenido de tus documentos para facilitar su consulta.
+        </p>
+      )}
+
+      <DeleteModal
+        isOpen={showRegenerarModal}
+        onConfirm={confirmarRegenerar}
+        onCancel={() => setShowRegenerarModal(false)}
+        title="Regenerar Resumen"
+        message="¿Estás seguro de regenerar el resumen? Esto consumirá tokens de IA y reemplazará el análisis actual."
+        confirmLabel="Regenerar"
+        confirmVariant="warning"
+      />
     </div>
   );
 }

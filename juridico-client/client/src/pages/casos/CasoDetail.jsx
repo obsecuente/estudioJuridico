@@ -711,7 +711,7 @@ ${ultimos10.map(h => `<tr><td>${new Date(h.fecha_registro).toLocaleDateString("e
     const ventana = window.open("", "_blank");
     ventana.document.write(html);
     ventana.document.close();
-    showToast("Resumen abierto — usá el botón Imprimir para guardar como PDF", "success");
+    showToast("Resumen exportado — usá el botón en la página para imprimir o guardar como PDF", "success");
   };
 
   if (loading) {

@@ -473,21 +473,7 @@ const VencimientoForm = ({ vencimiento, onClose, showToast }) => {
                 </p>
               )}
 
-              {mostrarCheckboxGracia && !ocultarPlazoGracia && (
-                <div className="form-group checkbox-premium" style={{ marginTop: '6px' }}>
-                  <label className="checkbox-premium-label">
-                    <input
-                      type="checkbox"
-                      name="incluir_plazo_gracia"
-                      checked={calcData.incluir_plazo_gracia}
-                      onChange={handleCalcChange}
-                      className="premium-checkbox"
-                    />
-                    <span className="checkbox-custom"></span>
-                    <span className="label-text">Incluir plazo de gracia (2 primeras horas)</span>
-                  </label>
-                </div>
-              )}
+
 
 
             </div>
@@ -569,19 +555,28 @@ const VencimientoForm = ({ vencimiento, onClose, showToast }) => {
               />
             </div>
             <div className="form-group">
-              <label>Recordatorio</label>
+              <label>Recordatorio por email</label>
               <CustomSelect
                 name="recordatorio_dias"
                 value={formData.recordatorio_dias}
                 options={[
+                  { value: 0, label: "Sin recordatorio" },
                   { value: 1, label: "1 día antes" },
                   { value: 2, label: "2 días antes" },
                   { value: 3, label: "3 días antes" },
+                  { value: 4, label: "4 días antes" },
                   { value: 5, label: "5 días antes" },
+                  { value: 6, label: "6 días antes" },
+                  { value: 7, label: "7 días antes" },
+                  { value: 8, label: "8 días antes" },
+                  { value: 9, label: "9 días antes" },
                   { value: 10, label: "10 días antes" }
                 ]}
                 onChange={(val) => handleChange({ target: { name: 'recordatorio_dias', value: val } })}
               />
+              <small style={{ color: '#94a3b8', fontSize: 11, marginTop: 4, display: 'block' }}>
+                📧 Recibirás un email de alerta en la fecha seleccionada
+              </small>
             </div>
           </div>
 

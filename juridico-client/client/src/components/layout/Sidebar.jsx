@@ -155,7 +155,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         </nav>
 
         <div className="sidebar-footer">
-          <p>© 2025 Sistema Jurídico</p>
+          <p>© 2026 Sistema Jurídico</p>
         </div>
       </aside>
     </>

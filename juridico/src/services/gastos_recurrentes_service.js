@@ -186,8 +186,9 @@ export const obtenerPendientesMes = async (id_abogado) => {
 export const marcarPagado = async (id_movimiento) => {
     const mov = await MovimientoFinanciero.findByPk(id_movimiento);
     if (!mov) throw new AppError("Movimiento no encontrado", 404);
-    if (mov.estado === "pagado") throw new AppError("Este movimiento ya está pagado", 400);
-    await mov.update({ estado: "pagado" });
+    // Si ya está pagado, retornar silenciosamente (idempotente)
+    if (mov.estado === "pagado") return mov;
+    await mov.update({ estado: "pagado", fecha_pago: new Date() });
     return mov;
 };
 

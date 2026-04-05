@@ -51,12 +51,13 @@
 
 /* Filters Bar - DARK THEME */
 .filters-bar {
+  width: 100%;
   display: flex;
   gap: 15px;
   margin-bottom: 25px;
   background: #1a1f2b;
   /* Azul Noche */
-  padding: 20px;
+  padding: 15px 20px;
   border-radius: 12px;
   border-left: 5px solid #d4af37;
   /* Dorado */
@@ -66,13 +67,26 @@
 
 .filter-group {
   display: flex;
-  gap: 15px;
+  flex-direction: row;
   flex-wrap: nowrap;
-  /* Forzamos horizontalidad */
+  gap: 15px;
   width: 100%;
+  align-items: center;
+}
+
+.filter-group .custom-select {
+  width: auto !important;
+  flex: none;
 }
 
 /* Specific widths for selects in Eventos */
+.filter-date-select,
+.filter-year-select,
+.filter-type-select {
+  flex: none;
+  width: auto;
+}
+
 .filter-date-select {
   min-width: 180px;
 }
@@ -111,9 +125,9 @@
 
 /* Completado toggle buttons */
 .btn-complete {
-  background: rgba(16, 185, 129, 0.15);
-  color: #10b981;
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  background: #10b981;
+  color: #ffffff;
+  border: 1px solid #10b981;
   border-radius: 6px;
   padding: 4px 8px;
   font-size: 14px;
@@ -123,7 +137,8 @@
 }
 
 .btn-complete:hover {
-  background: rgba(16, 185, 129, 0.3);
+  background: #059669;
+  border-color: #059669;
   transform: translateY(-1px);
 }
 

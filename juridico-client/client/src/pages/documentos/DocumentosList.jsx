@@ -64,7 +64,6 @@ const DocumentosList = () => {
       };
 
       const response = await api.get("/documentos", { params });
-      console.log("Response completa:", response.data);
       // Manejar si data es array directo o está dentro de data
       const documentosData = Array.isArray(response.data)
         ? response.data
@@ -259,7 +258,7 @@ const DocumentosList = () => {
                   </div>
                   <div className="documento-info">
                     <h3 className="documento-nombre" title={doc.nombre_archivo}>
-                      {doc.nombre_archivo}
+                      {doc.nombre_archivo.replace(/\.[^/.]+$/, "")}
                     </h3>
                     <p className="documento-caso">
                       {doc.caso ? (

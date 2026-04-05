@@ -95,8 +95,8 @@ const Home = () => {
     setLoadingWidgets(true);
     try {
       const [eventosRes, vencimientosRes] = await Promise.all([
-        eventosService.getProximos(10),
-        vencimientosService.getProximos(10)
+        eventosService.getProximos(6),
+        vencimientosService.getProximos(6)
       ]);
       setProximosEventos(eventosRes.data || []);
       setProximosVencimientos(vencimientosRes.data || []);
@@ -124,7 +124,7 @@ const Home = () => {
   };
 
   const handleCloseDocumento = (reload) => {
-    setShowDocumentoModal(false);
+    setShowDocModal(false);
     if (reload) cargarActividadReciente();
   };
 
@@ -290,7 +290,7 @@ const Home = () => {
             ) : proximosEventos.length === 0 ? (
               <div className="midia-empty">No hay eventos próximos.</div>
             ) : (
-              proximosEventos.map((evt) => (
+              proximosEventos.slice(0, 5).map((evt) => (
                 <div key={evt.id_evento} className="midia-tarea midia-evento">
                   <div className="midia-tarea-content" style={{ flex: 1 }}>
                     <div className="midia-tarea-texto">{evt.titulo}</div>
@@ -306,6 +306,11 @@ const Home = () => {
                   </span>
                 </div>
               ))
+            )}
+            {!loadingWidgets && proximosEventos.length > 5 && (
+              <Link to="/dashboard/eventos" className="midia-ver-mas-hint">
+                y {proximosEventos.length - 5} más → Ver todos
+              </Link>
             )}
           </div>
         </div>
@@ -324,7 +329,7 @@ const Home = () => {
             ) : proximosVencimientos.length === 0 ? (
               <div className="midia-empty"> No hay vencimientos próximos.</div>
             ) : (
-              proximosVencimientos.map((venc) => (
+              proximosVencimientos.slice(0, 5).map((venc) => (
                 <div key={venc.id_vencimiento} className={`midia-tarea ${venc.es_gasto_fijo ? 'midia-gasto-fijo' : ''}`}>
                   <div
                     className="midia-checkbox"
@@ -375,6 +380,11 @@ const Home = () => {
                 </div>
               ))
             )}
+            {!loadingWidgets && proximosVencimientos.length > 5 && (
+              <Link to="/dashboard/vencimientos" className="midia-ver-mas-hint">
+                y {proximosVencimientos.length - 5} más → Ver todos
+              </Link>
+            )}
           </div>
         </div>
       </div>
@@ -406,7 +416,7 @@ const Home = () => {
             <span className="action-icon"><CasosIcon /></span>
             <span>Nuevo Caso</span>
           </button>
-          <button onClick={() => setShowDocumentoModal(true)} className="action-btn">
+          <button onClick={() => setShowDocModal(true)} className="action-btn">
             <span className="action-icon"><DocumentosIcon /></span>
             <span>Subir Documento</span>
           </button>

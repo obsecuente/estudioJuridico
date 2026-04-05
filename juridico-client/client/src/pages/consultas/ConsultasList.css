@@ -1,48 +1,23 @@
 /* HEADER: Envía el botón a la derecha */
 .consultas-header {
   display: flex;
-  justify-content: space-between; /* Esto empuja el botón a la derecha */
+  justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 30px;
 }
 
-/* BOTÓN NUEVA CONSULTA (Igual al de Clientes) */
-.btn-nuevo {
-  height: 42px;
-  background: #0f172a !important; /* Azul Noche */
-  color: #d4af37 !important; /* Dorado */
-  border: 1px solid #d4af37 !important;
-  padding: 0 20px;
-  border-radius: 10px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* HOVER EXACTO DE NUEVO CLIENTE */
-.btn-nuevo:hover {
-  background: #d4af37 !important; /* Se vuelve dorado */
-  color: #0f172a !important; /* Texto azul noche */
-  transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
-}
-
-/* BARRA DE FILTROS: Simetría total */
+/* BARRA DE FILTROS */
 .filters-bar {
   display: flex;
-  flex-direction: column; /* Cambiamos a columna si prefieres el buscador arriba */
+  flex-direction: column;
   gap: 15px;
   margin-bottom: 25px;
 }
 
-/* Si prefieres mantenerlos en la misma línea pero que se vean bien: */
 @media (min-width: 900px) {
   .filters-bar {
     flex-direction: row;
-    align-items: stretch;
+    align-items: center;
   }
 }
 
@@ -52,53 +27,115 @@
 
 .search-input {
   width: 100%;
-  height: 45px; /* Altura unificada */
+  height: 42px;
   padding: 0 16px;
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
   font-size: 14px;
+  color: #f8fafc;
+  transition: border-color 0.2s;
+}
+
+.search-input::placeholder {
+  color: #64748b;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: rgba(212, 175, 55, 0.5);
 }
 
 .estado-filters {
   display: flex;
   gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.filter-group {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
 .filter-btn {
-  flex: 1; /* Hace que todos los botones midan lo mismo entre sí */
-  height: 45px; /* Misma altura que el input */
-  padding: 0 15px;
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  font-size: 11px;
-  font-weight: 700;
-  color: #64748b;
-  transition: all 0.3s ease;
+  padding: 8px 18px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(15, 23, 42, 0.6);
+  color: #94a3b8;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
   white-space: nowrap;
 }
 
-/* HOVER DE FILTROS (Azul corporativo suave) */
 .filter-btn:hover {
-  border-color: #3b82f6;
-  color: #3b82f6;
-  background: rgba(59, 130, 246, 0.05);
+  background: rgba(212, 175, 55, 0.1);
+  color: #d4af37;
+  border-color: rgba(212, 175, 55, 0.3);
 }
 
 .filter-btn.active {
-  background: #3b82f6;
-  color: white;
-  border-color: #3b82f6;
-  box-shadow: 0 4px 10px rgba(59, 130, 246, 0.2);
+  background: rgba(212, 175, 55, 0.15);
+  color: #d4af37;
+  border-color: rgba(212, 175, 55, 0.5);
+  box-shadow: 0 0 8px rgba(212, 175, 55, 0.15);
 }
 
 .filter-custom-select {
-  min-width: 220px;
+  min-width: 200px;
 }
 
-.filter-select option {
-  background: #0f172a;
-  color: white;
-  padding: 10px;
+/* ═══ PAGINACIÓN PREMIUM ═══ */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 24px;
+  padding: 16px 0;
+}
+
+.page-numbers {
+  display: flex;
+  gap: 4px;
+}
+
+.btn-page,
+.btn-page-number {
+  min-width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.6);
+  color: #94a3b8;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.btn-page:hover:not(:disabled),
+.btn-page-number:hover:not(.active) {
+  background: rgba(212, 175, 55, 0.1);
+  color: #d4af37;
+  border-color: rgba(212, 175, 55, 0.3);
+}
+
+.btn-page-number.active {
+  background: rgba(212, 175, 55, 0.2);
+  color: #d4af37;
+  border-color: rgba(212, 175, 55, 0.5);
+  box-shadow: 0 0 8px rgba(212, 175, 55, 0.15);
+}
+
+.btn-page:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
 }

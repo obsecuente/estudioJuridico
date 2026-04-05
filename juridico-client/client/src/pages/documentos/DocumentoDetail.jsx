@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import api from "../../services/api";
 import Toast from "../../components/common/Toast";
+import DeleteModal from "../../components/common/DeleteModal";
 import "./DocumentoDetail.css";
 import {
   CasosIcon,
@@ -32,6 +33,7 @@ const DocumentoDetail = () => {
 
   const [isEditing, setIsEditing] = useState(false);
   const [nuevoNombre, setNuevoNombre] = useState("");
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   useEffect(() => {
     cargarDocumento();
@@ -118,18 +120,14 @@ const DocumentoDetail = () => {
   };
 
   const handleEliminar = async () => {
-    if (
-      !window.confirm(
-        `¿Estás seguro de eliminar "${documento.nombre_archivo}"?`
-      )
-    )
-      return;
     try {
       await api.delete(`/documentos/${id}`);
       showToast("Documento eliminado exitosamente", "warning");
       setTimeout(() => navigate("/dashboard/documentos"), 1500);
     } catch (err) {
       showToast(err.response?.data?.error || "Error al eliminar", "error");
+    } finally {
+      setShowDeleteModal(false);
     }
   };
 
@@ -254,7 +252,7 @@ const DocumentoDetail = () => {
           </button>
           <button
             className="btn-action-header btn-delete"
-            onClick={handleEliminar}
+            onClick={() => setShowDeleteModal(true)}
           >
             <TrashICon /> Eliminar
           </button>
@@ -335,6 +333,16 @@ const DocumentoDetail = () => {
           onClose={() => setToast(null)}
         />
       )}
+
+      <DeleteModal
+        isOpen={showDeleteModal}
+        onConfirm={handleEliminar}
+        onCancel={() => setShowDeleteModal(false)}
+        title="Eliminar Documento"
+        message={`¿Estás seguro de eliminar "${documento?.nombre_archivo}"? Esta acción no se puede deshacer.`}
+        confirmLabel="Eliminar Documento"
+        confirmVariant="danger"
+      />
     </div>
   );
 };

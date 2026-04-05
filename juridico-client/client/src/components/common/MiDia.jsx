@@ -102,7 +102,6 @@ const MiDia = () => {
             // Gastos recurrentes que vencen hoy (coincide día del mes)
             const hoyDia = new Date().getDate();
             const listaGastos = gastosRes?.data || [];
-            console.log("MiDia - Gastos check:", { hoyDia, gastosCount: listaGastos.length });
 
             const gastosHoy = listaGastos.filter(g => {
                 if (!g.gasto_recurrente) return false;
@@ -112,7 +111,6 @@ const MiDia = () => {
                 // Vence hoy si el día de vencimiento es igual al día actual (usar == para evitar problemas de tipos)
                 const diaVenc = g.gasto_recurrente.dia_vencimiento;
                 const match = diaVenc == hoyDia;
-                if (match) console.log("MiDia - Gasto matches today:", g.descripcion);
                 return match;
             }).map(g => ({
                 id_vencimiento: `gasto-${g.id_movimiento}`,

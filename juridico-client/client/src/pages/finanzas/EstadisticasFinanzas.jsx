@@ -1,9 +1,8 @@
 // src/pages/finanzas/EstadisticasFinanzas.jsx
-import { useState, useEffect, useContext } from "react";
-import { AuthContext } from "../../context/AuthContext";
+import { useState, useEffect } from "react";
 import finanzasService from "../../services/finanzas.service";
 import BackButton from "../../components/common/BackButton";
-import DeleteModal from "../../components/common/DeleteModal";
+
 import ModalFrame from "../../components/common/ModalFrame";
 import { SpinnerIcon } from "../../components/common/Icons";
 import "./EstadisticasFinanzas.css";
@@ -36,12 +35,10 @@ const CAT_LABELS = {
 };
 
 const EstadisticasFinanzas = () => {
-    const { user } = useContext(AuthContext);
     const [anio, setAnio] = useState(new Date().getFullYear());
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [regenerating, setRegenerating] = useState(false);
-    const [showConfirmModal, setShowConfirmModal] = useState(false);
+
 
     // Detail modal state
     const [detailModal, setDetailModal] = useState({ open: false, mes: null, nombre: "" });
@@ -65,22 +62,7 @@ const EstadisticasFinanzas = () => {
         loadData();
     }, [anio]);
 
-    const executeGenerarManual = async () => {
-        setShowConfirmModal(false);
-        setRegenerating(true);
-        try {
-            const hoy = new Date();
-            let mes = hoy.getMonth();
-            let anioTarget = hoy.getFullYear();
-            if (mes === 0) { mes = 12; anioTarget -= 1; }
-            await finanzasService.generarCierreManual(mes, anioTarget);
-            await loadData();
-        } catch (err) {
-            console.error(err);
-        } finally {
-            setRegenerating(false);
-        }
-    };
+
 
     // Open monthly detail modal
     const openDetailModal = async (mesNum) => {
@@ -223,18 +205,7 @@ const EstadisticasFinanzas = () => {
                         })}
                     </div>
 
-                    {/* ═══ ADMIN: REGENERAR CIERRE ═══ */}
-                    {user?.rol === "admin" && (
-                        <div className="est-admin-section">
-                            <div>
-                                <h3>Herramientas de Admin</h3>
-                                <p>El cierre mensual se ejecuta automáticamente el día 1 a las 02:00 hs. Podés forzar una actualización del mes pasado.</p>
-                            </div>
-                            <button className="est-admin-btn" onClick={() => setShowConfirmModal(true)} disabled={regenerating}>
-                                {regenerating ? "Procesando..." : "Regenerar Cierre"}
-                            </button>
-                        </div>
-                    )}
+
                 </>
             ) : (
                 <div className="est-loading">No se pudieron cargar las estadísticas</div>
@@ -322,15 +293,7 @@ const EstadisticasFinanzas = () => {
                 </ModalFrame>
             )}
 
-            <DeleteModal
-                isOpen={showConfirmModal}
-                onConfirm={executeGenerarManual}
-                onCancel={() => setShowConfirmModal(false)}
-                title="¿Regenerar Cierre?"
-                message="Esto recalculará el balance del mes pasado basándose en los movimientos actuales."
-                confirmLabel="Sí, Regenerar"
-                confirmVariant="warning"
-            />
+
         </div>
     );
 };

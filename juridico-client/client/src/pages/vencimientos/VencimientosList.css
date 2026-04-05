@@ -1,11 +1,45 @@
 /* Vencimientos Styling - Reusing EventosList styles */
 @import "../eventos/EventosList.css";
 
-/* Specific styles for Vencimientos can go here if needed */
+/* Specific styles for Vencimientos */
 .text-danger {
     color: #ef4444;
 }
 
 .fw-bold {
     font-weight: 700;
+}
+
+/* ═══ Filter Bar ═══ */
+.filters-bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.filter-btn {
+    padding: 8px 20px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(15, 23, 42, 0.6);
+    color: #94a3b8;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+    letter-spacing: 0.3px;
+}
+
+.filter-btn:hover {
+    background: rgba(212, 175, 55, 0.1);
+    color: #d4af37;
+    border-color: rgba(212, 175, 55, 0.3);
+}
+
+.filter-btn.active {
+    background: rgba(212, 175, 55, 0.15);
+    color: #d4af37;
+    border-color: rgba(212, 175, 55, 0.5);
+    box-shadow: 0 0 8px rgba(212, 175, 55, 0.15);
 }

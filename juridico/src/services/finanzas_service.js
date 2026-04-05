@@ -301,7 +301,7 @@ export const obtenerResumenEstudio = async (provincia = "NQN", userContext = nul
 
     const ingresosMes = ingresosMesDirectos + ingresosMesCuotas;
 
-    // 2. EGRESOS MENSUALES
+    // 2. EGRESOS MENSUALES — include all egresos paid or created this month
     const egresosMesResult = await MovimientoFinanciero.findOne({
         where: {
             ...baseWhere,
@@ -311,15 +311,15 @@ export const obtenerResumenEstudio = async (provincia = "NQN", userContext = nul
                 {
                     fecha_pago: { [Op.not]: null },
                     [Op.and]: [
-                        sequelize.where(sequelize.fn('MONTH', sequelize.col('fecha_pago')), mesActual),
-                        sequelize.where(sequelize.fn('YEAR', sequelize.col('fecha_pago')), anioActual)
+                        sequelize.where(sequelize.fn('MONTH', sequelize.col('MovimientoFinanciero.fecha_pago')), mesActual),
+                        sequelize.where(sequelize.fn('YEAR', sequelize.col('MovimientoFinanciero.fecha_pago')), anioActual)
                     ]
                 },
                 {
                     fecha_pago: null,
                     [Op.and]: [
-                        sequelize.where(sequelize.fn('MONTH', sequelize.col('updated_at')), mesActual),
-                        sequelize.where(sequelize.fn('YEAR', sequelize.col('updated_at')), anioActual)
+                        sequelize.where(sequelize.fn('MONTH', sequelize.col('MovimientoFinanciero.updated_at')), mesActual),
+                        sequelize.where(sequelize.fn('YEAR', sequelize.col('MovimientoFinanciero.updated_at')), anioActual)
                     ]
                 }
             ]
@@ -498,9 +498,23 @@ export const obtenerResumenEstudio = async (provincia = "NQN", userContext = nul
             where: {
                 id_gasto_recurrente: gf.id_gasto_recurrente,
                 estado: "pagado",
-                [Op.and]: [
-                    sequelize.where(sequelize.fn('MONTH', sequelize.col('fecha_pago')), mesActual),
-                    sequelize.where(sequelize.fn('YEAR', sequelize.col('fecha_pago')), anioActual)
+                [Op.or]: [
+                    // Paid with fecha_pago this month
+                    {
+                        fecha_pago: { [Op.not]: null },
+                        [Op.and]: [
+                            sequelize.where(sequelize.fn('MONTH', sequelize.col('MovimientoFinanciero.fecha_pago')), mesActual),
+                            sequelize.where(sequelize.fn('YEAR', sequelize.col('MovimientoFinanciero.fecha_pago')), anioActual)
+                        ]
+                    },
+                    // Or marked paid this month (updated_at as fallback)
+                    {
+                        fecha_pago: null,
+                        [Op.and]: [
+                            sequelize.where(sequelize.fn('MONTH', sequelize.col('MovimientoFinanciero.updated_at')), mesActual),
+                            sequelize.where(sequelize.fn('YEAR', sequelize.col('MovimientoFinanciero.updated_at')), anioActual)
+                        ]
+                    }
                 ]
             },
         });
@@ -578,6 +592,7 @@ export const obtenerResumenEstudio = async (provincia = "NQN", userContext = nul
         },
         indicadores: {
             ratio_cobrabilidad: parseFloat(ratioCobrabilidad),
+            total_percibido_historico: totalPercibidoHist,
             valor_jus_actual: valorJusActual,
             provincia,
             movimientos_pendientes: countPendientes,

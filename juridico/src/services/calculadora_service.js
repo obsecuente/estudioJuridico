@@ -432,11 +432,12 @@ export const calcularDiasEntreFechas = async ({
     throw new AppError("Las fechas de inicio y fin son obligatorias", 400);
   }
 
-  const fechaIni = new Date(fecha_inicio + "T00:00:00");
-  const fechaFin = new Date(fecha_fin + "T00:00:00");
+  let fechaIni = new Date(fecha_inicio + "T00:00:00");
+  let fechaFin = new Date(fecha_fin + "T00:00:00");
 
+  // Auto-swap si el usuario puso las fechas al revés
   if (fechaFin < fechaIni) {
-    throw new AppError("La fecha fin debe ser posterior a la fecha inicio", 400);
+    [fechaIni, fechaFin] = [fechaFin, fechaIni];
   }
 
   // verificar si la fecha fin es dia habil

@@ -569,7 +569,7 @@ const FinanzasDashboard = () => {
                         <h4>Eficiencia de Cobro</h4>
                         <p>Ratio entre honorarios cobrados y el total generado (actualizado al JUS de hoy).</p>
                         <div className="fin-ring-legend">
-                            <span><span className="dot green"></span>Percibido: <span className="mono">{formatCurrency(dashboard?.caja?.percibido)}</span></span>
+                            <span><span className="dot green"></span>Percibido: <span className="mono">{formatCurrency(dashboard?.indicadores?.total_percibido_historico)}</span></span>
                             <span><span className="dot red"></span>Pendiente: <span className="mono">{formatCurrency(dashboard?.cartera?.total_pendiente_actualizado)}</span></span>
                         </div>
                     </div>
@@ -651,7 +651,7 @@ const FinanzasDashboard = () => {
                                 >
                                     <option value="">-- Seleccionar Cliente --</option>
                                     {clientes.map(c => (
-                                        <option key={c.id_cliente} value={c.id_cliente}>{c.nombre} {c.apellido} ({c.dni})</option>
+                                        <option key={c.id_cliente} value={c.id_cliente}>{c.nombre} {c.apellido || ""}{c.dni ? ` (${c.dni})` : ""}</option>
                                     ))}
                                 </select>
                             </div>

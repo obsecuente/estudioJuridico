@@ -14,15 +14,21 @@
   margin-bottom: 40px;
 }
 
+.search-bar {
+  margin-bottom: 10px;
+}
+
 .documentos-header h1 {
-  color: #1a1f2b; /* Azul noche del estudio */
+  color: #1a1f2b;
+  /* Azul noche del estudio */
   font-size: 28px;
   margin-bottom: 8px;
   font-weight: 800;
 }
 
 .documentos-header p {
-  color: #64748b; /* Gris texto legible */
+  color: #64748b;
+  /* Gris texto legible */
 }
 
 .btn-nuevo {
@@ -57,23 +63,29 @@
 
 /* Card Premium - Mimetizada con Actividad Reciente del Inicio */
 .documento-card {
-  background: #1a1f2b; /* El azul noche exacto de Home */
+  background: #1a1f2b;
+  /* El azul noche exacto de Home */
   border-radius: 12px;
   padding: 24px;
   display: flex;
   flex-direction: column;
   border: none;
-  border-left: 5px solid rgba(241, 196, 15, 0.3); /* Dorado sutil inicial */
+  border-left: 5px solid rgba(241, 196, 15, 0.3);
+  /* Dorado sutil inicial */
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   min-height: 240px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .documento-card:hover {
-  transform: translateX(10px); /* El "hover fachero" del inicio */
-  border-left-color: #f1c40f; /* Dorado brillante al hover */
-  background: rgba(241, 196, 15, 0.08); /* Tinte dorado sutil */
-  background-color: #1a1f2b; /* Mantener la base oscura */
+  transform: translateX(10px);
+  /* El "hover fachero" del inicio */
+  border-left-color: #f1c40f;
+  /* Dorado brillante al hover */
+  background: rgba(241, 196, 15, 0.08);
+  /* Tinte dorado sutil */
+  background-color: #1a1f2b;
+  /* Mantener la base oscura */
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
 }
 
@@ -91,14 +103,15 @@
 .documento-icon svg {
   width: 50px;
   height: 50px;
-  filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));
+  filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.5));
 }
 
 /* Información del Documento - Colores de Home */
 .documento-nombre {
   font-size: 16px;
   font-weight: 700;
-  color: #fff; /* Blanco puro como en Home */
+  color: #fff;
+  /* Blanco puro como en Home */
   margin-bottom: 8px;
   white-space: nowrap;
   overflow: hidden;
@@ -110,7 +123,8 @@
 }
 
 .documento-caso a {
-  color: #94a3b8; /* Gris claro de Home */
+  color: #94a3b8;
+  /* Gris claro de Home */
   text-decoration: none;
   display: flex;
   align-items: center;
@@ -119,7 +133,8 @@
 }
 
 .documento-caso a:hover {
-  color: #f1c40f; /* Dorado de Home */
+  color: #f1c40f;
+  /* Dorado de Home */
 }
 
 .sin-caso {
@@ -190,8 +205,13 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 .modal-edit-card {

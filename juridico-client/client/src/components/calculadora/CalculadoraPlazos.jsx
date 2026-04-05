@@ -12,14 +12,14 @@ const CalculadoraPlazos = ({ onResultado }) => {
     tipo_plazo: "contestacion_demanda_civil",
     dias_plazo: 15,
     jurisdiccion: "neuquen",
-    incluir_plazo_gracia: false,
-    localidad: "",
   });
 
   const [resultado, setResultado] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [diasCustom, setDiasCustom] = useState(null); // override de días por dictatoria
+  const [diasCustom, setDiasCustom] = useState(null);
+  const [editandoDias, setEditandoDias] = useState(false);
+  const [diasConfirmados, setDiasConfirmados] = useState(false);
 
   const tiposPlazo = {
     civil: [
@@ -80,14 +80,9 @@ const CalculadoraPlazos = ({ onResultado }) => {
         tipo_plazo: value,
         dias_plazo: tipoSeleccionado.dias,
       });
-      setDiasCustom(null); // resetear override al cambiar tipo
-    } else if (name === "jurisdiccion") {
-      setFormData({
-        ...formData,
-        jurisdiccion: value,
-        localidad: "",
-        incluir_plazo_gracia: false,
-      });
+      setDiasCustom(null);
+      setEditandoDias(false);
+      setDiasConfirmados(false);
     } else {
       setFormData({
         ...formData,
@@ -99,20 +94,31 @@ const CalculadoraPlazos = ({ onResultado }) => {
     setError(null);
   };
 
-  // Scroll a error y hacer pulsar el campo faltante
   const mostrarError = (msg) => {
     setError(msg);
-    // Scroll al error y agitar el campo de fecha
     setTimeout(() => {
       const errorEl = document.querySelector('.error-alert');
       if (errorEl) errorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      // Shake en el campo de fecha
       const dateInput = document.querySelector('input[name="fecha_notificacion"]');
       if (dateInput) {
         dateInput.classList.add('input-shake');
         setTimeout(() => dateInput.classList.remove('input-shake'), 600);
       }
     }, 50);
+  };
+
+  // Confirmar días personalizados — solo confirma, NO calcula
+  const confirmarDiasCustom = () => {
+    if (!diasCustom || diasCustom < 1) return;
+    setEditandoDias(false);
+    setDiasConfirmados(true);
+    setTimeout(() => setDiasConfirmados(false), 2500);
+  };
+
+  const cancelarDiasCustom = () => {
+    setDiasCustom(null);
+    setEditandoDias(false);
+    setDiasConfirmados(false);
   };
 
   const handleSubmit = async (e) => {
@@ -131,8 +137,8 @@ const CalculadoraPlazos = ({ onResultado }) => {
         fecha_notificacion: formData.fecha_notificacion,
         dias_plazo: diasCustom || formData.dias_plazo,
         jurisdiccion: formData.jurisdiccion,
-        incluir_plazo_gracia: ocultarPlazoGracia ? false : formData.incluir_plazo_gracia,
-        localidad: formData.localidad || null,
+        incluir_plazo_gracia: false,
+        localidad: null,
       });
 
       setResultado(data);
@@ -147,42 +153,17 @@ const CalculadoraPlazos = ({ onResultado }) => {
 
   const handleNuevoCalculo = () => {
     setResultado(null);
+    setDiasCustom(null);
+    setEditandoDias(false);
+    setDiasConfirmados(false);
     setFormData({
       fecha_notificacion: "",
       fuero: "civil",
       tipo_plazo: "contestacion_demanda_civil",
       dias_plazo: 15,
       jurisdiccion: "neuquen",
-      incluir_plazo_gracia: false,
-      localidad: "",
     });
   };
-
-  // opciones de ciudad por jurisdiccion
-  const ciudadesPorJurisdiccion = {
-    neuquen: [
-      { value: "neuquen_capital", label: "Neuquén Capital" },
-      { value: "zapala", label: "Zapala" },
-    ],
-    rio_negro: [
-      { value: "general_roca", label: "General Roca" },
-      { value: "viedma", label: "Viedma" },
-      { value: "bariloche", label: "Bariloche" },
-      { value: "cipolletti", label: "Cipolletti" },
-    ],
-  };
-
-  const mostrarCiudad = formData.jurisdiccion === "neuquen" || formData.jurisdiccion === "rio_negro";
-
-  // Ley 3551 — ocultar plazo de gracia para Neuquen post agosto 2026
-  const ocultarPlazoGracia =
-    formData.jurisdiccion === "neuquen" &&
-    formData.fecha_notificacion >= "2026-08-01";
-
-  // mostrar checkbox de plazo de gracia solo para nacional y rio_negro (y no Ley 3551)
-  const mostrarCheckboxGracia =
-    (formData.jurisdiccion === "nacional" || formData.jurisdiccion === "rio_negro") ||
-    (formData.jurisdiccion === "neuquen" && !ocultarPlazoGracia);
 
   const tipoActual = tiposPlazo[formData.fuero].find(t => t.codigo === formData.tipo_plazo);
 
@@ -256,7 +237,7 @@ const CalculadoraPlazos = ({ onResultado }) => {
             />
             {tipoActual && (
               <div className="plazo-legal-info" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                {diasCustom ? (
+                {editandoDias ? (
                   <>
                     <span>
                       <span className="gold-text" style={{ textDecoration: 'line-through', opacity: 0.5 }}>{tipoActual.dias}</span>
@@ -265,6 +246,7 @@ const CalculadoraPlazos = ({ onResultado }) => {
                         type="number"
                         value={diasCustom}
                         onChange={e => setDiasCustom(parseInt(e.target.value) || "")}
+                        onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); confirmarDiasCustom(); } }}
                         min="1"
                         className="dias-custom-input"
                         autoFocus
@@ -273,19 +255,43 @@ const CalculadoraPlazos = ({ onResultado }) => {
                     </span>
                     <span className="legal-citation">{tipoActual.legal}</span>
                     <button
-                      type="submit"
-                      title="Confirmar y calcular"
+                      type="button"
+                      onClick={confirmarDiasCustom}
+                      title="Confirmar cantidad de días"
                       className="btn-custom-dias-action btn-check"
                     >
                       <CheckIcon />
                     </button>
                     <button
                       type="button"
-                      onClick={() => setDiasCustom(null)}
+                      onClick={cancelarDiasCustom}
                       title="Cancelar y volver a días predeterminados"
                       className="btn-custom-dias-action btn-cancel"
                     >
                       <Xicon />
+                    </button>
+                  </>
+                ) : diasCustom ? (
+                  <>
+                    <span className={diasConfirmados ? 'dias-confirmed-flash' : ''}>
+                      <span className="gold-text">{diasCustom}</span> días hábiles
+                      <span style={{ color: '#94a3b8', fontSize: '0.85em', marginLeft: '6px' }}>(personalizado)</span>
+                    </span>
+                    <span className="legal-citation">{tipoActual.legal}</span>
+                    <button
+                      type="button"
+                      onClick={() => setEditandoDias(true)}
+                      className="btn-plazo-custom"
+                    >
+                      Editar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={cancelarDiasCustom}
+                      className="btn-plazo-custom"
+                      style={{ color: '#ef4444' }}
+                    >
+                      Resetear
                     </button>
                   </>
                 ) : (
@@ -294,7 +300,7 @@ const CalculadoraPlazos = ({ onResultado }) => {
                     <span className="legal-citation">{tipoActual.legal}</span>
                     <button
                       type="button"
-                      onClick={() => setDiasCustom(tipoActual.dias)}
+                      onClick={() => { setDiasCustom(tipoActual.dias); setEditandoDias(true); }}
                       className="btn-plazo-custom"
                     >
                       Plazo personalizado
@@ -331,42 +337,6 @@ const CalculadoraPlazos = ({ onResultado }) => {
               ))}
             </div>
           </div>
-
-          {mostrarCiudad && (
-            <div className="form-group">
-              <label>Ciudad (opcional — aplica feriados locales)</label>
-              <CustomSelect
-                name="localidad"
-                value={formData.localidad}
-                options={[
-                  { value: "", label: "Sin especificar" },
-                  ...(ciudadesPorJurisdiccion[formData.jurisdiccion] || []),
-                ]}
-                onChange={(val) => setFormData({ ...formData, localidad: val })}
-              />
-            </div>
-          )}
-
-          {ocultarPlazoGracia && (
-            <p className="nota-ley-3551" style={{ color: '#f59e0b', fontSize: '0.82em', margin: '6px 0 0', fontStyle: 'italic' }}>
-              Neuquén: Nuevo Código Adversarial (Ley 3551) — Plazo de gracia no aplica
-            </p>
-          )}
-
-          {mostrarCheckboxGracia && !ocultarPlazoGracia && (
-            <div className="form-group checkbox-premium">
-              <label className="checkbox-premium-label">
-                <input
-                  type="checkbox"
-                  name="incluir_plazo_gracia"
-                  checked={formData.incluir_plazo_gracia}
-                  onChange={handleChange}
-                  className="calc-custom-checkbox"
-                />
-                <span className="label-text">Habilitar plazo de gracia (2 primeras horas)</span>
-              </label>
-            </div>
-          )}
         </div>
 
         {error && <div className="error-alert">⚠️ {error}</div>}
@@ -376,8 +346,8 @@ const CalculadoraPlazos = ({ onResultado }) => {
             {loading ? "PROCESANDO..." : "CALCULAR VENCIMIENTO"}
           </button>
         </div>
-      </form >
-    </div >
+      </form>
+    </div>
   );
 };
 

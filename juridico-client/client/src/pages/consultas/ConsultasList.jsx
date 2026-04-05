@@ -187,6 +187,12 @@ const ConsultasList = () => {
               Pendientes
             </button>
             <button
+              className={`filter-btn ${estadoFiltro === "en_progreso" ? "active" : ""}`}
+              onClick={() => handleEstadoFilter("en_progreso")}
+            >
+              En Progreso
+            </button>
+            <button
               className={`filter-btn ${estadoFiltro === "resuelta" ? "active" : ""}`}
               onClick={() => handleEstadoFilter("resuelta")}
             >

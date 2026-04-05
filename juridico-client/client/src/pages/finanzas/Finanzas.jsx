@@ -22,7 +22,6 @@ const Finanzas = () => {
             setLoading(true);
             const response = await finanzasService.getDashboard();
             // response = { success, data: { caja, cartera, indicadores } }
-            console.log("📊 Finanzas.jsx — response:", response);
             setDatos(response.data);
         } catch (err) {
             console.error("Error al cargar finanzas:", err);

@@ -138,9 +138,11 @@ const EventosList = () => {
           <EventIcon />
           <h2>Eventos y Agenda</h2>
         </div>
-        <button className="btn-nuevo" onClick={handleCreate}>
-          <AddIcon /> Nuevo Evento
-        </button>
+        <div className="header-actions">
+          <button className="btn-nuevo" onClick={handleCreate}>
+            <AddIcon /> Nuevo Evento
+          </button>
+        </div>
       </div>
 
       <div className="filters-bar">

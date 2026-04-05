@@ -87,10 +87,8 @@ const CasoForm = ({ caso, clienteId, onClose, showToast }) => {
       // Cargar valor JUS por separado para manejar error
       try {
         const jusRes = await finanzasService.getValoresJus();
-        console.log("DEBUG: JUS Response in CasoForm:", jusRes);
-        console.log("DEBUG: Valor JUS NQN:", jusRes.data?.NQN);
 
-        const valorNQN = jusRes.data?.NQN || jusRes.data?.valor_jus_nqn; // Handle both potential response formats
+        const valorNQN = jusRes.data?.NQN || jusRes.data?.valor_jus_nqn;
 
         if (valorNQN) {
           setValorJusActual(valorNQN);

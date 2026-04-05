@@ -392,3 +392,13 @@
     min-width: 45%;
   }
 }
+
+/* Flash animation when custom days are confirmed */
+.dias-confirmed-flash {
+  animation: confirmedFlash 0.6s ease;
+}
+
+@keyframes confirmedFlash {
+  0% { background: rgba(16, 185, 129, 0.3); border-radius: 4px; }
+  100% { background: transparent; }
+}
